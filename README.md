@@ -81,6 +81,25 @@ Frontend runs on **http://localhost:3001/ai-mock-interview** (Next `basePath`), 
 
 Frontend is an OpenNext Worker (`basePath: /ai-mock-interview`) routed by [labs-gateway](https://github.com/BorderlessCodingHub/labs-gateway). API stays on Railway.
 
+There is **no root `package.json`**. OpenNext + Wrangler live under `frontend/` (`frontend/package.json`, `frontend/wrangler.jsonc`, `frontend/open-next.config.ts`).
+
+### Cloudflare Workers Builds (GitHub)
+
+If the dashboard Root directory is the repo root, `bun run build:cloudflare` fails with `Script not found "build:cloudflare"`. Set:
+
+| Setting | Value |
+| --- | --- |
+| **Root directory** | `frontend` |
+| **Install command** | `bun install` (default is fine) |
+| **Build command** | `bun run build:cloudflare` |
+| **Deploy command** | `bunx opennextjs-cloudflare deploy` |
+
+Equivalent without the npm script: Build = `bunx opennextjs-cloudflare build`, Deploy = `bunx wrangler deploy`.
+
+Worker name (from `frontend/wrangler.jsonc`): `ai-mock-interview`.
+
+### Env / secrets
+
 | Var | Where | Example |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SERVER_URL` | Cloudflare Worker / build | `https://YOUR-AMI-API.up.railway.app` |
@@ -88,6 +107,8 @@ Frontend is an OpenNext Worker (`basePath: /ai-mock-interview`) routed by [labs-
 | `BETTER_AUTH_SECRET` | Cloudflare Worker secrets | ≥32 chars |
 | `CORS_ORIGIN` | Railway API | `https://labs-gateway.yuri-491.workers.dev,https://labs.borderlesscoding.com` |
 | `FRONTEND_URL` | Railway API | `https://labs.borderlesscoding.com/ai-mock-interview` |
+
+### Manual deploy (local)
 
 ```bash
 cd frontend
