@@ -27,6 +27,7 @@ import type { SessionMessage } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import Link from "next/link";
 
 function getClosingFeedback(messages: SessionMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -270,12 +271,12 @@ function FeedbackContent() {
               title="No feedback yet"
               description="Complete an interview to see its feedback here."
               action={
-                <a
+                <Link
                   href="/practice"
                   className="inline-flex min-h-11 cursor-pointer items-center rounded-full bg-jade-deep px-3 py-1.5 text-xs font-semibold text-white hover:bg-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
                 >
                   Go practice
-                </a>
+                </Link>
               }
             />
           ) : (

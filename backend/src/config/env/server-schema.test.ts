@@ -75,6 +75,16 @@ describe("serverEnvSchema", () => {
     expect(result.data.R2_ENDPOINT).toBe("https://custom.r2.example.com");
   });
 
+  it("accepts comma-separated CORS_ORIGIN values", () => {
+    const result = serverEnvSchema.safeParse({
+      ...validEnv,
+      CORS_ORIGIN:
+        "https://labs-gateway.yuri-491.workers.dev,https://labs.borderlesscoding.com",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects invalid environment with clear field errors", () => {
     const result = serverEnvSchema.safeParse({
       ...validEnv,

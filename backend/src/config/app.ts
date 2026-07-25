@@ -12,6 +12,14 @@ import { setupRoutes } from "./routes";
 
 const READY_CHECK_TIMEOUT_MS = 2000;
 
+function parseCorsOrigins(value: string): string | string[] {
+  const origins = value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  return origins.length === 1 ? origins[0]! : origins;
+}
+
 type CheckStatus = "ok" | "error";
 
 async function withTimeout<T>(
@@ -44,7 +52,7 @@ export async function createApp(): Promise<Express> {
 
   app.use(
     cors({
-      origin: env.CORS_ORIGIN,
+      origin: parseCorsOrigins(env.CORS_ORIGIN),
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "Authorization"],
       credentials: true,

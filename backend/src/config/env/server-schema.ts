@@ -8,7 +8,20 @@ export const serverEnv = {
 
   // Server
   PORT: z.coerce.number().default(3000),
-  CORS_ORIGIN: z.url(),
+  /** One origin, or comma-separated origins (scheme+host, no path). */
+  CORS_ORIGIN: z
+    .string()
+    .min(1)
+    .refine(
+      (value) =>
+        value
+          .split(",")
+          .map((part) => part.trim())
+          .filter(Boolean)
+          .every((origin) => z.url().safeParse(origin).success),
+      { message: "Invalid url" },
+    ),
+  /** Absolute frontend base URL (include /ai-mock-interview under labs). */
   FRONTEND_URL: z.url(),
   NODE_ENV: z
     .enum(["development", "production", "test"])

@@ -1,0 +1,31 @@
+/**
+ * For more details on how to configure Wrangler, refer to:
+ * https://developers.cloudflare.com/workers/wrangler/configuration/
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-mock-interview",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-04-04",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": {
+    "enabled": true
+  }
+  /**
+   * Smart Placement
+   * Docs: https://developers.cloudflare.com/workers/configuration/smart_placement/#smart-placement
+   */
+  // "placement": { "mode": "smart" }
+  /**
+   * Note: Use secrets to store sensitive data (API keys, tokens, DSNs).
+   * Set them with: wrangler secret put <NAME>
+   * https://developers.cloudflare.com/workers/configuration/secrets/
+   */
+}
