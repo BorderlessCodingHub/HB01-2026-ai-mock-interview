@@ -5,7 +5,9 @@ import { z } from "zod";
 export const serverEnv = createEnv({
   server: {
     BETTER_AUTH_SECRET: z.string().min(32),
-    BETTER_AUTH_URL: z.url().default("http://localhost:3001"),
+    BETTER_AUTH_URL: z
+      .url()
+      .default("http://localhost:3001/ai-mock-interview"),
     BORDERLESS_API_BASE: z.url().default("https://api.borderlesscoding.com"),
   },
   experimental__runtimeEnv: process.env,

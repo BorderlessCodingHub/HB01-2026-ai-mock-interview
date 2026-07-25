@@ -75,7 +75,27 @@ cd backend && bun run dev:worker
 cd frontend && bun run dev
 ```
 
-Frontend runs on **http://localhost:3001**, API on **http://localhost:3000**.
+Frontend runs on **http://localhost:3001/ai-mock-interview** (Next `basePath`), API on **http://localhost:3000**.
+
+## Labs deploy (Cloudflare + Railway)
+
+Frontend is an OpenNext Worker (`basePath: /ai-mock-interview`) routed by [labs-gateway](https://github.com/BorderlessCodingHub/labs-gateway). API stays on Railway.
+
+| Var | Where | Example |
+| --- | --- | --- |
+| `NEXT_PUBLIC_SERVER_URL` | Cloudflare Worker / build | `https://YOUR-AMI-API.up.railway.app` |
+| `BETTER_AUTH_URL` | Cloudflare Worker secrets | `https://labs.borderlesscoding.com/ai-mock-interview` (or gateway `workers.dev` URL + path) |
+| `BETTER_AUTH_SECRET` | Cloudflare Worker secrets | ≥32 chars |
+| `CORS_ORIGIN` | Railway API | `https://labs-gateway.yuri-491.workers.dev,https://labs.borderlesscoding.com` |
+| `FRONTEND_URL` | Railway API | `https://labs.borderlesscoding.com/ai-mock-interview` |
+
+```bash
+cd frontend
+bun install
+bun run deploy   # opennextjs-cloudflare build + deploy → Worker name `ai-mock-interview`
+```
+
+Then enable the `AMI` service binding + `AMI_HOST` on labs-gateway (see that repo README).
 
 ## Team Credits
 

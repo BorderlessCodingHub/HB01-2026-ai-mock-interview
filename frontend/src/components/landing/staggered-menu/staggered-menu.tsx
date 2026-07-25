@@ -9,6 +9,7 @@ import {
   type CSSProperties,
 } from "react";
 import Image, { type StaticImageData } from "next/image";
+import Link from "next/link";
 import { gsap } from "gsap";
 
 import defaultLogo from "@/assets/logo.png";
@@ -496,14 +497,14 @@ function StaggeredMenu({
             {items && items.length ? (
               items.map((it, idx) => (
                 <li className="sm-panel-itemWrap" key={it.label + idx}>
-                  <a
+                  <Link
                     className="sm-panel-item"
                     href={it.link}
                     aria-label={it.ariaLabel}
                     data-index={idx + 1}
                   >
                     <span className="sm-panel-itemLabel">{it.label}</span>
-                  </a>
+                  </Link>
                 </li>
               ))
             ) : (

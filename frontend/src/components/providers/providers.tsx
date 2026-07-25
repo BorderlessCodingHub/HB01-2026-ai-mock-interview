@@ -16,6 +16,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
       defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
+      storageKey="ami-theme"
     >
       <QueryClientProvider client={queryClient}>
         <AuthSessionProvider>

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import Link from "next/link";
 
 type TabType =
   | "personal"
@@ -157,12 +158,12 @@ export default function ProfilePage() {
             title="No ready CV found"
             description="We couldn't find a successfully processed resume. Upload a PDF resume first."
             action={
-              <a
+              <Link
                 href="/resumes"
                 className="inline-flex cursor-pointer rounded-full bg-jade-deep px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
               >
                 Go to Resumes
-              </a>
+              </Link>
             }
           />
         )}

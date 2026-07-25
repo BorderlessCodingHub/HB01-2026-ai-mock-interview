@@ -17,6 +17,7 @@ import { MAX_JOB_DESCRIPTION_LENGTH } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import Link from "next/link";
 
 const LEVELS: { value: InterviewLevel; label: string; description: string }[] =
   [
@@ -87,12 +88,12 @@ function NewSessionContent() {
         title="No resume selected"
         description="Choose or upload a resume before starting an interview."
         action={
-          <a
+          <Link
             href="/practice"
             className="inline-flex rounded-full bg-jade-deep px-4 py-2 text-sm font-semibold text-white hover:bg-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
           >
             Choose a resume
-          </a>
+          </Link>
         }
       />
     );

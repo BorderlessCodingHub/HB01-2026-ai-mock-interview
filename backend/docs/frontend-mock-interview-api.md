@@ -979,7 +979,12 @@ Além dos tópicos agregados de `review-items`, o backend também analisa **cada
 
 Configuração atual do backend:
 
-- **Origins:** valor de `CORS_ORIGIN` no `.env` do servidor.
+- **Origins:** valor de `CORS_ORIGIN` no `.env` do servidor (scheme + host, **sem path**). Aceita uma origem ou várias separadas por vírgula.
+  - Local: `http://localhost:3001`
+  - Labs via gateway workers.dev: `https://labs-gateway.yuri-491.workers.dev`
+  - Labs via domínio custom: `https://labs.borderlesscoding.com`
+  - Transição (ambos vivos): `https://labs-gateway.yuri-491.workers.dev,https://labs.borderlesscoding.com`
+- **FRONTEND_URL:** URL absoluta do frontend **com** `basePath` `/ai-mock-interview` (ex.: `https://labs.borderlesscoding.com/ai-mock-interview`).
 - **Métodos permitidos:** `GET`, `POST`, `PATCH`, `DELETE`, `OPTIONS` (confira `src/config/app.ts` — `PATCH` deve estar listado para `PATCH /review-items/:id` a partir do browser).
 - **Headers:** `Content-Type`, `Authorization`.
 - **Credentials:** `true` (cookies só se o frontend enviar `credentials: "include"`).

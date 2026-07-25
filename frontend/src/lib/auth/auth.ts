@@ -57,6 +57,10 @@ function mapBorderlessErrorStatus(status: number, message: string): never {
 export const auth = betterAuth({
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
+  // Isolate cookies from other labs apps on labs.borderlesscoding.com
+  advanced: {
+    cookiePrefix: "ami",
+  },
   emailAndPassword: {
     enabled: false,
   },
