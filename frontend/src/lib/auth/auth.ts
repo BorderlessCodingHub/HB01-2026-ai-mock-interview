@@ -182,10 +182,9 @@ export const auth = betterAuth({
         }
 
         const rawBody = await response.text();
-        let payload: BorderlessSignInSuccess | BorderlessSignInError | null =
-          null;
+        let payload: unknown = null;
         try {
-          payload = rawBody ? (JSON.parse(rawBody) as typeof payload) : null;
+          payload = rawBody ? JSON.parse(rawBody) : null;
         } catch {
           payload = null;
         }
@@ -195,10 +194,11 @@ export const auth = betterAuth({
             status: response.status,
             body: rawBody.slice(0, 400),
           });
-          const message =
-            payload && "error" in payload
-              ? (payload.error?.message ?? "")
-              : "";
+          const errorPayload =
+            payload && typeof payload === "object"
+              ? (payload as BorderlessSignInError)
+              : null;
+          const message = errorPayload?.error?.message ?? "";
           mapBorderlessErrorStatus(response.status, message);
         }
 
