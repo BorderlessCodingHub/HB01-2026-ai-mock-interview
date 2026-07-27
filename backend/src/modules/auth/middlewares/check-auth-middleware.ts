@@ -11,6 +11,8 @@ export const PUBLIC_ROUTES: PublicRoute[] = [
   { method: "GET", path: "/" },
   { method: "GET", path: "/health" },
   { method: "GET", path: "/health/ready" },
+  { method: "POST", path: "/internal/borderless-sessions" },
+  { method: "DELETE", path: "/internal/borderless-sessions" },
 ];
 
 function isPublicRoute(method: string, path: string): boolean {

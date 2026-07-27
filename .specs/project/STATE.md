@@ -9,8 +9,8 @@
 
 ### AD-014: Decode Borderless Bearer without signature verify (2026-07-23)
 
-**Decision:** Remove `BORDERLESS_JWT_SECRET`. Express uses `jwt.decode` on the Borderless `accessToken`, rejects missing identity claims / expired `exp`, then upserts local `User` by `externalId`.  
-**Reason:** Borderless confirmed they do not share a JWT secret; contract is only `POST /api/auth/signin` → use `accessToken` as Bearer.  
+**Decision:** Remove `BORDERLESS_JWT_SECRET`. Express accepts Borderless Bearer tokens that are either JWTs (`jwt.decode` + `exp` + identity claims) or **opaque** strings registered at login into Redis via `POST /internal/borderless-sessions` (Next.js → Express, protected by `INTERNAL_AUTH_SYNC_SECRET`). Then upserts local `User` by `externalId`.
+**Reason:** Borderless confirmed they do not share a JWT secret; real `accessToken` values are opaque (not JWT). Contract is `POST /api/auth/signin` → use `accessToken` as Bearer; no introspect/`me` endpoint.
 **Trade-off:** Tokens are not cryptographically authenticated by this API until Borderless documents introspect/`me`.  
 **Impact:** `BorderlessAccessTokenParser`, env schema, test helpers.  
 **Spec:** `.specs/features/borderless-better-auth/`

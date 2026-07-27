@@ -30,6 +30,24 @@ type BorderlessSignInError = {
   };
 };
 
+function isBorderlessSignInSuccess(
+  payload: unknown,
+): payload is BorderlessSignInSuccess {
+  if (!payload || typeof payload !== "object") return false;
+  const data = (payload as { data?: unknown }).data;
+  if (!data || typeof data !== "object") return false;
+  const user = (data as { user?: unknown }).user;
+  const token = (data as { token?: unknown }).token;
+  if (!user || typeof user !== "object" || !token || typeof token !== "object") {
+    return false;
+  }
+  return (
+    typeof (user as { id?: unknown }).id === "string" &&
+    typeof (user as { email?: unknown }).email === "string" &&
+    typeof (token as { accessToken?: unknown }).accessToken === "string"
+  );
+}
+
 function mapBorderlessErrorStatus(status: number, message: string): never {
   if (status === 429) {
     throw new APIError("TOO_MANY_REQUESTS", {
@@ -54,7 +72,34 @@ function mapBorderlessErrorStatus(status: number, message: string): never {
   });
 }
 
+async function registerOpaqueSession(params: {
+  accessToken: string;
+  externalId: string;
+  email: string;
+  name: string;
+  expiresIn: number;
+}): Promise<void> {
+  const response = await fetch(
+    `${serverEnv.SERVER_INTERNAL_URL}/internal/borderless-sessions`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Internal-Auth-Secret": serverEnv.INTERNAL_AUTH_SYNC_SECRET,
+      },
+      body: JSON.stringify(params),
+    },
+  );
+
+  if (!response.ok) {
+    throw new APIError("INTERNAL_SERVER_ERROR", {
+      message: "Failed to establish API session. Try again.",
+    });
+  }
+}
+
 export const auth = betterAuth({
+  database: undefined,
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
   emailAndPassword: {
@@ -110,13 +155,33 @@ export const auth = betterAuth({
           mapBorderlessErrorStatus(response.status, message);
         }
 
-        const success = payload as BorderlessSignInSuccess;
-        const borderlessUser = success.data.user;
-        const accessToken = success.data.token.accessToken;
+        if (!isBorderlessSignInSuccess(payload)) {
+          throw new APIError("INTERNAL_SERVER_ERROR", {
+            message: "Unexpected authentication response. Try again.",
+          });
+        }
+
+        const borderlessUser = payload.data.user;
+        const accessToken = payload.data.token.accessToken;
+        const expiresIn =
+          typeof payload.data.token.expiresIn === "number" &&
+          payload.data.token.expiresIn > 0
+            ? payload.data.token.expiresIn
+            : 60 * 60 * 24;
+        const name =
+          borderlessUser.name || borderlessUser.username || "User";
+
+        await registerOpaqueSession({
+          accessToken,
+          externalId: borderlessUser.id,
+          email: borderlessUser.email,
+          name,
+          expiresIn,
+        });
 
         return {
           email: borderlessUser.email,
-          name: borderlessUser.name || borderlessUser.username || "User",
+          name,
           accessToken,
           externalId: borderlessUser.id,
         };

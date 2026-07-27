@@ -1,5 +1,7 @@
 export type {
+  BorderlessSessionRecord,
   BorderlessTokenClaims,
+  IBorderlessSessionStore,
   IBorderlessTokenVerifier,
   IMailer,
   IPasswordHasher,
@@ -15,6 +17,8 @@ export type { PublicRoute } from "./middlewares/check-auth-middleware";
 export { UserRepository } from "./repository/user-repository";
 export { UserSyncService } from "./service/user-sync-service";
 export { BorderlessAccessTokenParser } from "./adapters/borderless-access-token-parser";
+export { RedisBorderlessSessionStore } from "./adapters/borderless-session-store";
+export { BorderlessTokenResolver } from "./adapters/borderless-token-resolver";
 export type {
   CreateUserParams,
   UpdateUserParams,

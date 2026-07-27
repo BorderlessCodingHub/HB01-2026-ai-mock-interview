@@ -14,6 +14,7 @@ const validEnv = {
   R2_ACCESS_KEY_ID: "test-access-key",
   R2_SECRET_ACCESS_KEY: "test-secret-key",
   R2_BUCKET_NAME: "test-bucket",
+  INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
 };
 
 describe("serverEnvSchema", () => {

@@ -94,7 +94,7 @@ Local email/password JWT auth duplicates the Borderless Coding identity platform
 - WHEN Borderless returns rate limit (429) THEN system SHALL surface a retry-friendly message
 - WHEN JWT lacks required identity claims (`sub`/`id` and `email`) THEN Express SHALL return 401
 - WHEN two tokens map to the same email but different `externalId` THEN system SHALL fail safely (unique email constraint) without corrupting other users
-- WHEN `accessToken` is opaque (not JWT) THEN implementation SHALL stop and require introspect/`me` (no decode-without-verify)
+- WHEN `accessToken` is opaque (not JWT) THEN Next.js SHALL register the token in Express Redis at login (`POST /internal/borderless-sessions`); Express SHALL resolve opaque Bearers via Redis lookup (no introspect/`me` required)
 
 ---
 
