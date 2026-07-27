@@ -16,6 +16,7 @@ const e2eEnvDefaults: Record<string, string> = {
   R2_SECRET_ACCESS_KEY: "secret",
   R2_BUCKET_NAME: "bucket",
   RESUME_MAX_BYTES: "5242880",
+  INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
 };
 
 for (const [key, value] of Object.entries(e2eEnvDefaults)) {

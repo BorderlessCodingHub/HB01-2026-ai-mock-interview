@@ -65,11 +65,13 @@ function createRes() {
 }
 
 describe("makeCheckAuthMiddleware", () => {
-  it("exposes only health public routes", () => {
+  it("exposes health and internal session sync public routes", () => {
     expect(PUBLIC_ROUTES.map((r) => `${r.method} ${r.path}`)).toEqual([
       "GET /",
       "GET /health",
       "GET /health/ready",
+      "POST /internal/borderless-sessions",
+      "DELETE /internal/borderless-sessions",
     ]);
   });
 
