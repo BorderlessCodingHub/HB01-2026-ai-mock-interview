@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyReviewSessionSchema,
   createReviewSessionSchema,
+  listReviewSessionsQuerySchema,
   reviewItemStatusSchema,
   reviewSessionEvaluationOutputSchema,
   reviewSessionStatusSchema,
@@ -353,5 +354,116 @@ describe("reviewSessionEvaluationOutputSchema", () => {
         priority: "low",
       }),
     ).toThrow();
+  });
+});
+
+describe("listReviewSessionsQuerySchema", () => {
+  it("accepts a single status and defaults page/limit", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        status: ["completed"],
+        page: 1,
+        limit: 10,
+      });
+    }
+  });
+
+  it("accepts comma-separated statuses", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "in_progress,pending_review",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.status).toEqual(["in_progress", "pending_review"]);
+    }
+  });
+
+  it("trims whitespace around status tokens", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: " completed , in_progress ",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.status).toEqual(["completed", "in_progress"]);
+    }
+  });
+
+  it("coerces page and limit from query strings", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed",
+      page: "2",
+      limit: "20",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({
+        status: ["completed"],
+        page: 2,
+        limit: 20,
+      });
+    }
+  });
+
+  it("rejects missing status", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({});
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty status string", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({ status: "" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty status tokens", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed,",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid status values", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "cancelled",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects page less than 1", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed",
+      page: 0,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects limit less than 1", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed",
+      limit: 0,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects limit greater than 50", () => {
+    const result = listReviewSessionsQuerySchema.safeParse({
+      status: "completed",
+      limit: 51,
+    });
+
+    expect(result.success).toBe(false);
   });
 });
