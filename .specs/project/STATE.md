@@ -1,11 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-23  
-**Current Work:** Borderless Auth — decode-only Bearer (no JWT_SECRET); apply Prisma migration; better-auth env; E2E needs Docker
+**Last Updated:** 2026-07-28  
+**Current Work:** Study Session History — Execute T1–T14 complete (no commits; await user commit / UAT)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-015: Study Session History on `/practice`-like `/study` shell (2026-07-28)
+
+**Decision:** Persist completed Review Session history in a `/study` sidebar (topics + date + badge); click opens read-only Q&A via `/study?sessionId=`; open sessions stay on resume banner. Single `GET /api/review-sessions` with status + page/limit=10; expose `turns` on `GET /:id`. No report/outcomes in MVP transcript.
+**Reason:** Parent Study Hub deferred history; candidates need durable recall like interview practice history.
+**Trade-off:** Requires backend list + turns exposure before FE; `/study` layout restructure; banner migrates off storage-only.
+**Impact:** New feature specs under `frontend/.specs/features/study-session-history/`; extends review-sessions API; reshapes Study hub UI.
+**Spec:** `frontend/.specs/features/study-session-history/spec.md`  
+**Context:** `frontend/.specs/features/study-session-history/context.md`
 
 ### AD-014: Decode Borderless Bearer without signature verify (2026-07-23)
 
@@ -135,6 +144,12 @@ _None_
 
 ## Todos
 
+- [x] Grill-me + Specify study-session-history → `spec.md` + `context.md` (2026-07-28)
+- [x] Design phase for study-session-history (`design.md`) — approved
+- [x] Tasks breakdown for study-session-history (`tasks.md`) — draft, awaiting approval
+- [x] Execute study-session-history (T1–T14) — implemented; commit deferred by user; no commits made
+- [ ] Interactive UAT for study-session-history (history sidebar, transcript, Load more, banner via API)
+- [ ] Commit study-session-history (deferred — user requested no commits)
 - [x] Grill-me + Specify interview-speech-to-text → `spec.md` + `context.md`
 - [x] Design phase for interview-speech-to-text (`design.md`) — approved
 - [x] Tasks breakdown for interview-speech-to-text (`tasks.md`) — draft, awaiting approval

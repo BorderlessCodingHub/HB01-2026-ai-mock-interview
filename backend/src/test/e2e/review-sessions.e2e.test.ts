@@ -119,6 +119,43 @@ async function seedReviewItem(
   });
 }
 
+async function seedCompletedReviewSession(
+  userId: number,
+  overrides: {
+    topic: string;
+    completedAt: Date;
+    createdAt?: Date;
+  },
+) {
+  const reviewItem = await seedReviewItem(userId, {
+    topic: overrides.topic,
+    description: `Practice ${overrides.topic}.`,
+    priority: ReviewPriority.medium,
+  });
+
+  return prisma.reviewSession.create({
+    data: {
+      userId,
+      status: "completed",
+      interviewLocale: "en",
+      createdAt: overrides.createdAt ?? overrides.completedAt,
+      completedAt: overrides.completedAt,
+      items: {
+        create: [
+          {
+            reviewItemId: reviewItem.id,
+            order: 0,
+            topic: overrides.topic,
+            description: `Practice ${overrides.topic}.`,
+            currentPriority: ReviewPriority.medium,
+            turns: [],
+          },
+        ],
+      },
+    },
+  });
+}
+
 function configureReviewSessionAiMocks(): void {
   reviewSessionAiMock.streamQuestion.mockImplementation(
     (input: ReviewSessionQuestionInput) => {
@@ -378,6 +415,229 @@ describe("Review Sessions API E2E", () => {
       expect(crossUserResponse.body).toEqual({
         message: "Review session not found",
       });
+    });
+
+    it("includes turns on each item after stream answers", async () => {
+      const { token, userId } = await authenticate();
+      const item = await seedReviewItem(userId, {
+        topic: "System Design",
+        description: "Practice scalability trade-offs.",
+        priority: ReviewPriority.high,
+      });
+
+      const createResponse = await request(app)
+        .post("/api/review-sessions/")
+        .set(authHeader(token))
+        .send({ reviewItemIds: [item.id], interviewLocale: "en" });
+
+      const sessionId = createResponse.body.id as string;
+
+      const beforeStream = await request(app)
+        .get(`/api/review-sessions/${sessionId}`)
+        .set(authHeader(token));
+
+      expect(beforeStream.status).toBe(200);
+      expect(beforeStream.body.items[0].turns).toEqual([]);
+
+      await runStreamThroughEvaluation(app, token, sessionId, 1);
+
+      const afterStream = await request(app)
+        .get(`/api/review-sessions/${sessionId}`)
+        .set(authHeader(token));
+
+      expect(afterStream.status).toBe(200);
+      expect(afterStream.body.items).toHaveLength(1);
+      expect(afterStream.body.items[0].turns).toEqual([
+        {
+          question: "Question about System Design?",
+          answer: "Answer 1 for review session item.",
+        },
+      ]);
+    });
+  });
+
+  describe("GET /api/review-sessions/", () => {
+    it("returns 401 without authentication", async () => {
+      const response = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "completed" });
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        message: "Authentication required",
+      });
+    });
+
+    it("returns 422 when status query is missing or invalid", async () => {
+      const { token } = await authenticate();
+
+      const missingStatus = await request(app)
+        .get("/api/review-sessions/")
+        .set(authHeader(token));
+
+      expect(missingStatus.status).toBe(422);
+      expect(missingStatus.body.message).toBe("Validation failed");
+      expect(missingStatus.body.errors).toBeDefined();
+
+      const invalidStatus = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "done" })
+        .set(authHeader(token));
+
+      expect(invalidStatus.status).toBe(422);
+      expect(invalidStatus.body.message).toBe("Validation failed");
+      expect(invalidStatus.body.errors).toBeDefined();
+    });
+
+    it("returns empty sessions list when user has none", async () => {
+      const { token } = await authenticate();
+
+      const response = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "completed" })
+        .set(authHeader(token));
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({
+        sessions: [],
+        page: 1,
+        limit: 10,
+        hasMore: false,
+      });
+    });
+
+    it("lists completed sessions after apply and keeps open sessions out of completed", async () => {
+      const { token, userId } = await authenticate();
+      const completedItem = await seedReviewItem(userId, {
+        topic: "System Design",
+        description: "Practice scalability trade-offs.",
+        priority: ReviewPriority.high,
+      });
+      const openItem = await seedReviewItem(userId, {
+        topic: "TypeScript",
+        description: "Review generics and utility types.",
+        priority: ReviewPriority.medium,
+      });
+
+      const completedCreate = await request(app)
+        .post("/api/review-sessions/")
+        .set(authHeader(token))
+        .send({ reviewItemIds: [completedItem.id], interviewLocale: "en" });
+
+      const completedSessionId = completedCreate.body.id as string;
+      await runStreamThroughEvaluation(app, token, completedSessionId, 1);
+
+      const report = await request(app)
+        .get(`/api/review-sessions/${completedSessionId}`)
+        .set(authHeader(token));
+
+      await request(app)
+        .post(`/api/review-sessions/${completedSessionId}/apply`)
+        .set(authHeader(token))
+        .send({
+          items: [
+            {
+              reviewSessionItemId: report.body.items[0].id as string,
+              status: "active",
+              priority: "medium",
+            },
+          ],
+        })
+        .expect(200);
+
+      const openCreate = await request(app)
+        .post("/api/review-sessions/")
+        .set(authHeader(token))
+        .send({ reviewItemIds: [openItem.id], interviewLocale: "en" });
+
+      const openSessionId = openCreate.body.id as string;
+
+      const completedList = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "completed" })
+        .set(authHeader(token));
+
+      expect(completedList.status).toBe(200);
+      expect(completedList.body.hasMore).toBe(false);
+      expect(completedList.body.sessions).toEqual([
+        expect.objectContaining({
+          id: completedSessionId,
+          status: "completed",
+          topics: expect.arrayContaining(["System Design"]),
+          completedAt: expect.any(String),
+        }),
+      ]);
+      expect(
+        completedList.body.sessions.some(
+          (session: { id: string }) => session.id === openSessionId,
+        ),
+      ).toBe(false);
+
+      const openList = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "in_progress,pending_review" })
+        .set(authHeader(token));
+
+      expect(openList.status).toBe(200);
+      expect(openList.body.sessions).toEqual([
+        expect.objectContaining({
+          id: openSessionId,
+          status: "in_progress",
+          topics: expect.arrayContaining(["TypeScript"]),
+          completedAt: null,
+        }),
+      ]);
+      expect(
+        openList.body.sessions.some(
+          (session: { id: string }) => session.id === completedSessionId,
+        ),
+      ).toBe(false);
+    });
+
+    it("paginates completed sessions with hasMore and distinct page ids", async () => {
+      const { token, userId } = await authenticate();
+      const baseTime = Date.UTC(2026, 6, 1, 12, 0, 0);
+
+      for (let index = 0; index < 11; index += 1) {
+        await seedCompletedReviewSession(userId, {
+          topic: `Topic ${index + 1}`,
+          completedAt: new Date(baseTime + index * 60_000),
+        });
+      }
+
+      const page1 = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "completed", page: 1, limit: 10 })
+        .set(authHeader(token));
+
+      expect(page1.status).toBe(200);
+      expect(page1.body.page).toBe(1);
+      expect(page1.body.limit).toBe(10);
+      expect(page1.body.hasMore).toBe(true);
+      expect(page1.body.sessions).toHaveLength(10);
+
+      const page2 = await request(app)
+        .get("/api/review-sessions/")
+        .query({ status: "completed", page: 2, limit: 10 })
+        .set(authHeader(token));
+
+      expect(page2.status).toBe(200);
+      expect(page2.body.page).toBe(2);
+      expect(page2.body.limit).toBe(10);
+      expect(page2.body.hasMore).toBe(false);
+      expect(page2.body.sessions).toHaveLength(1);
+
+      const page1Ids = page1.body.sessions.map(
+        (session: { id: string }) => session.id,
+      );
+      const page2Ids = page2.body.sessions.map(
+        (session: { id: string }) => session.id,
+      );
+
+      expect(page1Ids).toHaveLength(10);
+      expect(page2Ids).toHaveLength(1);
+      expect(new Set([...page1Ids, ...page2Ids]).size).toBe(11);
+      expect(page1Ids).not.toEqual(expect.arrayContaining(page2Ids));
     });
   });
 

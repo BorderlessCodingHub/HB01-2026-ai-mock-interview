@@ -19,7 +19,7 @@ Candidates need a dedicated **Study** experience to manage topics, run focused r
 | Item | Reason |
 |------|--------|
 | Backend implementation of bulk apply | Separate backend work item; frontend spec defines the contract and blocks report features until it exists |
-| Completed Review Session history UI | Deferred — see `context.md` |
+| Completed Review Session history UI | Spun out — [study-session-history](../study-session-history/spec.md) |
 | System-suggested session prompts ("you have 5 high-priority items") | Backend defers; manual trigger only |
 | User-configurable questions per item (`N`) | Fixed server default (3); not exposed in UI |
 | Changes to normal mock interview flow | Backend already stops mutating existing review items on interview final turn |

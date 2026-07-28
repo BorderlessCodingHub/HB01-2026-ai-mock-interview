@@ -204,6 +204,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
             suggestedPriority: item.suggestedPriority,
             confirmedStatus: null,
             confirmedPriority: null,
+            turns: [],
           })),
         },
       );

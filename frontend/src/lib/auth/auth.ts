@@ -182,7 +182,7 @@ export const auth = betterAuth({
         }
 
         const rawBody = await response.text();
-        let payload: unknown = null;
+        let payload: unknown;
         try {
           payload = rawBody ? JSON.parse(rawBody) : null;
         } catch {

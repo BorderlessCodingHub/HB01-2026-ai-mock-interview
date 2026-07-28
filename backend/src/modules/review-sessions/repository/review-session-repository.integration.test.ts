@@ -346,4 +346,263 @@ describe("ReviewSessionRepository (integration)", () => {
       confirmedAt: expect.any(Date),
     });
   });
+
+  it("findManyByUserId filters by status and scopes to userId", async () => {
+    const { user, first, second } = await seedReviewItems();
+    const other = await seedReviewItems();
+
+    const inProgress = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    const pending = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: second.id,
+          topic: second.topic,
+          description: second.description,
+          currentPriority: second.priority,
+        },
+      ],
+      "en",
+    );
+    await repository.markPendingReview(pending.id, "en");
+
+    const completed = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    await repository.markPendingReview(completed.id, "en");
+    await repository.confirmItem(completed.items[0]!.id, {
+      status: "learned",
+      priority: null,
+    });
+    await repository.markCompletedIfAllConfirmed(completed.id);
+
+    await repository.create(
+      other.user.id,
+      [
+        {
+          reviewItemId: other.first.id,
+          topic: other.first.topic,
+          description: other.first.description,
+          currentPriority: other.first.priority,
+        },
+      ],
+      "en",
+    );
+
+    const open = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["in_progress", "pending_review"],
+      skip: 0,
+      take: 10,
+    });
+    const onlyCompleted = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["completed"],
+      skip: 0,
+      take: 10,
+    });
+
+    expect(open.map((s) => s.id).sort()).toEqual(
+      [inProgress.id, pending.id].sort(),
+    );
+    expect(onlyCompleted).toHaveLength(1);
+    expect(onlyCompleted[0]!.id).toBe(completed.id);
+    expect(onlyCompleted[0]!.userId).toBe(user.id);
+  });
+
+  it("findManyByUserId paginates with skip and take", async () => {
+    const { user, first } = await seedReviewItems();
+    const ids: string[] = [];
+
+    for (let i = 0; i < 3; i++) {
+      const created = await repository.create(
+        user.id,
+        [
+          {
+            reviewItemId: first.id,
+            topic: `${first.topic}-${i}`,
+            description: first.description,
+            currentPriority: first.priority,
+          },
+        ],
+        "en",
+      );
+      ids.push(created.id);
+      await new Promise((r) => setTimeout(r, 5));
+    }
+
+    const page1 = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["in_progress"],
+      skip: 0,
+      take: 2,
+    });
+    const page2 = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["in_progress"],
+      skip: 2,
+      take: 2,
+    });
+
+    expect(page1).toHaveLength(2);
+    expect(page2).toHaveLength(1);
+    expect(page1.map((s) => s.id)).not.toContain(page2[0]!.id);
+    expect([...page1, ...page2].map((s) => s.id).sort()).toEqual(
+      [...ids].sort(),
+    );
+  });
+
+  it("findManyByUserId orders by completedAt desc then createdAt desc", async () => {
+    const { user, first } = await seedReviewItems();
+
+    const olderCompleted = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: "older-completed",
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    const newerCompleted = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: "newer-completed",
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    const openNewer = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: "open-newer",
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    await new Promise((r) => setTimeout(r, 5));
+    const openOldestCreated = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: "open-older",
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+
+    const olderDate = new Date("2026-01-01T12:00:00.000Z");
+    const newerDate = new Date("2026-06-01T12:00:00.000Z");
+    await prisma.reviewSession.update({
+      where: { id: olderCompleted.id },
+      data: { status: "completed", completedAt: olderDate },
+    });
+    await prisma.reviewSession.update({
+      where: { id: newerCompleted.id },
+      data: { status: "completed", completedAt: newerDate },
+    });
+    // Force createdAt so open sessions sort predictably among null completedAt
+    await prisma.reviewSession.update({
+      where: { id: openOldestCreated.id },
+      data: { createdAt: new Date("2025-01-01T12:00:00.000Z") },
+    });
+    await prisma.reviewSession.update({
+      where: { id: openNewer.id },
+      data: { createdAt: new Date("2025-06-01T12:00:00.000Z") },
+    });
+
+    const rows = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["completed", "in_progress"],
+      skip: 0,
+      take: 10,
+    });
+
+    expect(rows.map((s) => s.id)).toEqual([
+      newerCompleted.id,
+      olderCompleted.id,
+      openNewer.id,
+      openOldestCreated.id,
+    ]);
+  });
+
+  it("findManyByUserId returns items ordered by order asc", async () => {
+    const { user, first, second } = await seedReviewItems();
+
+    const created = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: second.id,
+          topic: second.topic,
+          description: second.description,
+          currentPriority: second.priority,
+        },
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+
+    // Flip DB order so list query must re-sort by `order`
+    await prisma.reviewSessionItem.update({
+      where: { id: created.items[0]!.id },
+      data: { order: 1 },
+    });
+    await prisma.reviewSessionItem.update({
+      where: { id: created.items[1]!.id },
+      data: { order: 0 },
+    });
+
+    const [found] = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["in_progress"],
+      skip: 0,
+      take: 10,
+    });
+
+    expect(found!.items.map((i) => i.order)).toEqual([0, 1]);
+    expect(found!.items.map((i) => i.topic)).toEqual([
+      "system design",
+      "algorithms",
+    ]);
+  });
 });

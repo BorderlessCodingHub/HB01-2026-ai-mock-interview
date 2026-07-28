@@ -8,6 +8,7 @@ import type { ReviewSessionConfirmation } from "@/modules/review-sessions/reposi
 import type {
   ReviewSessionItemRecord,
   ReviewSessionRecord,
+  ReviewSessionTurn,
 } from "@/modules/review-sessions/types/review-session-record";
 import type {
   ApplyReviewSessionInput,
@@ -36,11 +37,27 @@ export type ReviewSessionSummary = {
   items: ReviewSessionSummaryItem[];
 };
 
+export type ReviewSessionListSummary = {
+  id: string;
+  status: ReviewSessionStatus;
+  topics: string[];
+  createdAt: string;
+  completedAt: string | null;
+};
+
+export type ListReviewSessionsResult = {
+  sessions: ReviewSessionListSummary[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
 export type ReviewSessionReportItem = {
   id: string;
   reviewItemId: string;
   topic: string;
   currentPriority: ReviewPriority;
+  turns: ReviewSessionTurn[];
   suggestedStatus: ReviewItemStatus | null;
   suggestedPriority: ReviewPriority | null;
   confirmedStatus: ReviewItemStatus | null;
@@ -70,6 +87,7 @@ function toReportItem(item: ReviewSessionItemRecord): ReviewSessionReportItem {
     reviewItemId: item.reviewItemId,
     topic: item.topic,
     currentPriority: item.currentPriority,
+    turns: item.turns,
     suggestedStatus: item.suggestedStatus,
     suggestedPriority: item.suggestedPriority,
     confirmedStatus: item.confirmedStatus,
@@ -82,6 +100,16 @@ function toSummary(session: ReviewSessionRecord): ReviewSessionSummary {
     id: session.id,
     status: session.status,
     items: session.items.map(toSummaryItem),
+  };
+}
+
+function toListSummary(session: ReviewSessionRecord): ReviewSessionListSummary {
+  return {
+    id: session.id,
+    status: session.status,
+    topics: session.items.map((item) => item.topic),
+    createdAt: session.createdAt.toISOString(),
+    completedAt: session.completedAt?.toISOString() ?? null,
   };
 }
 
@@ -177,6 +205,29 @@ export class ReviewSessionsService {
     }
 
     return toReport(session);
+  }
+
+  async list(
+    userId: number,
+    params: {
+      statuses: ReviewSessionStatus[];
+      page: number;
+      limit: number;
+    },
+  ): Promise<ListReviewSessionsResult> {
+    const { statuses, page, limit } = params;
+    const skip = (page - 1) * limit;
+    const rows = await this.reviewSessionRepository.findManyByUserId({
+      userId,
+      statuses,
+      skip,
+      take: limit + 1,
+    });
+
+    const hasMore = rows.length > limit;
+    const sessions = rows.slice(0, limit).map(toListSummary);
+
+    return { sessions, page, limit, hasMore };
   }
 
   async apply(

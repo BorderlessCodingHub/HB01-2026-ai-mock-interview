@@ -90,7 +90,7 @@ sequenceDiagram
 | ID | Decision | Choice | Rationale |
 |----|----------|--------|-----------|
 | STUDY-DES-01 | SSE parser duplication | Extract shared `readSseStream()` in `src/lib/api/sse-stream.ts`; refactor `interview-stream.ts` to use it | CONCERNS.md flags fragile manual parser — one implementation for both flows |
-| STUDY-DES-02 | Resume banner data source | `sessionStorage` key + `GET /api/review-sessions/:id` validation on `/study` mount | No list endpoint on backend today; avoids extra backend work for P2; storage updated on session create |
+| STUDY-DES-02 | Resume banner data source | `sessionStorage` key + `GET /api/review-sessions/:id` validation on `/study` mount | **Superseded** by [study-session-history](../study-session-history/design.md): list API is required; storage-only resume banner is no longer the source of truth |
 | STUDY-DES-03 | Q&A message persistence | Local React state only (no server message history) | Backend Review Session has no messages API; turns live on `ReviewSessionItem.turns` server-side only |
 | STUDY-DES-04 | Topic transitions in chat | Insert a centered **topic divider** message when `meta.itemIndex` advances | Makes multi-topic sessions readable without cross-item transcript |
 | STUDY-DES-05 | Report card initial values | `suggestedStatus`/`suggestedPriority` when present; else `active` + `currentPriority` | Failed evaluation (`suggestedStatus: null`) still yields an editable card with safe defaults |
@@ -121,7 +121,7 @@ Replace per-item confirm. Request/response per `spec.md` Prerequisites section.
 
 ### BE-STUDY-02 (optional, deferred): `GET /api/review-sessions?status=`
 
-Not required for MVP if `STUDY-DES-02` is used. Add later if users can have multiple open sessions across devices.
+**Superseded** by [study-session-history](../study-session-history/design.md): the list endpoint is now required (history sidebar + open-session detection). Storage-only resume banner (`STUDY-DES-02`) is superseded.
 
 ---
 
@@ -592,7 +592,7 @@ No frontend test runner today (`TESTING.md`). Per-task gates:
 
 ## Out of Scope (unchanged from spec)
 
-Completed session history, system-suggested prompts, configurable N, Portuguese copy, `/feedback` cross-link, backend list endpoint (optional BE-STUDY-02).
+System-suggested prompts, configurable N, Portuguese copy, `/feedback` cross-link. Completed session history + list API: see [study-session-history](../study-session-history/design.md) (supersedes STUDY-DES-02 / BE-STUDY-02).
 
 ---
 
