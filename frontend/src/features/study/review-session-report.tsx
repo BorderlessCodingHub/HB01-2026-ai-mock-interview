@@ -126,6 +126,9 @@ function ReportCardsForm({ sessionId, items }: ReportCardsFormProps) {
     clearLastReviewSessionId();
     void queryClient.invalidateQueries({ queryKey: ["review-items"] });
     void queryClient.invalidateQueries({
+      queryKey: ["review-sessions", "list"],
+    });
+    void queryClient.invalidateQueries({
       queryKey: queryKeys.reviewSession(sessionId),
     });
     router.push("/study");
