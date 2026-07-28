@@ -10,6 +10,7 @@ import type {
   ReviewItemStatus,
   ReviewSession as PrismaReviewSession,
   ReviewSessionItem as PrismaReviewSessionItem,
+  ReviewSessionStatus,
   Prisma,
 } from "../../../../prisma/generated/client";
 
@@ -118,6 +119,31 @@ export class ReviewSessionRepository {
     });
 
     return row ? toReviewSessionRecord(row) : null;
+  }
+
+  async findManyByUserId(params: {
+    userId: number;
+    statuses: ReviewSessionStatus[];
+    skip: number;
+    take: number;
+  }): Promise<ReviewSessionRecord[]> {
+    const rows = await prisma.reviewSession.findMany({
+      where: {
+        userId: params.userId,
+        status: { in: params.statuses },
+      },
+      orderBy: [
+        { completedAt: { sort: "desc", nulls: "last" } },
+        { createdAt: "desc" },
+      ],
+      skip: params.skip,
+      take: params.take,
+      include: {
+        items: { orderBy: { order: "asc" } },
+      },
+    });
+
+    return rows.map(toReviewSessionRecord);
   }
 
   async appendTurn(
