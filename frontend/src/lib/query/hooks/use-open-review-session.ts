@@ -1,32 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { clearLastReviewSessionId } from "@/features/study/lib/review-session-storage";
 
-import { ApiError } from "@/lib/api/client";
-import {
-  clearLastReviewSessionId,
-  getLastReviewSessionId,
-} from "@/features/study/lib/review-session-storage";
+import { useOpenReviewSessions } from "./use-open-review-sessions";
 
-import { useReviewSession } from "./use-review-session";
-
+/**
+ * Newest open review session for the resume banner.
+ * Source of truth: API list (`in_progress` / `pending_review`).
+ * sessionStorage is non-authoritative (clear remains for optional write-through).
+ */
 export function useOpenReviewSession() {
-  const storedId = getLastReviewSessionId();
-  const query = useReviewSession(storedId ?? undefined);
+  const query = useOpenReviewSessions();
 
-  useEffect(() => {
-    if (query.error instanceof ApiError && query.error.status === 404) {
-      clearLastReviewSessionId();
-    }
-  }, [query.error]);
-
-  const session = query.data;
-  const isOpen =
-    session?.status === "in_progress" || session?.status === "pending_review";
+  const session = query.data?.sessions[0] ?? null;
 
   return {
-    session: isOpen ? session : null,
-    isLoading: Boolean(storedId) && query.isLoading,
+    session,
+    isLoading: query.isLoading,
     clear: clearLastReviewSessionId,
   };
 }

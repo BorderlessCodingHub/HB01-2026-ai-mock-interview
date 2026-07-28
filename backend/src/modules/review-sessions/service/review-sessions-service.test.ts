@@ -83,6 +83,7 @@ describe("ReviewSessionsService", () => {
     reviewSessionRepository = {
       create: vi.fn(),
       findByIdAndUserId: vi.fn(),
+      findManyByUserId: vi.fn(),
       confirmItem: vi.fn(),
       markCompletedIfAllConfirmed: vi.fn(),
     } as unknown as ReviewSessionRepository;
@@ -227,6 +228,7 @@ describe("ReviewSessionsService", () => {
             reviewItemId: "review-item-1",
             topic: "system design",
             currentPriority: "high",
+            turns: [],
             suggestedStatus: "active",
             suggestedPriority: "medium",
             confirmedStatus: null,
@@ -234,6 +236,33 @@ describe("ReviewSessionsService", () => {
           },
         ],
       });
+    });
+
+    it("includes turns on each report item", async () => {
+      const turns = [
+        { question: "What is sharding?", answer: "It splits data" },
+        { question: "Why shard?", answer: "Scale writes" },
+      ];
+
+      vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+        createReviewSessionRecord({
+          status: "completed",
+          items: [
+            createSessionItem({
+              turns,
+              suggestedStatus: "learned",
+              suggestedPriority: null,
+              confirmedStatus: "learned",
+              confirmedPriority: null,
+              confirmedAt: baseDate,
+            }),
+          ],
+        }),
+      );
+
+      const result = await service.getById(1, "review-session-id");
+
+      expect(result.items[0]!.turns).toEqual(turns);
     });
 
     it("throws NotFoundError when the session is missing or not owned", async () => {
@@ -244,6 +273,113 @@ describe("ReviewSessionsService", () => {
       await expect(
         service.getById(1, "missing-session-id"),
       ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe("list", () => {
+    it("maps sessions to list summaries and returns page metadata", async () => {
+      const completedAt = new Date("2026-01-02T12:00:00.000Z");
+
+      vi.mocked(reviewSessionRepository.findManyByUserId).mockResolvedValue([
+        createReviewSessionRecord({
+          id: "session-a",
+          status: "completed",
+          createdAt: baseDate,
+          completedAt,
+          items: [
+            createSessionItem({ topic: "system design" }),
+            createSessionItem({
+              id: "session-item-2",
+              order: 1,
+              topic: "rest apis",
+            }),
+          ],
+        }),
+        createReviewSessionRecord({
+          id: "session-b",
+          status: "in_progress",
+          createdAt: baseDate,
+          completedAt: null,
+          items: [createSessionItem({ topic: "typescript" })],
+        }),
+      ]);
+
+      const result = await service.list(1, {
+        statuses: ["completed", "in_progress"],
+        page: 1,
+        limit: 10,
+      });
+
+      expect(reviewSessionRepository.findManyByUserId).toHaveBeenCalledWith({
+        userId: 1,
+        statuses: ["completed", "in_progress"],
+        skip: 0,
+        take: 11,
+      });
+      expect(result).toEqual({
+        sessions: [
+          {
+            id: "session-a",
+            status: "completed",
+            topics: ["system design", "rest apis"],
+            createdAt: "2026-01-01T00:00:00.000Z",
+            completedAt: "2026-01-02T12:00:00.000Z",
+          },
+          {
+            id: "session-b",
+            status: "in_progress",
+            topics: ["typescript"],
+            createdAt: "2026-01-01T00:00:00.000Z",
+            completedAt: null,
+          },
+        ],
+        page: 1,
+        limit: 10,
+        hasMore: false,
+      });
+    });
+
+    it("sets hasMore true and trims to limit when repo returns limit + 1", async () => {
+      vi.mocked(reviewSessionRepository.findManyByUserId).mockResolvedValue([
+        createReviewSessionRecord({ id: "session-1" }),
+        createReviewSessionRecord({ id: "session-2" }),
+        createReviewSessionRecord({ id: "session-3" }),
+      ]);
+
+      const result = await service.list(1, {
+        statuses: ["completed"],
+        page: 2,
+        limit: 2,
+      });
+
+      expect(reviewSessionRepository.findManyByUserId).toHaveBeenCalledWith({
+        userId: 1,
+        statuses: ["completed"],
+        skip: 2,
+        take: 3,
+      });
+      expect(result.sessions.map((session) => session.id)).toEqual([
+        "session-1",
+        "session-2",
+      ]);
+      expect(result.hasMore).toBe(true);
+      expect(result.page).toBe(2);
+      expect(result.limit).toBe(2);
+    });
+
+    it("sets hasMore false when repo returns at most limit rows", async () => {
+      vi.mocked(reviewSessionRepository.findManyByUserId).mockResolvedValue([
+        createReviewSessionRecord({ id: "session-1" }),
+      ]);
+
+      const result = await service.list(1, {
+        statuses: ["pending_review"],
+        page: 1,
+        limit: 10,
+      });
+
+      expect(result.hasMore).toBe(false);
+      expect(result.sessions).toHaveLength(1);
     });
   });
 
