@@ -642,11 +642,64 @@ sequenceDiagram
 
   Note over UI,API: Último stream: meta com status pending_review + report
   UI->>API: GET /api/review-sessions/:id
-  API-->>UI: relatório com suggested* e confirmed*
+  API-->>UI: relatório com suggested*, confirmed* e turns
 
   UI->>API: POST .../apply { items[] }
   API-->>UI: 200 relatório completed + review_items atualizados
+
+  Note over UI,API: Histórico / banner
+  UI->>API: GET /api/review-sessions?status=completed
+  UI->>API: GET /api/review-sessions?status=in_progress,pending_review
 ```
+
+### `GET /api/review-sessions` — Listar sessões
+
+Lista paginada de sessões do usuário autenticado. Payload leve (sem `turns`); use `GET /:id` para o relatório/transcrição.
+
+**Query:**
+
+| Param | Regras |
+|-------|--------|
+| `status` | **Obrigatório.** Um valor ou lista separada por vírgula: `in_progress`, `pending_review`, `completed` (ex.: `in_progress,pending_review`) |
+| `page` | Inteiro ≥ 1; default `1` |
+| `limit` | Inteiro 1–50; default `10` |
+
+Exemplos: `GET /api/review-sessions?status=completed`, `GET /api/review-sessions?status=completed&page=2&limit=10`, `GET /api/review-sessions?status=in_progress,pending_review`
+
+**Resposta (200):**
+
+```json
+{
+  "sessions": [
+    {
+      "id": "770e8400-e29b-41d4-a716-446655440002",
+      "status": "completed",
+      "topics": ["system design", "rest apis"],
+      "createdAt": "2026-07-28T12:00:00.000Z",
+      "completedAt": "2026-07-28T12:30:00.000Z"
+    }
+  ],
+  "page": 1,
+  "limit": 10,
+  "hasMore": true
+}
+```
+
+| Campo | Descrição |
+|-------|-----------|
+| `topics` | Tópicos dos itens na ordem da sessão |
+| `completedAt` | ISO-8601 quando `status === "completed"`; senão `null` |
+| Ordenação | `completedAt` desc, depois `createdAt` desc (mais recentes primeiro) |
+| `hasMore` | `true` se existir próxima página (`limit + 1` fetch no servidor) |
+
+**Erros:**
+
+| Status | Quando |
+|--------|--------|
+| `401` | Sem autenticação |
+| `422` | Query inválida (`status` ausente/inválido, `page`/`limit` fora da faixa) |
+
+---
 
 ### `POST /api/review-sessions` — Criar sessão
 
@@ -821,7 +874,7 @@ Se o cliente abortar no meio do stream:
 
 ### `GET /api/review-sessions/:id` — Relatório
 
-Retorna o estado atual da sessão e de cada item (sugestões e confirmações).
+Retorna o estado atual da sessão e de cada item (sugestões, confirmações e turnos Q&A persistidos).
 
 **Resposta (200):**
 
@@ -835,6 +888,12 @@ Retorna o estado atual da sessão e de cada item (sugestões e confirmações).
       "reviewItemId": "550e8400-e29b-41d4-a716-446655440000",
       "topic": "system design",
       "currentPriority": "high",
+      "turns": [
+        {
+          "question": "How would you shard this table?",
+          "answer": "I would shard by tenant id and keep hot keys cached."
+        }
+      ],
       "suggestedStatus": "active",
       "suggestedPriority": "medium",
       "confirmedStatus": null,
@@ -845,6 +904,12 @@ Retorna o estado atual da sessão e de cada item (sugestões e confirmações).
       "reviewItemId": "660e8400-e29b-41d4-a716-446655440001",
       "topic": "rest apis",
       "currentPriority": "medium",
+      "turns": [
+        {
+          "question": "When would you use PUT vs PATCH?",
+          "answer": "PUT replaces the resource; PATCH applies a partial update."
+        }
+      ],
       "suggestedStatus": "learned",
       "suggestedPriority": null,
       "confirmedStatus": "learned",
@@ -854,7 +919,14 @@ Retorna o estado atual da sessão e de cada item (sugestões e confirmações).
 }
 ```
 
+| Campo do item | Tipo | Descrição |
+|---------------|------|-----------|
+| `turns` | `{ question: string, answer: string }[]` | Q&A já persistidos neste item (vazio se ainda não houve respostas) |
+| Demais campos | — | Inalterados (`suggested*` / `confirmed*`) |
+
 **`status` da sessão:** `in_progress` | `pending_review` | `completed`
+
+> `turns` é retornado em **todos** os status (útil para histórico `completed` e futura hidratação de resume).
 
 **Erros:** `404` se a sessão não existir ou não pertencer ao usuário.
 
@@ -1051,8 +1123,9 @@ selecting_items → creating → in_progress (Q&A SSE)
 | `PATCH` | `/api/review-items/:id` | Marcar/desmarcar como aprendido |
 | `DELETE` | `/api/review-items/:id` | Remover item |
 | `POST` | `/api/review-sessions` | Criar Review Session |
+| `GET` | `/api/review-sessions` | Listar sessões (`?status=` + paginação) |
 | `POST` | `/api/review-sessions/:id/stream` | Q&A adaptativo (SSE) |
-| `GET` | `/api/review-sessions/:id` | Relatório da sessão |
+| `GET` | `/api/review-sessions/:id` | Relatório da sessão (inclui `turns`) |
 | `POST` | `/api/review-sessions/:id/apply` | Aplicar decisões do relatório (bulk) |
 | `GET` | `/api/weak-answers` | Respostas fracas individuais do usuário |
 | `DELETE` | `/api/weak-answers/:id` | Remover uma resposta fraca |
