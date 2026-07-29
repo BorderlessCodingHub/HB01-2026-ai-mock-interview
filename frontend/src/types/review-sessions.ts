@@ -8,6 +8,11 @@ export type CreateReviewSessionInput = {
   interviewLocale: InterviewLocale;
 };
 
+export type ReviewSessionTurn = {
+  question: string;
+  answer: string;
+};
+
 export type ReviewSessionItemReport = {
   id: string;
   reviewItemId: string;
@@ -17,6 +22,22 @@ export type ReviewSessionItemReport = {
   suggestedPriority: ReviewPriority | null;
   confirmedStatus: ReviewItemStatus | null;
   confirmedPriority: ReviewPriority | null;
+  turns: ReviewSessionTurn[];
+};
+
+export type ReviewSessionSummary = {
+  id: string;
+  status: ReviewSessionStatus;
+  topics: string[];
+  createdAt: string;
+  completedAt: string | null;
+};
+
+export type ListReviewSessionsResponse = {
+  sessions: ReviewSessionSummary[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
 };
 
 export type ReviewSession = {

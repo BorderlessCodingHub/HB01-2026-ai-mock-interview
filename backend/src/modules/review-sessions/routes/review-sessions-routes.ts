@@ -18,6 +18,7 @@ export default function reviewSessionsRoutes(router: Router): void {
     validate(createReviewSessionSchema),
     asyncHandler(controller.create),
   );
+  router.get("/", asyncHandler(controller.list));
   router.post(
     "/:id/stream",
     aiRateLimiter,

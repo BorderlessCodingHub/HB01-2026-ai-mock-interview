@@ -7,7 +7,11 @@ import express, { type Express } from "express";
 import { setup as setupCheckpointer } from "@/infrastructure/ai/checkpoint/postgres-checkpointer";
 import { pingDatabase } from "@/infrastructure/database/health";
 import { pingRedis } from "@/infrastructure/queue/redis-health";
-import { makeCheckAuth } from "@/factories/auth/check-auth-factory";
+import {
+  makeBorderlessSessionController,
+  makeCheckAuth,
+} from "@/factories/auth/check-auth-factory";
+import { asyncHandler } from "@/shared";
 import { setupRoutes } from "./routes";
 
 const READY_CHECK_TIMEOUT_MS = 2000;
@@ -54,7 +58,11 @@ export async function createApp(): Promise<Express> {
     cors({
       origin: parseCorsOrigins(env.CORS_ORIGIN),
       methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
-      allowedHeaders: ["Content-Type", "Authorization"],
+      allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "X-Internal-Auth-Secret",
+      ],
       credentials: true,
     }),
   );
@@ -62,6 +70,16 @@ export async function createApp(): Promise<Express> {
   app.use(express.json());
   setupSwagger(app);
   app.use(makeCheckAuth());
+
+  const borderlessSessions = makeBorderlessSessionController();
+  app.post(
+    "/internal/borderless-sessions",
+    asyncHandler(borderlessSessions.register),
+  );
+  app.delete(
+    "/internal/borderless-sessions",
+    asyncHandler(borderlessSessions.invalidate),
+  );
 
   await setupRoutes(app);
 

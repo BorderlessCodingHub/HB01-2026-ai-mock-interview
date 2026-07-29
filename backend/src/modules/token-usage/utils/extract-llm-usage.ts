@@ -4,6 +4,10 @@ type UsageMetadata = {
   input_tokens?: number;
   output_tokens?: number;
   total_tokens?: number;
+  input_token_details?: {
+    cache_read?: number;
+    cached_tokens?: number;
+  };
 };
 
 type TokenUsageShape = {
@@ -17,6 +21,18 @@ function toNonNegativeInt(value: unknown): number | undefined {
     return undefined;
   }
   return Math.floor(value);
+}
+
+function extractCachedTokens(usageMetadata: UsageMetadata): number | undefined {
+  const details = usageMetadata.input_token_details;
+  if (!details || typeof details !== "object") {
+    return undefined;
+  }
+
+  return (
+    toNonNegativeInt(details.cache_read) ??
+    toNonNegativeInt(details.cached_tokens)
+  );
 }
 
 export function extractLlmUsageFromMetadata(
@@ -40,9 +56,12 @@ export function extractLlmUsageFromMetadata(
     return undefined;
   }
 
+  const cachedTokens = extractCachedTokens(usageMetadata);
+
   return {
     promptTokens: promptTokens ?? 0,
     completionTokens: completionTokens ?? 0,
+    ...(cachedTokens !== undefined ? { cachedTokens } : {}),
   };
 }
 
