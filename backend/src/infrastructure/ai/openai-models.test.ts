@@ -41,13 +41,14 @@ describe("create*Model", () => {
     chatOpenAIConstructorCalls.length = 0;
   });
 
-  it("createInterviewModel uses provider defaults (no generation overrides)", () => {
+  it("createInterviewModel uses prompt cache retention and no generation overrides", () => {
     createInterviewModel();
 
     expect(chatOpenAIConstructorCalls).toHaveLength(1);
     const args = chatOpenAIConstructorCalls[0]!;
 
     expect(args.model).toBe("gpt-5");
+    expect(args.promptCacheRetention).toBe("24h");
     expect(args).not.toHaveProperty("reasoning");
     expect(args).not.toHaveProperty("reasoningEffort");
     expect(args).not.toHaveProperty("verbosity");

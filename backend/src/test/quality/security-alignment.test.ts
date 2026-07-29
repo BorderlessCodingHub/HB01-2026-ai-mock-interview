@@ -46,8 +46,6 @@ describe("security and alignment quality checks", () => {
     const interviewerPrompt = buildInterviewerSystemPrompt({
       level: "mid",
       resumeSummary: sampleResumeSummary,
-      turnCount: 1,
-      maxTurns: 7,
     });
     const closingPrompt = buildClosingFeedbackPrompt({
       level: "mid",
@@ -67,8 +65,6 @@ describe("security and alignment quality checks", () => {
     const interviewerPrompt = buildInterviewerSystemPrompt({
       level: "mid",
       resumeSummary: sampleResumeSummary,
-      turnCount: 1,
-      maxTurns: 7,
       jobDescription: injection,
     });
 

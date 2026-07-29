@@ -20,7 +20,12 @@ function createBaseOpenAIModel(model: string): ChatOpenAI {
 }
 
 export function createInterviewModel(): ChatOpenAI {
-  return createBaseOpenAIModel(env.OPENAI_MODEL_INTERVIEW);
+  return new ChatOpenAI({
+    model: env.OPENAI_MODEL_INTERVIEW,
+    apiKey: env.OPENAI_API_KEY,
+    // Extended retention for multi-turn sessions that may pause (pre-gpt-5.6 models).
+    promptCacheRetention: "24h",
+  });
 }
 
 export function createExtractionModel(): ChatOpenAI {

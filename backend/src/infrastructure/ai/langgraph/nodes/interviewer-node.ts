@@ -16,6 +16,16 @@ export type InterviewerNodeDeps = {
   model?: ChatOpenAI;
 };
 
+function interviewPromptCacheKey(
+  config?: RunnableConfig,
+): string | undefined {
+  const threadId = config?.configurable?.thread_id;
+  if (typeof threadId !== "string" || threadId.length === 0) {
+    return undefined;
+  }
+  return `interview:${threadId}`;
+}
+
 export function createInterviewerNode(deps: InterviewerNodeDeps = {}) {
   const model = deps.model ?? createInterviewModel();
   const outputParser = new StringOutputParser();
@@ -40,7 +50,13 @@ export function createInterviewerNode(deps: InterviewerNodeDeps = {}) {
           jobDescription: state.jobDescription,
         });
 
-    const chain = promptTemplate.pipe(model).pipe(outputParser);
+    const promptCacheKey = state.runReview
+      ? undefined
+      : interviewPromptCacheKey(config);
+    const llm = promptCacheKey
+      ? model.withConfig({ promptCacheKey })
+      : model;
+    const chain = promptTemplate.pipe(llm).pipe(outputParser);
     const rawContent = await chain.invoke({ history: state.messages }, config);
 
     const content = state.runReview
