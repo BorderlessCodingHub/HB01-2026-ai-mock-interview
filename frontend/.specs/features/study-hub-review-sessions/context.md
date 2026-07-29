@@ -83,7 +83,7 @@ Deliver a dedicated `/study` hub where candidates manage their review backlog (`
 
 ## Deferred Ideas
 
-- **Completed session history** — list past `completed` Review Sessions with dates and outcomes.
+- **Completed session history** — spun out to [study-session-history](../study-session-history/spec.md) (specified 2026-07-28; transcript-only MVP, not outcomes).
 - **"Review all high priority" shortcut** — pre-select high-priority items before session start.
 - **Per-item review** — one-click "Review this topic" starting a single-item session (backend already supports it; UI deferred).
 - **Portuguese localization** — user chose English for this feature; i18n later.

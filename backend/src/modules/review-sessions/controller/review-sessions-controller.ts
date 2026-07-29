@@ -5,13 +5,35 @@ import type {
   CreateReviewSessionInput,
   ReviewSessionStreamBodyInput,
 } from "@/modules/review-sessions/validations/review-session-schemas";
+import { listReviewSessionsQuerySchema } from "@/modules/review-sessions/validations/review-session-schemas";
 import type { Request, Response } from "express";
+import { z } from "zod";
 
 export class ReviewSessionsController {
   constructor(
     private readonly reviewSessionsService: ReviewSessionsService,
     private readonly reviewSessionStreamService: ReviewSessionStreamService,
   ) {}
+
+  list = async (req: Request, res: Response): Promise<void> => {
+    const queryResult = listReviewSessionsQuerySchema.safeParse(req.query);
+
+    if (!queryResult.success) {
+      res.status(422).json({
+        message: "Validation failed",
+        errors: z.treeifyError(queryResult.error),
+      });
+      return;
+    }
+
+    const { status, page, limit } = queryResult.data;
+    const result = await this.reviewSessionsService.list(req.userId!, {
+      statuses: status,
+      page,
+      limit,
+    });
+    res.status(200).json(result);
+  };
 
   create = async (req: Request, res: Response): Promise<void> => {
     const body = req.body as CreateReviewSessionInput;

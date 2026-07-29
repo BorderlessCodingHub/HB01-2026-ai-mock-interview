@@ -21,6 +21,38 @@ describe("extractLlmUsageFromMetadata", () => {
       completionTokens: 45,
     });
   });
+
+  it("reads cached tokens from input_token_details.cache_read when present", () => {
+    expect(
+      extractLlmUsageFromMetadata({
+        usage_metadata: {
+          input_tokens: 2000,
+          output_tokens: 100,
+          input_token_details: { cache_read: 1800 },
+        },
+      }),
+    ).toEqual({
+      promptTokens: 2000,
+      completionTokens: 100,
+      cachedTokens: 1800,
+    });
+  });
+
+  it("reads cached tokens from input_token_details.cached_tokens as fallback", () => {
+    expect(
+      extractLlmUsageFromMetadata({
+        usage_metadata: {
+          input_tokens: 1500,
+          output_tokens: 50,
+          input_token_details: { cached_tokens: 1024 },
+        },
+      }),
+    ).toEqual({
+      promptTokens: 1500,
+      completionTokens: 50,
+      cachedTokens: 1024,
+    });
+  });
 });
 
 describe("extractLlmUsageFromTokenUsage", () => {

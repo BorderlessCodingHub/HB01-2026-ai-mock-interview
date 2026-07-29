@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 
 import { ApiError } from "@/lib/api/client";
 import { authClient } from "@/lib/auth/auth-client";
+import { env } from "@/config/env";
 import type { UserWithoutPassword } from "@/types/auth";
 
 import {
@@ -180,6 +181,25 @@ export function AuthSessionProvider({
   );
 
   const logout = useCallback(async () => {
+    const token = getSessionSnapshot()?.accessToken;
+    if (token) {
+      try {
+        await fetch(
+          `${env.NEXT_PUBLIC_SERVER_URL}/internal/borderless-sessions`,
+          {
+            method: "DELETE",
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+          },
+        );
+      } catch {
+        // Best-effort: local logout still proceeds
+      }
+    }
+
     await authClient.signOut();
     clearStoredSession();
     notifySessionChange();
@@ -210,9 +230,13 @@ export function AuthSessionProvider({
         return await request(token);
       } catch (err) {
         if (err instanceof ApiError && err.status === 401) {
-          await authClient.signOut();
           clearStoredSession();
           notifySessionChange();
+          try {
+            await authClient.signOut();
+          } catch {
+            // Ignore sign-out failures after session already cleared
+          }
           router.push("/login");
         }
         throw err;

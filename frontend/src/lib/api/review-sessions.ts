@@ -3,6 +3,7 @@ import type {
   ApplyReviewSessionRequest,
   CreateReviewSessionInput,
   CreateReviewSessionResponse,
+  ListReviewSessionsResponse,
   ReviewSession,
 } from "@/types/review-sessions";
 
@@ -15,6 +16,23 @@ export const reviewSessionsApi = {
       body,
       token,
     });
+  },
+
+  list(
+    token: string,
+    params: { status: string; page?: number; limit?: number },
+  ): Promise<ListReviewSessionsResponse> {
+    const searchParams = new URLSearchParams({ status: params.status });
+    if (params.page !== undefined) {
+      searchParams.set("page", String(params.page));
+    }
+    if (params.limit !== undefined) {
+      searchParams.set("limit", String(params.limit));
+    }
+    return apiRequest<ListReviewSessionsResponse>(
+      `/api/review-sessions?${searchParams}`,
+      { token },
+    );
   },
 
   getById(token: string, sessionId: string) {

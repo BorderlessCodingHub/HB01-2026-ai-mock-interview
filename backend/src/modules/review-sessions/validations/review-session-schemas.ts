@@ -11,6 +11,30 @@ export const reviewSessionStatusSchema = z.enum([
   "completed",
 ]);
 
+function parseCommaStatuses(
+  value: string,
+  ctx: z.RefinementCtx,
+): string[] {
+  const tokens = value.split(",").map((token) => token.trim());
+  if (tokens.some((token) => token.length === 0)) {
+    ctx.addIssue({
+      code: "custom",
+      message: "Empty status token",
+    });
+    return z.NEVER;
+  }
+  return tokens;
+}
+
+export const listReviewSessionsQuerySchema = z.object({
+  status: z
+    .string()
+    .transform(parseCommaStatuses)
+    .pipe(z.array(reviewSessionStatusSchema).min(1)),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(50).default(10),
+});
+
 export const createReviewSessionSchema = z.object({
   reviewItemIds: z
     .array(z.uuid())
@@ -90,3 +114,6 @@ export type ReviewSessionStreamBodyInput = z.infer<
   typeof reviewSessionStreamBodySchema
 >;
 export type ApplyReviewSessionInput = z.infer<typeof applyReviewSessionSchema>;
+export type ListReviewSessionsQuery = z.infer<
+  typeof listReviewSessionsQuerySchema
+>;

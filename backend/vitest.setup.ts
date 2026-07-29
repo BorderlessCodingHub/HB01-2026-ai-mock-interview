@@ -16,6 +16,7 @@ const testEnvDefaults: Record<string, string> = {
   R2_BUCKET_NAME: "test-bucket",
   REDIS_URL: "redis://localhost:6379",
   RESUME_MAX_BYTES: "5242880",
+  INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
 };
 
 for (const [key, value] of Object.entries(testEnvDefaults)) {

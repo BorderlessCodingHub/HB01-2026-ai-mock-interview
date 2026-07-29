@@ -59,8 +59,11 @@ export const serverEnv = {
   R2_BUCKET_NAME: z.string().min(1),
   R2_ENDPOINT: z.string().url().optional(),
 
-  // Redis (BullMQ)
+  // Redis (BullMQ + Borderless opaque session store)
   REDIS_URL: z.string().default("redis://localhost:6379"),
+
+  // Server-to-server sync of Borderless opaque access tokens (Next.js → Express)
+  INTERNAL_AUTH_SYNC_SECRET: z.string().min(32),
 
   // Résumé uploads
   RESUME_MAX_BYTES: z.coerce.number().default(5_242_880), // 5 MB
