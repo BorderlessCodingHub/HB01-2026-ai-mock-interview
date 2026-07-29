@@ -11,9 +11,11 @@ import {
   CLOSING_FORMAT_HEADER,
 } from "@/modules/interview/prompts/closing-feedback-prompt";
 import {
+  buildInterviewContextPrompt,
   buildInterviewerSystemPrompt,
   CONDUCT_SECTION_HEADER,
   FORMAT_SECTION_HEADER,
+  INTERVIEW_CONTEXT_SECTION_HEADER,
 } from "@/modules/interview/prompts/interviewer-system-prompt";
 
 import { createInitialInterviewState } from "../interview-state";
@@ -28,7 +30,9 @@ const sampleResumeSummary = {
 };
 
 function createMockModel(content = "Model output") {
-  const invoke = vi.fn().mockResolvedValue(new AIMessage({ content }));
+  const invoke = vi.fn(
+    async (_input: unknown, _config?: unknown) => new AIMessage({ content }),
+  );
   const model = RunnableLambda.from(invoke) as unknown as ChatOpenAI;
   return {
     invoke,
@@ -64,7 +68,7 @@ describe("createInterviewerNode", () => {
     interviewLocale: "en",
   });
 
-  it("invokes with interviewer system prompt when runReview is false", async () => {
+  it("invokes with static system + trailing interview context when runReview is false", async () => {
     const { invoke, model } = createMockModel("Next question?");
     const node = createInterviewerNode({ model });
     const state = { ...baseState, runReview: false };
@@ -74,18 +78,53 @@ describe("createInterviewerNode", () => {
     const expectedSystemPrompt = buildInterviewerSystemPrompt({
       level: state.level,
       resumeSummary: state.resumeSummary,
-      turnCount: state.turnCount,
-      maxTurns: state.maxTurns,
       interviewLocale: state.interviewLocale,
     });
-    const systemContent = getRenderedSystemContent(
-      getChainInputMessages(invoke.mock.calls[0]?.[0]),
+    const expectedContext = buildInterviewContextPrompt(
+      state.turnCount,
+      state.maxTurns,
     );
+    const messages = getChainInputMessages(invoke.mock.calls[0]?.[0]);
+    const systemContent = getRenderedSystemContent(messages);
+    const lastContent = messages.at(-1)?.content;
 
     expect(systemContent).toBe(expectedSystemPrompt);
     expect(systemContent).toContain(CONDUCT_SECTION_HEADER);
     expect(systemContent).toContain(FORMAT_SECTION_HEADER);
+    expect(systemContent).not.toContain(INTERVIEW_CONTEXT_SECTION_HEADER);
     expect(systemContent).not.toContain(CLOSING_EVALUATE_HEADER);
+    expect(lastContent).toBe(expectedContext);
+  });
+
+  it("passes promptCacheKey from thread_id when runReview is false", async () => {
+    const { invoke, model } = createMockModel("Next question?");
+    const node = createInterviewerNode({ model });
+    const sessionId = "session-cache-key-1";
+
+    await node(
+      { ...baseState, runReview: false },
+      { configurable: { thread_id: sessionId } },
+    );
+
+    const invokeConfig = invoke.mock.calls[0]?.[1] as
+      | { promptCacheKey?: string }
+      | undefined;
+    expect(invokeConfig?.promptCacheKey).toBe(`interview:${sessionId}`);
+  });
+
+  it("does not pass promptCacheKey when runReview is true", async () => {
+    const { invoke, model } = createMockModel("## What you did well\n\n- Good");
+    const node = createInterviewerNode({ model });
+
+    await node(
+      { ...baseState, runReview: true },
+      { configurable: { thread_id: "session-closing" } },
+    );
+
+    const invokeConfig = invoke.mock.calls[0]?.[1] as
+      | { promptCacheKey?: string }
+      | undefined;
+    expect(invokeConfig?.promptCacheKey).toBeUndefined();
   });
 
   it("invokes with closing feedback prompt when runReview is true", async () => {
@@ -140,7 +179,9 @@ describe("createInterviewerNode", () => {
 
   it("propagates rejected model.invoke errors with the original message", async () => {
     const failure = new Error("OpenAI request failed after retries");
-    const invoke = vi.fn().mockRejectedValue(failure);
+    const invoke = vi.fn(async (_input: unknown, _config?: unknown) => {
+      throw failure;
+    });
     const model = RunnableLambda.from(invoke) as unknown as ChatOpenAI;
     const node = createInterviewerNode({ model });
 
