@@ -26,7 +26,7 @@
     "enabled": true
   },
   "vars": {
-    "BETTER_AUTH_URL": "https://labs.borderlesscoding.com/ai-mock-interview",
+    "BETTER_AUTH_URL": "https://labs.borderlesscoding.com/ai-mock-interview/api/auth",
     "NEXT_PUBLIC_SERVER_URL": "https://hone-ai-mock-interview-borderless-production.up.railway.app",
     "NEXT_PUBLIC_BORDERLESS_SIGNUP_URL": "https://platform.borderlesscoding.com/sign-up",
     "BORDERLESS_API_BASE": "https://api.borderlesscoding.com",

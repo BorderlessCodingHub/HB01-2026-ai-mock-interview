@@ -84,7 +84,7 @@ Frontend is an OpenNext Worker (`basePath: /ai-mock-interview`) routed by [labs-
 | Var | Where | Example |
 | --- | --- | --- |
 | `NEXT_PUBLIC_SERVER_URL` | Cloudflare Worker / build | `https://YOUR-AMI-API.up.railway.app` |
-| `BETTER_AUTH_URL` | Cloudflare Worker secrets | `https://labs.borderlesscoding.com/ai-mock-interview` (or gateway `workers.dev` URL + path) |
+| `BETTER_AUTH_URL` | Cloudflare Worker vars | `https://labs.borderlesscoding.com/ai-mock-interview/api/auth` (full better-auth mount; app basePath + `/api/auth`) |
 | `BETTER_AUTH_SECRET` | Cloudflare Worker secrets | ≥32 chars |
 | `CORS_ORIGIN` | Railway API | `https://labs-gateway.yuri-491.workers.dev,https://labs.borderlesscoding.com` |
 | `FRONTEND_URL` | Railway API | `https://labs.borderlesscoding.com/ai-mock-interview` |
