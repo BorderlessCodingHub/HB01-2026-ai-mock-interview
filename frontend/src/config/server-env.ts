@@ -5,9 +5,12 @@ import { z } from "zod";
 export const serverEnv = createEnv({
   server: {
     BETTER_AUTH_SECRET: z.string().min(32),
+    // Full better-auth mount (app basePath + /api/auth). Path in URL is used as
+    // basePath and must NOT stop at /ai-mock-interview alone — withPath skips
+    // appending /api/auth when the URL already has a pathname.
     BETTER_AUTH_URL: z
       .url()
-      .default("http://localhost:3001/ai-mock-interview"),
+      .default("http://localhost:3001/ai-mock-interview/api/auth"),
     BORDERLESS_API_BASE: z.url().default("https://api.borderlesscoding.com"),
     /** Express base URL for server-to-server session sync (opaque Borderless tokens). */
     SERVER_INTERNAL_URL: z.url().default("http://localhost:3000"),
