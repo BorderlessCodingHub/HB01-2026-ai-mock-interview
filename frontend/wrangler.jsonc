@@ -1,6 +1,13 @@
 /**
  * For more details on how to configure Wrangler, refer to:
  * https://developers.cloudflare.com/workers/wrangler/configuration/
+ *
+ * Secrets stay out of this file (dashboard / `wrangler secret put`):
+ * - BETTER_AUTH_SECRET
+ * - INTERNAL_AUTH_SYNC_SECRET
+ *
+ * NEXT_PUBLIC_* must ALSO be set as Cloudflare Workers Builds → Build variables
+ * so they are inlined into the client bundle.
  */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -17,15 +24,12 @@
   },
   "observability": {
     "enabled": true
+  },
+  "vars": {
+    "BETTER_AUTH_URL": "https://labs.borderlesscoding.com/ai-mock-interview",
+    "NEXT_PUBLIC_SERVER_URL": "https://hone-ai-mock-interview-borderless-production.up.railway.app",
+    "NEXT_PUBLIC_BORDERLESS_SIGNUP_URL": "https://platform.borderlesscoding.com/sign-up",
+    "BORDERLESS_API_BASE": "https://api.borderlesscoding.com",
+    "SERVER_INTERNAL_URL": "https://hone-ai-mock-interview-borderless-production.up.railway.app"
   }
-  /**
-   * Smart Placement
-   * Docs: https://developers.cloudflare.com/workers/configuration/smart_placement/#smart-placement
-   */
-  // "placement": { "mode": "smart" }
-  /**
-   * Note: Use secrets to store sensitive data (API keys, tokens, DSNs).
-   * Set them with: wrangler secret put <NAME>
-   * https://developers.cloudflare.com/workers/configuration/secrets/
-   */
 }
