@@ -6,6 +6,7 @@ export type ReviewItem = {
   id: string;
   sessionId: string;
   topic: string;
+  angle: string;
   description: string;
   priority: ReviewPriority;
   status: ReviewItemStatus;

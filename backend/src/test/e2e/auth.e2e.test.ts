@@ -108,6 +108,8 @@ describe("Auth API E2E (Borderless Bearer)", () => {
   });
 
   it("former local auth routes are not mounted", async () => {
+    const auth = await seedAuthenticatedUser();
+
     for (const path of [
       "/api/auth/signup",
       "/api/auth/login",
@@ -115,7 +117,12 @@ describe("Auth API E2E (Borderless Bearer)", () => {
       "/api/auth/request-password-reset",
       "/api/auth/reset-password",
     ]) {
-      const response = await request(app).post(path).send({});
+      // Global checkAuth runs before the 404 handler; authenticate so we
+      // assert the routes are absent rather than blocked as unauthenticated.
+      const response = await request(app)
+        .post(path)
+        .set(authHeader(auth.accessToken))
+        .send({});
       expect(response.status).toBe(404);
     }
   });

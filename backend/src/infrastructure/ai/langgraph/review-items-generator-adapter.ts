@@ -30,6 +30,7 @@ export class ReviewItemsGeneratorAdapter implements IReviewItemsGenerator {
         jobDescription: params.jobDescription,
         existingItems: existingItems.map((item) => ({
           topic: item.topic,
+          angle: item.angle,
           description: item.description,
           priority: item.priority,
         })),

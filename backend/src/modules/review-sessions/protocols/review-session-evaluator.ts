@@ -11,6 +11,7 @@ export type ReviewSessionTurn = {
 
 export type ReviewSessionEvaluationInput = {
   topic: string;
+  angle: string;
   description: string;
   currentPriority: ReviewPriority;
   turns: ReviewSessionTurn[];

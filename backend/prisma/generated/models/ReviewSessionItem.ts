@@ -40,6 +40,7 @@ export type ReviewSessionItemMinAggregateOutputType = {
   reviewItemId: string | null
   order: number | null
   topic: string | null
+  angle: string | null
   description: string | null
   currentPriority: $Enums.ReviewPriority | null
   pendingQuestion: string | null
@@ -57,6 +58,7 @@ export type ReviewSessionItemMaxAggregateOutputType = {
   reviewItemId: string | null
   order: number | null
   topic: string | null
+  angle: string | null
   description: string | null
   currentPriority: $Enums.ReviewPriority | null
   pendingQuestion: string | null
@@ -74,6 +76,7 @@ export type ReviewSessionItemCountAggregateOutputType = {
   reviewItemId: number
   order: number
   topic: number
+  angle: number
   description: number
   turns: number
   currentPriority: number
@@ -102,6 +105,7 @@ export type ReviewSessionItemMinAggregateInputType = {
   reviewItemId?: true
   order?: true
   topic?: true
+  angle?: true
   description?: true
   currentPriority?: true
   pendingQuestion?: true
@@ -119,6 +123,7 @@ export type ReviewSessionItemMaxAggregateInputType = {
   reviewItemId?: true
   order?: true
   topic?: true
+  angle?: true
   description?: true
   currentPriority?: true
   pendingQuestion?: true
@@ -136,6 +141,7 @@ export type ReviewSessionItemCountAggregateInputType = {
   reviewItemId?: true
   order?: true
   topic?: true
+  angle?: true
   description?: true
   turns?: true
   currentPriority?: true
@@ -241,6 +247,7 @@ export type ReviewSessionItemGroupByOutputType = {
   reviewItemId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns: runtime.JsonValue
   currentPriority: $Enums.ReviewPriority
@@ -282,6 +289,7 @@ export type ReviewSessionItemWhereInput = {
   reviewItemId?: Prisma.StringFilter<"ReviewSessionItem"> | string
   order?: Prisma.IntFilter<"ReviewSessionItem"> | number
   topic?: Prisma.StringFilter<"ReviewSessionItem"> | string
+  angle?: Prisma.StringFilter<"ReviewSessionItem"> | string
   description?: Prisma.StringFilter<"ReviewSessionItem"> | string
   turns?: Prisma.JsonFilter<"ReviewSessionItem">
   currentPriority?: Prisma.EnumReviewPriorityFilter<"ReviewSessionItem"> | $Enums.ReviewPriority
@@ -302,6 +310,7 @@ export type ReviewSessionItemOrderByWithRelationInput = {
   reviewItemId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   topic?: Prisma.SortOrder
+  angle?: Prisma.SortOrder
   description?: Prisma.SortOrder
   turns?: Prisma.SortOrder
   currentPriority?: Prisma.SortOrder
@@ -325,6 +334,7 @@ export type ReviewSessionItemWhereUniqueInput = Prisma.AtLeast<{
   reviewItemId?: Prisma.StringFilter<"ReviewSessionItem"> | string
   order?: Prisma.IntFilter<"ReviewSessionItem"> | number
   topic?: Prisma.StringFilter<"ReviewSessionItem"> | string
+  angle?: Prisma.StringFilter<"ReviewSessionItem"> | string
   description?: Prisma.StringFilter<"ReviewSessionItem"> | string
   turns?: Prisma.JsonFilter<"ReviewSessionItem">
   currentPriority?: Prisma.EnumReviewPriorityFilter<"ReviewSessionItem"> | $Enums.ReviewPriority
@@ -345,6 +355,7 @@ export type ReviewSessionItemOrderByWithAggregationInput = {
   reviewItemId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   topic?: Prisma.SortOrder
+  angle?: Prisma.SortOrder
   description?: Prisma.SortOrder
   turns?: Prisma.SortOrder
   currentPriority?: Prisma.SortOrder
@@ -371,6 +382,7 @@ export type ReviewSessionItemScalarWhereWithAggregatesInput = {
   reviewItemId?: Prisma.StringWithAggregatesFilter<"ReviewSessionItem"> | string
   order?: Prisma.IntWithAggregatesFilter<"ReviewSessionItem"> | number
   topic?: Prisma.StringWithAggregatesFilter<"ReviewSessionItem"> | string
+  angle?: Prisma.StringWithAggregatesFilter<"ReviewSessionItem"> | string
   description?: Prisma.StringWithAggregatesFilter<"ReviewSessionItem"> | string
   turns?: Prisma.JsonWithAggregatesFilter<"ReviewSessionItem">
   currentPriority?: Prisma.EnumReviewPriorityWithAggregatesFilter<"ReviewSessionItem"> | $Enums.ReviewPriority
@@ -387,6 +399,7 @@ export type ReviewSessionItemCreateInput = {
   id?: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -407,6 +420,7 @@ export type ReviewSessionItemUncheckedCreateInput = {
   reviewItemId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -423,6 +437,7 @@ export type ReviewSessionItemUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -443,6 +458,7 @@ export type ReviewSessionItemUncheckedUpdateInput = {
   reviewItemId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -461,6 +477,7 @@ export type ReviewSessionItemCreateManyInput = {
   reviewItemId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -477,6 +494,7 @@ export type ReviewSessionItemUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -495,6 +513,7 @@ export type ReviewSessionItemUncheckedUpdateManyInput = {
   reviewItemId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -523,6 +542,7 @@ export type ReviewSessionItemCountOrderByAggregateInput = {
   reviewItemId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   topic?: Prisma.SortOrder
+  angle?: Prisma.SortOrder
   description?: Prisma.SortOrder
   turns?: Prisma.SortOrder
   currentPriority?: Prisma.SortOrder
@@ -545,6 +565,7 @@ export type ReviewSessionItemMaxOrderByAggregateInput = {
   reviewItemId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   topic?: Prisma.SortOrder
+  angle?: Prisma.SortOrder
   description?: Prisma.SortOrder
   currentPriority?: Prisma.SortOrder
   pendingQuestion?: Prisma.SortOrder
@@ -562,6 +583,7 @@ export type ReviewSessionItemMinOrderByAggregateInput = {
   reviewItemId?: Prisma.SortOrder
   order?: Prisma.SortOrder
   topic?: Prisma.SortOrder
+  angle?: Prisma.SortOrder
   description?: Prisma.SortOrder
   currentPriority?: Prisma.SortOrder
   pendingQuestion?: Prisma.SortOrder
@@ -673,6 +695,7 @@ export type ReviewSessionItemCreateWithoutReviewItemInput = {
   id?: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -691,6 +714,7 @@ export type ReviewSessionItemUncheckedCreateWithoutReviewItemInput = {
   reviewSessionId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -738,6 +762,7 @@ export type ReviewSessionItemScalarWhereInput = {
   reviewItemId?: Prisma.StringFilter<"ReviewSessionItem"> | string
   order?: Prisma.IntFilter<"ReviewSessionItem"> | number
   topic?: Prisma.StringFilter<"ReviewSessionItem"> | string
+  angle?: Prisma.StringFilter<"ReviewSessionItem"> | string
   description?: Prisma.StringFilter<"ReviewSessionItem"> | string
   turns?: Prisma.JsonFilter<"ReviewSessionItem">
   currentPriority?: Prisma.EnumReviewPriorityFilter<"ReviewSessionItem"> | $Enums.ReviewPriority
@@ -754,6 +779,7 @@ export type ReviewSessionItemCreateWithoutReviewSessionInput = {
   id?: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -772,6 +798,7 @@ export type ReviewSessionItemUncheckedCreateWithoutReviewSessionInput = {
   reviewItemId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -815,6 +842,7 @@ export type ReviewSessionItemCreateManyReviewItemInput = {
   reviewSessionId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -831,6 +859,7 @@ export type ReviewSessionItemUpdateWithoutReviewItemInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -849,6 +878,7 @@ export type ReviewSessionItemUncheckedUpdateWithoutReviewItemInput = {
   reviewSessionId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -866,6 +896,7 @@ export type ReviewSessionItemUncheckedUpdateManyWithoutReviewItemInput = {
   reviewSessionId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -883,6 +914,7 @@ export type ReviewSessionItemCreateManyReviewSessionInput = {
   reviewItemId: string
   order: number
   topic: string
+  angle: string
   description: string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority: $Enums.ReviewPriority
@@ -899,6 +931,7 @@ export type ReviewSessionItemUpdateWithoutReviewSessionInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -917,6 +950,7 @@ export type ReviewSessionItemUncheckedUpdateWithoutReviewSessionInput = {
   reviewItemId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -934,6 +968,7 @@ export type ReviewSessionItemUncheckedUpdateManyWithoutReviewSessionInput = {
   reviewItemId?: Prisma.StringFieldUpdateOperationsInput | string
   order?: Prisma.IntFieldUpdateOperationsInput | number
   topic?: Prisma.StringFieldUpdateOperationsInput | string
+  angle?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.StringFieldUpdateOperationsInput | string
   turns?: Prisma.JsonNullValueInput | runtime.InputJsonValue
   currentPriority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
@@ -954,6 +989,7 @@ export type ReviewSessionItemSelect<ExtArgs extends runtime.Types.Extensions.Int
   reviewItemId?: boolean
   order?: boolean
   topic?: boolean
+  angle?: boolean
   description?: boolean
   turns?: boolean
   currentPriority?: boolean
@@ -974,6 +1010,7 @@ export type ReviewSessionItemSelectCreateManyAndReturn<ExtArgs extends runtime.T
   reviewItemId?: boolean
   order?: boolean
   topic?: boolean
+  angle?: boolean
   description?: boolean
   turns?: boolean
   currentPriority?: boolean
@@ -994,6 +1031,7 @@ export type ReviewSessionItemSelectUpdateManyAndReturn<ExtArgs extends runtime.T
   reviewItemId?: boolean
   order?: boolean
   topic?: boolean
+  angle?: boolean
   description?: boolean
   turns?: boolean
   currentPriority?: boolean
@@ -1014,6 +1052,7 @@ export type ReviewSessionItemSelectScalar = {
   reviewItemId?: boolean
   order?: boolean
   topic?: boolean
+  angle?: boolean
   description?: boolean
   turns?: boolean
   currentPriority?: boolean
@@ -1026,7 +1065,7 @@ export type ReviewSessionItemSelectScalar = {
   createdAt?: boolean
 }
 
-export type ReviewSessionItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reviewSessionId" | "reviewItemId" | "order" | "topic" | "description" | "turns" | "currentPriority" | "pendingQuestion" | "suggestedStatus" | "suggestedPriority" | "confirmedStatus" | "confirmedPriority" | "confirmedAt" | "createdAt", ExtArgs["result"]["reviewSessionItem"]>
+export type ReviewSessionItemOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "reviewSessionId" | "reviewItemId" | "order" | "topic" | "angle" | "description" | "turns" | "currentPriority" | "pendingQuestion" | "suggestedStatus" | "suggestedPriority" | "confirmedStatus" | "confirmedPriority" | "confirmedAt" | "createdAt", ExtArgs["result"]["reviewSessionItem"]>
 export type ReviewSessionItemInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   reviewSession?: boolean | Prisma.ReviewSessionDefaultArgs<ExtArgs>
   reviewItem?: boolean | Prisma.ReviewItemDefaultArgs<ExtArgs>
@@ -1052,6 +1091,7 @@ export type $ReviewSessionItemPayload<ExtArgs extends runtime.Types.Extensions.I
     reviewItemId: string
     order: number
     topic: string
+    angle: string
     description: string
     turns: runtime.JsonValue
     currentPriority: $Enums.ReviewPriority
@@ -1492,6 +1532,7 @@ export interface ReviewSessionItemFieldRefs {
   readonly reviewItemId: Prisma.FieldRef<"ReviewSessionItem", 'String'>
   readonly order: Prisma.FieldRef<"ReviewSessionItem", 'Int'>
   readonly topic: Prisma.FieldRef<"ReviewSessionItem", 'String'>
+  readonly angle: Prisma.FieldRef<"ReviewSessionItem", 'String'>
   readonly description: Prisma.FieldRef<"ReviewSessionItem", 'String'>
   readonly turns: Prisma.FieldRef<"ReviewSessionItem", 'Json'>
   readonly currentPriority: Prisma.FieldRef<"ReviewSessionItem", 'ReviewPriority'>

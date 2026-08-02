@@ -6,6 +6,7 @@ import {
 } from "@/shared/interview-locale/interview-locale";
 
 import {
+  ANGLE_SECTION_HEADER,
   buildReviewSessionEvaluationPrompt,
   CURRENT_PRIORITY_SECTION_HEADER,
   DESCRIPTION_SECTION_HEADER,
@@ -17,6 +18,7 @@ import {
 describe("buildReviewSessionEvaluationPrompt", () => {
   const baseParams = {
     topic: "System design trade-offs",
+    angle: "consistency model comparison",
     description: "Candidate struggled to compare consistency models.",
     currentPriority: "high" as const,
     turns: [
@@ -33,6 +35,8 @@ describe("buildReviewSessionEvaluationPrompt", () => {
 
     expect(prompt).toContain(TOPIC_SECTION_HEADER);
     expect(prompt).toContain(baseParams.topic);
+    expect(prompt).toContain(ANGLE_SECTION_HEADER);
+    expect(prompt).toContain(baseParams.angle);
     expect(prompt).toContain(DESCRIPTION_SECTION_HEADER);
     expect(prompt).toContain(baseParams.description);
     expect(prompt).toContain(CURRENT_PRIORITY_SECTION_HEADER);

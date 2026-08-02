@@ -1,11 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-28  
-**Current Work:** Study Session History — Execute T1–T14 complete (no commits; await user commit / UAT)
+**Last Updated:** 2026-08-02  
+**Current Work:** Review Item Angles — Execute complete (no commits; await user commit / UAT)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-016: Review item angles as missed-facet ledger (2026-08-02)
+
+**Decision:** Add free-text `angle` on `ReviewItem` / `ReviewSessionItem`; unique `(userId, topic, angle)`; backfill `'general'`. Practice feeds covered angles into interviewer prompt for variety; Study locks Q&A to the missed angle. No separate `topic_coverage` table.
+**Reason:** Topic-only uniqueness blocked multi-facet gaps; Study/Practice split needs facet-level memory.
+**Trade-off:** LLM synonymy handled via pair similarity; historical rows stay `general`.
+**Impact:** Prisma migration, generator/merge, interviewer + study prompts, APIs, FE `topic — angle` display.
+**Spec:** `.specs/features/review-item-angles/spec.md`  
+**Context:** `.specs/features/review-item-angles/context.md`
 
 ### AD-015: Study Session History on `/practice`-like `/study` shell (2026-07-28)
 
@@ -130,6 +139,7 @@ _None_
 
 ## Deferred Ideas
 
+- [ ] Normal-interview topic diversity via angles on review_items (fulfilled by review-item-angles) — Captured during: review-items-learned-status / review-item-angles
 - [ ] App-wide UI i18n (`appLocale` or similar) — Captured during: interview-locale
 - [ ] DB table for editable language prompt instructions — Captured during: interview-locale
 - [ ] Analytics dashboard for EN vs PT session counts — Captured during: interview-locale
@@ -144,6 +154,11 @@ _None_
 
 ## Todos
 
+- [x] Specify + context review-item-angles (2026-08-02)
+- [x] Design + tasks review-item-angles (2026-08-02)
+- [x] Execute review-item-angles (schema, merge, practice, study, FE)
+- [ ] Commit review-item-angles (deferred — user requested no commits unless asked)
+- [ ] Interactive UAT for review-item-angles (practice variety + study angle display)
 - [x] Grill-me + Specify study-session-history → `spec.md` + `context.md` (2026-07-28)
 - [x] Design phase for study-session-history (`design.md`) — approved
 - [x] Tasks breakdown for study-session-history (`tasks.md`) — draft, awaiting approval

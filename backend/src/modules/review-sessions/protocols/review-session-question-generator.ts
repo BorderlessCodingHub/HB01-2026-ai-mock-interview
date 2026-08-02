@@ -10,6 +10,7 @@ export type ReviewSessionTurn = {
 
 export type ReviewSessionQuestionGeneratorInput = {
   topic: string;
+  angle: string;
   description: string;
   turns: ReviewSessionTurn[];
   interviewLocale: InterviewLocale;

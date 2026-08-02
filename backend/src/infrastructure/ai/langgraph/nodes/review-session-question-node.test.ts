@@ -40,6 +40,7 @@ describe("createReviewSessionQuestionNode", () => {
 
     const iterator = generator.streamQuestion({
       topic: "Distributed systems",
+      angle: "consistency trade-offs",
       description: "Explain consistency trade-offs.",
       turns: [],
       interviewLocale: "en",
@@ -76,6 +77,7 @@ describe("createReviewSessionQuestionNode", () => {
 
     const iterator = generator.streamQuestion({
       topic: "System design trade-offs",
+      angle: "CAP theorem implications",
       description: "Practice articulating CAP theorem implications.",
       turns,
       interviewLocale: "en",
@@ -108,6 +110,7 @@ describe("createReviewSessionQuestionNode", () => {
 
     const iterator = generator.streamQuestion({
       topic: "API design",
+      angle: "REST resource modeling",
       description: "Validate REST resource modeling.",
       turns: [],
       interviewLocale: "en",
@@ -135,6 +138,7 @@ describe("createReviewSessionQuestionNode", () => {
     const iterator = generator.streamQuestion(
       {
         topic: "Testing",
+        angle: "mocking dependencies",
         description: "Mock dependencies.",
         turns: [],
         interviewLocale: "pt",

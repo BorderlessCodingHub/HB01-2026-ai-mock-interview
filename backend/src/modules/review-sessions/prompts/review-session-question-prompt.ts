@@ -6,12 +6,14 @@ import {
 
 export const PERSONA_SECTION_HEADER = "## Role";
 export const TOPIC_SECTION_HEADER = "## Topic";
+export const ANGLE_SECTION_HEADER = "## Angle";
 export const DESCRIPTION_SECTION_HEADER = "## Description";
 export const PRIOR_TURNS_SECTION_HEADER = "## Prior Q&A for this topic";
 export const INSTRUCTIONS_SECTION_HEADER = "## Instructions";
 
 export type BuildReviewSessionQuestionPromptParams = {
   topic: string;
+  angle: string;
   description: string;
   turns: ReviewSessionTurn[];
   interviewLocale: InterviewLocale;
@@ -19,7 +21,7 @@ export type BuildReviewSessionQuestionPromptParams = {
 
 function buildPersonaBlock(): string {
   return `${PERSONA_SECTION_HEADER}
-You are probing a candidate's understanding of exactly one topic from their review list.`;
+You are probing a candidate's understanding of exactly one review item — a specific angle within a topic from their study list.`;
 }
 
 function buildPriorTurnsBlock(turns: ReviewSessionTurn[]): string | null {
@@ -38,7 +40,7 @@ ${lines.join("\n")}`;
 
 function buildInstructionsBlock(): string {
   return `${INSTRUCTIONS_SECTION_HEADER}
-Ask exactly one focused question. No preamble, introduction, or explanation before the question.`;
+Ask exactly one focused question about the given angle within the topic. No preamble, introduction, or explanation before the question.`;
 }
 
 export function buildReviewSessionQuestionPrompt(
@@ -48,6 +50,8 @@ export function buildReviewSessionQuestionPrompt(
     buildPersonaBlock(),
     `${TOPIC_SECTION_HEADER}
 ${params.topic}`,
+    `${ANGLE_SECTION_HEADER}
+${params.angle}`,
     `${DESCRIPTION_SECTION_HEADER}
 ${params.description}`,
   ];

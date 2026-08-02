@@ -26,6 +26,7 @@ export type InterviewGraphInput = {
   interviewLocale: InterviewLocale;
   isFinished: boolean;
   runReview: boolean;
+  coveredAngles?: { topic: string; angle: string }[];
 };
 
 export type InterviewGraphStreamOptions = {
