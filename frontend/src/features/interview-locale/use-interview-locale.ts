@@ -49,12 +49,19 @@ export function useInterviewLocale(): {
 
   const setLocale = useCallback(
     async (next: InterviewLocale) => {
-      const res = await fetchWithAuth((token) =>
-        usersApi.patchInterviewLocale(token, next),
-      );
-      updateUser({ interviewLocale: res.interviewLocale });
+      const previous = user?.interviewLocale ?? null;
+      updateUser({ interviewLocale: next });
+      try {
+        const res = await fetchWithAuth((token) =>
+          usersApi.patchInterviewLocale(token, next),
+        );
+        updateUser({ interviewLocale: res.interviewLocale });
+      } catch (err) {
+        updateUser({ interviewLocale: previous });
+        throw err;
+      }
     },
-    [fetchWithAuth, updateUser],
+    [fetchWithAuth, updateUser, user?.interviewLocale],
   );
 
   return {

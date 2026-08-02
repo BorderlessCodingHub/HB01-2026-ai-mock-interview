@@ -16,7 +16,8 @@ import {
 
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useAuth } from "@/features/auth/session-provider";
-import { uploadResume, deleteResume } from "@/lib/api/resumes";
+import { uploadResume } from "@/lib/api/resumes";
+import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { queryKeys } from "@/lib/query/keys";
 import { ApiError } from "@/lib/api/client";
@@ -34,17 +35,20 @@ type UploadState = "idle" | "uploading";
 export default function ResumesPage() {
   const { getAccessToken } = useAuth();
   const queryClient = useQueryClient();
+  const deleteResumeMutation = useDeleteResume();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(() =>
     getStoredResumeId(),
   );
 
   const { data, isLoading, error } = useResumes();
   const resumes = data?.resumes ?? [];
+  const deletingId = deleteResumeMutation.isPending
+    ? (deleteResumeMutation.variables ?? null)
+    : null;
 
   // Automatically make the first ready resume active if none is set
   const readyResumes = resumes.filter((r) => r.status === "ready");
@@ -91,7 +95,8 @@ export default function ResumesPage() {
     }
   }
 
-  async function handleDelete(id: string) {
+  function handleDelete(id: string) {
+    if (deleteResumeMutation.isPending) return;
     if (
       !confirm(
         "Are you sure you want to delete this resume? All related interview sessions will be lost.",
@@ -100,33 +105,20 @@ export default function ResumesPage() {
       return;
     }
 
-    const token = await getAccessToken();
-    if (!token) {
-      toast.error("Not authenticated");
-      return;
+    const wasActive = activeResumeId === id;
+    if (wasActive) {
+      setStoredResumeId("");
+      setActiveResumeId(null);
     }
 
-    setDeletingId(id);
-    try {
-      await deleteResume(id, token);
-      toast.success("Resume deleted successfully");
-
-      // Invalidate queries
-      void queryClient.invalidateQueries({ queryKey: queryKeys.resumes });
-      void queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
-      void queryClient.invalidateQueries({ queryKey: ["review-items"] });
-
-      if (activeResumeId === id) {
-        setStoredResumeId("");
-        setActiveResumeId(null);
-      }
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete resume",
-      );
-    } finally {
-      setDeletingId(null);
-    }
+    deleteResumeMutation.mutate(id, {
+      onError: () => {
+        if (wasActive) {
+          setStoredResumeId(id);
+          setActiveResumeId(id);
+        }
+      },
+    });
   }
 
   function handleSetActive(id: string) {
