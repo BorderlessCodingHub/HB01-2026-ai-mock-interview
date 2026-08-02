@@ -27,6 +27,7 @@ const reviewItemsGeneratorMock = vi.hoisted(() => ({
     async (): Promise<{
       items: Array<{
         topic: string;
+        angle: string;
         description: string;
         priority: "high" | "medium" | "low";
       }>;
