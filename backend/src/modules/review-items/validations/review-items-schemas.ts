@@ -6,6 +6,7 @@ export const reviewItemResponseSchema = z.object({
   id: z.uuid(),
   sessionId: z.uuid(),
   topic: z.string(),
+  angle: z.string(),
   description: z.string(),
   priority: reviewPrioritySchema,
   status: reviewItemStatusSchema,

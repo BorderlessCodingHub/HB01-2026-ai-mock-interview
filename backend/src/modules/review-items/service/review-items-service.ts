@@ -18,6 +18,7 @@ function toResponse(item: ReviewItemRecord): ReviewItemResponse {
     id: item.id,
     sessionId: item.sessionId,
     topic: item.topic,
+    angle: item.angle,
     description: item.description,
     priority: item.priority,
     status: item.status,

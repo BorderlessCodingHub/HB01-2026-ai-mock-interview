@@ -17,6 +17,7 @@ describe("IReviewSessionQuestionGenerator", () => {
 
     const iterator = generator.streamQuestion({
       topic: "Distributed systems",
+      angle: "consistency trade-offs",
       description: "Explain consistency trade-offs.",
       turns: [],
       interviewLocale: "en",
