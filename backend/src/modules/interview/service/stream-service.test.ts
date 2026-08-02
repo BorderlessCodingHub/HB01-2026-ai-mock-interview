@@ -9,6 +9,7 @@ import type {
 import type { IReviewGenerationQueue } from "@/modules/interview/protocols/review-generation-queue";
 import type { IWeakAnswerQueue } from "@/modules/interview/protocols/weak-answer-queue";
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
+import type { ReviewRepository } from "@/modules/interview/repository/review-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { TokenUsageService } from "@/modules/token-usage/service/token-usage-service";
@@ -102,6 +103,7 @@ describe("InterviewStreamService", () => {
   let reviewGenerationQueue: IReviewGenerationQueue;
   let weakAnswerQueue: IWeakAnswerQueue;
   let tokenUsageService: TokenUsageService;
+  let reviewRepository: ReviewRepository;
   let service: InterviewStreamService;
 
   beforeEach(() => {
@@ -141,6 +143,10 @@ describe("InterviewStreamService", () => {
       getUsage: vi.fn(),
     } as unknown as TokenUsageService;
 
+    reviewRepository = {
+      listByUserId: vi.fn().mockResolvedValue([]),
+    } as unknown as ReviewRepository;
+
     service = new InterviewStreamService(
       sessionRepository,
       messageRepository,
@@ -149,6 +155,7 @@ describe("InterviewStreamService", () => {
       reviewGenerationQueue,
       weakAnswerQueue,
       tokenUsageService,
+      reviewRepository,
     );
   });
 
@@ -246,6 +253,7 @@ describe("InterviewStreamService", () => {
         runReview: false,
         jobDescription: "Backend Engineer role",
         interviewLocale: "en",
+        coveredAngles: [],
       }),
       expect.objectContaining({
         threadId: baseSession.id,
@@ -269,6 +277,62 @@ describe("InterviewStreamService", () => {
     expect(reviewGenerationQueue.add).not.toHaveBeenCalled();
     expect(sessionRepository.markFinished).not.toHaveBeenCalled();
     expect(res.end).toHaveBeenCalled();
+  });
+
+  it("passes covered angles from review items into the interview graph", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue(
+      baseSession,
+    );
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(reviewRepository.listByUserId).mockResolvedValue([
+      {
+        id: "item-1",
+        userId: 1,
+        sessionId: "old",
+        topic: "caching",
+        angle: "write-path invalidation",
+        description: "Practice invalidation",
+        priority: "high",
+        status: "active",
+        learnedAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]);
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Q?" };
+        return { content: "Q?" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 1,
+    });
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(
+      1,
+      baseSession.id,
+      { content: "Hello", interviewLocale: "en" },
+      res,
+    );
+
+    expect(reviewRepository.listByUserId).toHaveBeenCalledWith(1);
+    expect(graph.streamMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        coveredAngles: [
+          { topic: "caching", angle: "write-path invalidation" },
+        ],
+      }),
+      expect.any(Object),
+    );
   });
 
   it("does not include reviewGenerationStatus or enqueue on mid-turn", async () => {
@@ -347,6 +411,7 @@ describe("InterviewStreamService", () => {
       expect.objectContaining({
         runReview: true,
         interviewLocale: "pt",
+        coveredAngles: [],
       }),
       expect.objectContaining({
         threadId: baseSession.id,

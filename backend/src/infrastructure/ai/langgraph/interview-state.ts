@@ -19,6 +19,7 @@ export const InterviewGraphStateAnnotation = Annotation.Root({
   interviewLocale: Annotation<InterviewLocale>,
   isFinished: Annotation<boolean>,
   runReview: Annotation<boolean>,
+  coveredAngles: Annotation<{ topic: string; angle: string }[]>,
 });
 
 export type InterviewGraphState = typeof InterviewGraphStateAnnotation.State;
@@ -34,6 +35,7 @@ export type CreateInitialInterviewStateParams = {
   jobDescription?: string | null;
   isFinished?: boolean;
   runReview?: boolean;
+  coveredAngles?: { topic: string; angle: string }[];
 };
 
 export function createInitialInterviewState(
@@ -50,5 +52,6 @@ export function createInitialInterviewState(
     interviewLocale: params.interviewLocale,
     isFinished: params.isFinished ?? false,
     runReview: params.runReview ?? false,
+    coveredAngles: params.coveredAngles ?? [],
   };
 }
