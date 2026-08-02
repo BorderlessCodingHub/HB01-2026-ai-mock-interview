@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useState, type MouseEvent } from "react";
 import ReactMarkdown from "react-markdown";
 import {
   Trash2,
@@ -13,16 +11,14 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
-import { useAuth } from "@/features/auth/session-provider";
+import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { useSessionMessages } from "@/lib/query/hooks/use-session-messages";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
 import { ReviewItemsGrid } from "@/features/dashboard/review-items-grid";
-import { interviewApi } from "@/lib/api/interview";
-import { queryKeys } from "@/lib/query/keys";
-import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 import type { SessionMessage } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
@@ -159,13 +155,11 @@ function SessionFeedbackDetail({
 }
 
 function FeedbackContent() {
-  const { getAccessToken } = useAuth();
-  const queryClient = useQueryClient();
+  const deleteSession = useDeleteSession();
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
   );
-  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
     data: sessionsData,
@@ -180,8 +174,13 @@ function FeedbackContent() {
   const { data: resumesData, error: resumesError } = useResumes();
   const resumes = resumesData?.resumes ?? [];
 
-  async function handleDeleteSession(id: string, e: React.MouseEvent) {
+  const deletingId = deleteSession.isPending
+    ? (deleteSession.variables ?? null)
+    : null;
+
+  function handleDeleteSession(id: string, e: MouseEvent) {
     e.stopPropagation(); // Stop click from selecting
+    if (deleteSession.isPending) return;
     if (
       !confirm(
         "Are you sure you want to delete this interview feedback and all its review topics?",
@@ -190,31 +189,18 @@ function FeedbackContent() {
       return;
     }
 
-    const token = await getAccessToken();
-    if (!token) {
-      toast.error("Not authenticated");
-      return;
+    const previousSelectedId = selectedSessionId;
+    if (resolvedSessionId === id) {
+      setSelectedSessionId(null);
     }
 
-    setDeletingId(id);
-    try {
-      await interviewApi.deleteSession(id, token);
-      toast.success("Feedback deleted successfully");
-
-      // Invalidate queries
-      void queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
-      void queryClient.invalidateQueries({ queryKey: ["review-items"] });
-
-      if (resolvedSessionId === id) {
-        setSelectedSessionId(null);
-      }
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete feedback",
-      );
-    } finally {
-      setDeletingId(null);
-    }
+    deleteSession.mutate(id, {
+      onError: () => {
+        if (resolvedSessionId === id) {
+          setSelectedSessionId(previousSelectedId);
+        }
+      },
+    });
   }
 
   const selectedSession = finishedSessions.find(

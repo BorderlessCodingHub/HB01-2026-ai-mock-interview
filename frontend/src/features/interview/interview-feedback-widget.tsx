@@ -37,6 +37,8 @@ export function InterviewFeedbackWidget({
       return;
     }
 
+    const previousSubmitted = submitted;
+    setSubmitted(true);
     setIsSubmitting(true);
 
     try {
@@ -46,8 +48,8 @@ export function InterviewFeedbackWidget({
         { rating: selectedRating, comment: trimmedComment },
         token,
       );
-      setSubmitted(true);
     } catch (err) {
+      setSubmitted(previousSubmitted);
       toast.error(
         err instanceof ApiError ? err.message : "Failed to submit feedback",
       );
