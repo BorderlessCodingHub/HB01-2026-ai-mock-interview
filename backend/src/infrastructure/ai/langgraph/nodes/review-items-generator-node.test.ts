@@ -53,6 +53,7 @@ describe("createReviewItemsGeneratorNode", () => {
       items: [
         {
           topic: "System design",
+          angle: "caching trade-offs",
           description: "Practice trade-offs",
           priority: "high" as const,
         },
@@ -80,6 +81,7 @@ describe("createReviewItemsGeneratorNode", () => {
     const existingItems = [
       {
         topic: "interview problem-solving and hypothesis-driven answering",
+        angle: "structured hypothesis framing",
         description:
           "Candidate was honest about not knowing (positive) but did not attempt a high-level hypothesis.",
         priority: "medium" as const,
