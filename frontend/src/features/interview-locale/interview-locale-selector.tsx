@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
@@ -17,17 +16,13 @@ const OPTIONS: { value: InterviewLocale; label: string }[] = [
 
 export function InterviewLocaleSelector() {
   const { locale, setLocale, isReady } = useInterviewLocale();
-  const [isSaving, setIsSaving] = useState(false);
 
   async function handleSelect(next: InterviewLocale) {
-    if (!isReady || isSaving || next === locale) return;
-    setIsSaving(true);
+    if (!isReady || next === locale) return;
     try {
       await setLocale(next);
     } catch {
       toast.error("Failed to update interview language");
-    } finally {
-      setIsSaving(false);
     }
   }
 
@@ -41,7 +36,7 @@ export function InterviewLocaleSelector() {
           <button
             key={opt.value}
             type="button"
-            disabled={!isReady || isSaving}
+            disabled={!isReady}
             onClick={() => void handleSelect(opt.value)}
             aria-pressed={locale === opt.value}
             className={cn(
@@ -49,8 +44,7 @@ export function InterviewLocaleSelector() {
               locale === opt.value
                 ? "border-jade bg-jade-mist font-semibold text-jade-deep"
                 : "border-border-hairline bg-paper-white text-ink-black hover:bg-mist-gray",
-              (!isReady || isSaving) &&
-                "pointer-events-none cursor-not-allowed opacity-50",
+              !isReady && "pointer-events-none cursor-not-allowed opacity-50",
             )}
           >
             <span className="text-xs">{opt.label}</span>
