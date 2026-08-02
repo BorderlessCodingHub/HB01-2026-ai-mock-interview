@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
+import { formatTopicAngleLabel } from "@/features/study/lib/format-topic-angle";
 import type { ReviewItem } from "@/types/review-items";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
@@ -47,7 +48,9 @@ export function ReviewItemsGrid({
               <ReviewPriorityBadge priority={item.priority} />
             </div>
             <div className="border-t border-border-hairline pt-3">
-              <p className="manrope font-medium text-ink-black">{item.topic}</p>
+              <p className="manrope font-medium text-ink-black">
+                {formatTopicAngleLabel(item.topic, item.angle)}
+              </p>
               <p className="manrope mt-1 text-xs leading-relaxed text-text-base">
                 {item.description}
               </p>

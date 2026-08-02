@@ -1,6 +1,8 @@
 import type { ReviewItemStatus, ReviewPriority } from "@/types/review-items";
 import type { ReviewSessionItemReport } from "@/types/review-sessions";
 
+import { formatTopicAngleLabel } from "./format-topic-angle";
+
 export type ReportCardState = {
   reviewSessionItemId: string;
   topic: string;
@@ -19,10 +21,12 @@ export type ReportCardStatePatch = Partial<
 export function initReportCardState(
   item: ReviewSessionItemReport,
 ): ReportCardState {
+  const topicLabel = formatTopicAngleLabel(item.topic, item.angle);
+
   if (item.suggestedStatus === null) {
     return {
       reviewSessionItemId: item.id,
-      topic: item.topic,
+      topic: topicLabel,
       currentPriority: item.currentPriority,
       suggestedStatus: item.suggestedStatus,
       suggestedPriority: item.suggestedPriority,
@@ -40,7 +44,7 @@ export function initReportCardState(
 
   return {
     reviewSessionItemId: item.id,
-    topic: item.topic,
+    topic: topicLabel,
     currentPriority: item.currentPriority,
     suggestedStatus: item.suggestedStatus,
     suggestedPriority: item.suggestedPriority,

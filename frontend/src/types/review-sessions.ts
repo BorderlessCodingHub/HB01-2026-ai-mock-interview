@@ -17,6 +17,7 @@ export type ReviewSessionItemReport = {
   id: string;
   reviewItemId: string;
   topic: string;
+  angle: string;
   currentPriority: ReviewPriority;
   suggestedStatus: ReviewItemStatus | null;
   suggestedPriority: ReviewPriority | null;
@@ -53,6 +54,7 @@ export type CreateReviewSessionResponse = {
     id: string;
     reviewItemId: string;
     topic: string;
+    angle: string;
     currentPriority: ReviewPriority;
   }>;
 };
@@ -74,6 +76,7 @@ export type ReviewSessionStreamMetaComplete = {
     reviewSessionItemId: string;
     reviewItemId: string;
     topic: string;
+    angle: string;
     currentPriority: ReviewPriority;
     suggestedStatus: ReviewItemStatus | null;
     suggestedPriority: ReviewPriority | null;
