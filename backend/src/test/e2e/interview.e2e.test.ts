@@ -780,6 +780,7 @@ describe("Interview API E2E", () => {
         items: [
           {
             topic: "Communication",
+            angle: "conciseness under pressure",
             description: "Be more concise",
             priority: "medium",
           },
