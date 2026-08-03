@@ -29,6 +29,10 @@ import {
   InterviewMessageList,
   type DisplayMessage,
 } from "./interview-message-list";
+import {
+  getInterviewReadyMessage,
+  getInterviewWelcomeText,
+} from "./interview-ready-message";
 import { InterviewReviewPanel } from "./interview-review-panel";
 
 export function InterviewChat({ sessionId }: { sessionId: string }) {
@@ -44,6 +48,10 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
   const [pendingHuman, setPendingHuman] = useState<SessionMessage | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const streamingContentRef = useRef("");
+  const autoStartedForSessionRef = useRef<string | null>(null);
+  const sendMessageRef = useRef<(content: string) => Promise<void>>(
+    async () => {},
+  );
   const [viewMode, setViewMode] = useState<"chat" | "review">("chat");
   const [isRetrying, setIsRetrying] = useState(false);
 
@@ -266,6 +274,26 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
     }
   }
 
+  sendMessageRef.current = sendMessage;
+
+  useEffect(() => {
+    if (!messagesQuery.isSuccess) return;
+    if (serverMessages.length > 0) return;
+    if (isCompleted || isStreaming || pendingHuman) return;
+    if (autoStartedForSessionRef.current === sessionId) return;
+
+    autoStartedForSessionRef.current = sessionId;
+    void sendMessageRef.current(getInterviewReadyMessage(locale));
+  }, [
+    messagesQuery.isSuccess,
+    serverMessages.length,
+    sessionId,
+    locale,
+    isCompleted,
+    isStreaming,
+    pendingHuman,
+  ]);
+
   function handleSend(e: React.FormEvent) {
     e.preventDefault();
     const content = draft.trim();
@@ -274,7 +302,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
   }
 
   function handleStart() {
-    void sendMessage("Hi, I'm ready for the interview!");
+    void sendMessage(getInterviewReadyMessage(locale));
   }
 
   if (messagesQuery.isLoading) {
@@ -376,6 +404,8 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
             messages={displayMessages}
             showWelcome={showWelcome}
             onStart={handleStart}
+            welcomeText={getInterviewWelcomeText(locale)}
+            startLabel={getInterviewReadyMessage(locale)}
           />
 
           {isCompleted && (
