@@ -5,8 +5,10 @@ import { useEffect, useRef } from "react";
 import type { SessionMessage } from "@/types/interview";
 
 import { InterviewMessageBubble } from "./interview-message-bubble";
-
-const START_MESSAGE = "Hi, I'm ready for the interview!";
+import {
+  getInterviewReadyMessage,
+  getInterviewWelcomeText,
+} from "./interview-ready-message";
 
 export type DisplayMessage =
   | SessionMessage
@@ -31,8 +33,8 @@ export function InterviewMessageList({
   messages,
   showWelcome,
   onStart,
-  welcomeText = "When you're ready, click to start the interview.",
-  startLabel = START_MESSAGE,
+  welcomeText = getInterviewWelcomeText("en"),
+  startLabel = getInterviewReadyMessage("en"),
 }: InterviewMessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);

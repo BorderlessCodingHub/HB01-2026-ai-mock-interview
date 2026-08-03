@@ -123,6 +123,7 @@ model ReviewItem {
   sessionId   String           @map("session_id")
   userId      Int              @map("user_id")
   topic       String
+  angle       String
   description String           @db.Text
   priority    ReviewPriority
   status      ReviewItemStatus @default(active)
@@ -135,7 +136,7 @@ model ReviewItem {
   sessionItems ReviewSessionItem[]
 
   @@map("review_items")
-  @@unique([userId, topic])
+  @@unique([userId, topic, angle])
   @@index([userId])
   @@index([userId, status])
 }
@@ -162,6 +163,7 @@ model ReviewSessionItem {
   reviewItemId      String            @map("review_item_id")
   order             Int
   topic             String
+  angle             String
   description       String            @db.Text
   turns             Json              @default("[]")
   currentPriority   ReviewPriority    @map("current_priority")

@@ -16,6 +16,7 @@ import {
 
 const baseInput: ReviewSessionEvaluationInput = {
   topic: "Concurrency primitives",
+  angle: "mutex vs semaphore trade-offs",
   description: "Needs practice explaining mutex vs semaphore trade-offs.",
   currentPriority: "medium",
   turns: [

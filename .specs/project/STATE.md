@@ -1,11 +1,28 @@
 # State
 
-**Last Updated:** 2026-07-28  
-**Current Work:** Study Session History — Execute T1–T14 complete (no commits; await user commit / UAT)
+**Last Updated:** 2026-08-03  
+**Current Work:** Auto-start interview ready message (EN/PT) — Execute complete (no commits; await user commit / UAT)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-017: Auto-send locale-aware ready message on empty interview chat (2026-08-03)
+
+**Decision:** When `InterviewChat` loads an empty session (outcome of Start New Practice), auto-send a fixed ready string once per session mount. Copy is mapped from `interviewLocale`: EN `Hi, I'm ready for the interview!` / PT `Olá, estou pronto para a entrevista!`. Welcome CTA kept as fallback with the same strings.
+**Reason:** Remove second-click friction; keep kickoff transcript aligned with interview language.
+**Trade-off:** Any empty session auto-starts (not only via query flag); Strict Mode abort may leave fallback CTA until manual click in dev.
+**Impact:** FE only — `interview-ready-message.ts`, `interview-chat.tsx`, `interview-message-list.tsx`.
+**Spec:** `.specs/features/auto-start-interview-ready/spec.md`
+
+### AD-016: Review item angles as missed-facet ledger (2026-08-02)
+
+**Decision:** Add free-text `angle` on `ReviewItem` / `ReviewSessionItem`; unique `(userId, topic, angle)`; backfill `'general'`. Practice feeds covered angles into interviewer prompt for variety; Study locks Q&A to the missed angle. No separate `topic_coverage` table.
+**Reason:** Topic-only uniqueness blocked multi-facet gaps; Study/Practice split needs facet-level memory.
+**Trade-off:** LLM synonymy handled via pair similarity; historical rows stay `general`.
+**Impact:** Prisma migration, generator/merge, interviewer + study prompts, APIs, FE `topic — angle` display.
+**Spec:** `.specs/features/review-item-angles/spec.md`  
+**Context:** `.specs/features/review-item-angles/context.md`
 
 ### AD-015: Study Session History on `/practice`-like `/study` shell (2026-07-28)
 
@@ -130,6 +147,7 @@ _None_
 
 ## Deferred Ideas
 
+- [ ] Normal-interview topic diversity via angles on review_items (fulfilled by review-item-angles) — Captured during: review-items-learned-status / review-item-angles
 - [ ] App-wide UI i18n (`appLocale` or similar) — Captured during: interview-locale
 - [ ] DB table for editable language prompt instructions — Captured during: interview-locale
 - [ ] Analytics dashboard for EN vs PT session counts — Captured during: interview-locale
@@ -144,6 +162,14 @@ _None_
 
 ## Todos
 
+- [x] Specify + Execute auto-start-interview-ready (helper + InterviewChat auto-send + localized CTA)
+- [ ] Interactive UAT for auto-start-interview-ready (EN/PT Start New Practice; no double-send on existing session)
+- [x] Commit auto-start-interview-ready (atomic commits on `refact/interview-auto-start`)
+- [x] Specify + context review-item-angles (2026-08-02)
+- [x] Design + tasks review-item-angles (2026-08-02)
+- [x] Execute review-item-angles (schema, merge, practice, study, FE)
+- [ ] Commit review-item-angles (deferred — user requested no commits unless asked)
+- [ ] Interactive UAT for review-item-angles (practice variety + study angle display)
 - [x] Grill-me + Specify study-session-history → `spec.md` + `context.md` (2026-07-28)
 - [x] Design phase for study-session-history (`design.md`) — approved
 - [x] Tasks breakdown for study-session-history (`tasks.md`) — draft, awaiting approval

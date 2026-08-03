@@ -32,6 +32,7 @@ type ReviewSessionStreamReportItem = {
   reviewSessionItemId: string;
   reviewItemId: string;
   topic: string;
+  angle: string;
   currentPriority: string;
   suggestedStatus: string | null;
   suggestedPriority: string | null;
@@ -55,6 +56,7 @@ function toReportItem(item: ReviewSessionItemRecord): ReviewSessionStreamReportI
     reviewSessionItemId: item.id,
     reviewItemId: item.reviewItemId,
     topic: item.topic,
+    angle: item.angle,
     currentPriority: item.currentPriority,
     suggestedStatus: item.suggestedStatus,
     suggestedPriority: item.suggestedPriority,
@@ -250,6 +252,7 @@ export class ReviewSessionStreamService {
     const stream = this.questionGenerator.streamQuestion(
       {
         topic: item.topic,
+        angle: item.angle,
         description: item.description,
         turns: item.turns,
         interviewLocale,
@@ -317,6 +320,7 @@ export class ReviewSessionStreamService {
         const evaluation = await this.evaluator.evaluate(
           {
             topic: item.topic,
+            angle: item.angle,
             description: item.description,
             currentPriority: item.currentPriority,
             turns: item.turns,

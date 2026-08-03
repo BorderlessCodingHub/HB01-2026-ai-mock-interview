@@ -45,6 +45,7 @@ describe("ReviewItemsGeneratorAdapter", () => {
         userId: 42,
         sessionId: "old-session",
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Be concise",
         priority: "medium",
         status: "active",
@@ -58,6 +59,7 @@ describe("ReviewItemsGeneratorAdapter", () => {
       items: [
         {
           topic: "System design",
+          angle: "caching trade-offs",
           description: "Practice trade-offs",
           priority: "high" as const,
         },
@@ -76,6 +78,7 @@ describe("ReviewItemsGeneratorAdapter", () => {
         existingItems: [
           {
             topic: "Communication",
+            angle: "conciseness under pressure",
             description: "Be concise",
             priority: "medium",
           },

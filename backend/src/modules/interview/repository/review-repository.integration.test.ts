@@ -47,6 +47,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "System Design",
+      angle: "scalability patterns",
       description: "Practice scalability patterns",
       priority: ReviewPriority.high,
     });
@@ -55,13 +56,14 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "system design",
+      angle: "scalability patterns",
       description: "Practice scalability patterns",
       priority: ReviewPriority.high,
     });
     expect(created.id).toBeTruthy();
   });
 
-  it("upsert updates an existing item for the same user and topic", async () => {
+  it("upsert updates an existing item for the same user, topic, and angle", async () => {
     const { user, session } = await seedSession();
     const otherSession = await prisma.interviewSession.create({
       data: {
@@ -77,6 +79,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "Algorithms",
+      angle: "dynamic programming",
       description: "Review sorting",
       priority: ReviewPriority.medium,
     });
@@ -85,6 +88,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: otherSession.id,
       topic: "ALGORITHMS",
+      angle: "dynamic programming",
       description: "Review dynamic programming",
       priority: ReviewPriority.high,
     });
@@ -119,6 +123,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "databases",
+      angle: "indexing strategies",
       description: "Indexes and query plans",
       priority: ReviewPriority.low,
     });
@@ -126,6 +131,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: otherSession.id,
       topic: "networking",
+      angle: "tcp fundamentals",
       description: "TCP and HTTP fundamentals",
       priority: ReviewPriority.high,
     });
@@ -158,6 +164,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "System Design",
+      angle: "scalability patterns",
       description: "Practice scalability patterns",
       priority: ReviewPriority.high,
     });
@@ -172,26 +179,29 @@ describe("ReviewRepository (integration)", () => {
     expect(found!.topic).toBe("system design");
   });
 
-  // ReviewRepository uses TOPIC_SIMILARITY_THRESHOLD = 0.7 (pg_trgm similarity).
-  it("findSimilarByUserIdAndTopic returns a row when the search phrase is similar enough", async () => {
+  // ReviewRepository uses PAIR_SIMILARITY_THRESHOLD = 0.7 (pg_trgm similarity on topic+angle).
+  it("findSimilarByUserIdAndTopicAngle returns a row when the search phrase is similar enough", async () => {
     const { user, session } = await seedSession();
 
     const created = await repository.upsert({
       userId: user.id,
       sessionId: session.id,
       topic: "database indexing",
+      angle: "b-tree and composite indexes",
       description: "B-tree and composite indexes",
       priority: ReviewPriority.medium,
     });
 
-    const found = await repository.findSimilarByUserIdAndTopic(
+    const found = await repository.findSimilarByUserIdAndTopicAngle(
       user.id,
       "database index",
+      "b-tree composite indexes",
     );
 
     expect(found).not.toBeNull();
     expect(found!.id).toBe(created.id);
     expect(found!.topic).toBe("database indexing");
+    expect(found!.angle).toBe("b-tree and composite indexes");
   });
 
   it("findActiveByIdsAndUserId returns only active items owned by the user", async () => {
@@ -226,6 +236,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "active topic",
+      angle: "core concepts",
       description: "Still reviewing",
       priority: ReviewPriority.high,
     });
@@ -234,6 +245,7 @@ describe("ReviewRepository (integration)", () => {
         userId: user.id,
         sessionId: session.id,
         topic: "learned topic",
+        angle: "general",
         description: "Already mastered",
         priority: ReviewPriority.medium,
         status: "learned",
@@ -244,6 +256,7 @@ describe("ReviewRepository (integration)", () => {
         userId: otherUser.id,
         sessionId: otherSession.id,
         topic: "foreign topic",
+        angle: "general",
         description: "Belongs to another user",
         priority: ReviewPriority.low,
         status: "active",
@@ -269,6 +282,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "first topic",
+      angle: "foundations",
       description: "First active item",
       priority: ReviewPriority.high,
     });
@@ -276,6 +290,7 @@ describe("ReviewRepository (integration)", () => {
       userId: user.id,
       sessionId: session.id,
       topic: "second topic",
+      angle: "advanced patterns",
       description: "Second active item",
       priority: ReviewPriority.medium,
     });

@@ -237,11 +237,13 @@ describe("reviewItemsGeneratorOutputSchema", () => {
     items: [
       {
         topic: "System design trade-offs",
+        angle: "caching strategy comparison",
         description: "Candidate struggled to compare caching strategies.",
         priority: "high" as const,
       },
       {
         topic: "Concurrency",
+        angle: "race condition explanation",
         description: "Needs practice explaining race conditions.",
         priority: "medium" as const,
       },
@@ -268,6 +270,7 @@ describe("reviewItemsGeneratorOutputSchema", () => {
       items: [
         {
           topic: "Testing",
+          angle: "unit test coverage",
           description: "Improve unit test coverage.",
           priority: "critical",
         },
@@ -282,6 +285,36 @@ describe("reviewItemsGeneratorOutputSchema", () => {
       items: [
         {
           topic: "  ",
+          angle: "edge cases",
+          description: "Needs improvement.",
+          priority: "low",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects item with empty angle", () => {
+    const result = reviewItemsGeneratorOutputSchema.safeParse({
+      items: [
+        {
+          topic: "Testing",
+          angle: "  ",
+          description: "Needs improvement.",
+          priority: "low",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing angle", () => {
+    const result = reviewItemsGeneratorOutputSchema.safeParse({
+      items: [
+        {
+          topic: "Testing",
           description: "Needs improvement.",
           priority: "low",
         },

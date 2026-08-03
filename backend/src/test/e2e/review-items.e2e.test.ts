@@ -29,6 +29,7 @@ async function seedReviewItem(
   userId: number,
   overrides: {
     topic: string;
+    angle?: string;
     description: string;
     priority: (typeof ReviewPriority)[keyof typeof ReviewPriority];
     status?: "active" | "learned";
@@ -51,6 +52,7 @@ async function seedReviewItem(
       userId,
       sessionId: session.id,
       topic: overrides.topic,
+      angle: overrides.angle ?? "general",
       description: overrides.description,
       priority: overrides.priority,
       status: overrides.status ?? "active",
@@ -114,6 +116,7 @@ describe("Review Items API E2E", () => {
           userId,
           sessionId: session.id,
           topic: "System Design",
+          angle: "scalability trade-offs",
           description: "Practice scalability trade-offs.",
           priority: ReviewPriority.high,
         },
@@ -151,6 +154,7 @@ describe("Review Items API E2E", () => {
           userId,
           sessionId: session.id,
           topic: "System Design",
+          angle: "scalability trade-offs",
           description: "Practice scalability trade-offs.",
           priority: ReviewPriority.high,
         },
@@ -161,6 +165,7 @@ describe("Review Items API E2E", () => {
           userId,
           sessionId: session.id,
           topic: "TypeScript",
+          angle: "generics and utility types",
           description: "Review generics and utility types.",
           priority: ReviewPriority.medium,
         },
@@ -378,6 +383,7 @@ describe("Review Items API E2E", () => {
           userId,
           sessionId: session.id,
           topic: "System Design",
+          angle: "scalability trade-offs",
           description: "Practice scalability trade-offs.",
           priority: ReviewPriority.high,
         },
@@ -433,6 +439,7 @@ describe("Review Items API E2E", () => {
           userId,
           sessionId: session.id,
           topic: "System Design",
+          angle: "scalability trade-offs",
           description: "Practice scalability trade-offs.",
           priority: ReviewPriority.high,
         },

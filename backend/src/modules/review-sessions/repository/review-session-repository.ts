@@ -17,6 +17,7 @@ import type {
 export type CreateReviewSessionItemInput = {
   reviewItemId: string;
   topic: string;
+  angle: string;
   description: string;
   currentPriority: ReviewPriority;
 };
@@ -47,6 +48,7 @@ function toReviewSessionItemRecord(
     reviewItemId: row.reviewItemId,
     order: row.order,
     topic: row.topic,
+    angle: row.angle,
     description: row.description,
     currentPriority: row.currentPriority as ReviewPriority,
     turns: parseTurns(row.turns),
@@ -93,6 +95,7 @@ export class ReviewSessionRepository {
           create: items.map((item, index) => ({
             reviewItemId: item.reviewItemId,
             topic: item.topic,
+            angle: item.angle,
             description: item.description,
             currentPriority: item.currentPriority,
             order: index,

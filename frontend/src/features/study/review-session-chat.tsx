@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/features/auth/session-provider";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import { InterviewChatInput } from "@/features/interview/interview-chat-input";
+import { formatTopicAngleLabel } from "@/features/study/lib/format-topic-angle";
 import {
   InterviewMessageList,
   type DisplayMessage,
@@ -158,12 +159,15 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
   const resolveTopicName = useCallback(
     (meta: ReviewSessionStreamMetaProgress) => {
       const items = sessionItemsRef.current;
+      const item =
+        items[meta.itemIndex] ??
+        items.find((entry) => entry.id === meta.reviewSessionItemId);
 
-      return (
-        items[meta.itemIndex]?.topic ??
-        items.find((item) => item.id === meta.reviewSessionItemId)?.topic ??
-        "Next topic"
-      );
+      if (!item) {
+        return "Next topic";
+      }
+
+      return formatTopicAngleLabel(item.topic, item.angle);
     },
     [],
   );
@@ -199,6 +203,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
             id: item.reviewSessionItemId,
             reviewItemId: item.reviewItemId,
             topic: item.topic,
+            angle: item.angle,
             currentPriority: item.currentPriority,
             suggestedStatus: item.suggestedStatus,
             suggestedPriority: item.suggestedPriority,

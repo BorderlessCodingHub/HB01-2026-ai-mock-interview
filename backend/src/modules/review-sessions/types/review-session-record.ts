@@ -16,6 +16,7 @@ export type ReviewSessionItemRecord = {
   reviewItemId: string;
   order: number;
   topic: string;
+  angle: string;
   description: string;
   currentPriority: ReviewPriority;
   turns: ReviewSessionTurn[];
