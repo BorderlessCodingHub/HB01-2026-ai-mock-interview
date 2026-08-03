@@ -27,6 +27,7 @@ const reviewItemsGeneratorMock = vi.hoisted(() => ({
     async (): Promise<{
       items: Array<{
         topic: string;
+        angle: string;
         description: string;
         priority: "high" | "medium" | "low";
       }>;
@@ -780,6 +781,7 @@ describe("Interview API E2E", () => {
         items: [
           {
             topic: "Communication",
+            angle: "conciseness under pressure",
             description: "Be more concise",
             priority: "medium",
           },

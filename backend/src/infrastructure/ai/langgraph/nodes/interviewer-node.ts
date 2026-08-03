@@ -48,6 +48,7 @@ export function createInterviewerNode(deps: InterviewerNodeDeps = {}) {
           maxTurns: state.maxTurns,
           interviewLocale: state.interviewLocale,
           jobDescription: state.jobDescription,
+          coveredAngles: state.coveredAngles,
         });
 
     const promptCacheKey = state.runReview

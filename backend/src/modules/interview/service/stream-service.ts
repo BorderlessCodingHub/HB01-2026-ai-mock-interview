@@ -7,6 +7,7 @@ import type { IInterviewGraph } from "@/modules/interview/protocols/interview-gr
 import type { IReviewGenerationQueue } from "@/modules/interview/protocols/review-generation-queue";
 import type { IWeakAnswerQueue } from "@/modules/interview/protocols/weak-answer-queue";
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
+import type { ReviewRepository } from "@/modules/interview/repository/review-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
@@ -33,6 +34,7 @@ export class InterviewStreamService {
     private readonly reviewGenerationQueue: IReviewGenerationQueue,
     private readonly weakAnswerQueue: IWeakAnswerQueue,
     private readonly tokenUsageService: TokenUsageService,
+    private readonly reviewRepository: ReviewRepository,
   ) {}
 
   async streamTurn(
@@ -69,6 +71,12 @@ export class InterviewStreamService {
 
     await this.tokenUsageService.assertWithinLimit(userId);
 
+    const reviewItems = await this.reviewRepository.listByUserId(userId);
+    const coveredAngles = reviewItems.map((item) => ({
+      topic: item.topic,
+      angle: item.angle,
+    }));
+
     const interviewerUsageCapture = createUsageCaptureCallback();
 
     res.writeHead(200, SSE_HEADERS);
@@ -99,6 +107,7 @@ export class InterviewStreamService {
         interviewLocale,
         isFinished: session.isFinished,
         runReview: isFinalTurn,
+        coveredAngles,
       },
       {
         threadId: sessionId,

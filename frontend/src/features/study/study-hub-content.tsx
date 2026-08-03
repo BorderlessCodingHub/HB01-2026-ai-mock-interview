@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
@@ -20,9 +20,10 @@ import {
 } from "@/features/study/study-tabs";
 import { setLastReviewSessionId } from "@/features/study/lib/review-session-storage";
 import { ApiError } from "@/lib/api/client";
-import { reviewItemsApi } from "@/lib/api/review-items";
 import { reviewSessionsApi } from "@/lib/api/review-sessions";
+import { useDeleteReviewItem } from "@/lib/query/hooks/use-delete-review-item";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
+import { useUpdateReviewItemStatus } from "@/lib/query/hooks/use-update-review-item-status";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
@@ -30,16 +31,29 @@ type StudyTab = "active" | "learned";
 
 const MAX_SELECTION = 10;
 
+function removeFromSelection(
+  setSelectedIds: Dispatch<SetStateAction<Set<string>>>,
+  itemId: string,
+) {
+  setSelectedIds((prev) => {
+    if (!prev.has(itemId)) return prev;
+    const next = new Set(prev);
+    next.delete(itemId);
+    return next;
+  });
+}
+
 export function StudyHubContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { getAccessToken, fetchWithAuth } = useAuth();
+  const { getAccessToken } = useAuth();
   const { locale } = useInterviewLocale();
+  const updateStatus = useUpdateReviewItemStatus();
+  const deleteReviewItem = useDeleteReviewItem();
 
   const [activeTab, setActiveTab] = useState<StudyTab>("active");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isStarting, setIsStarting] = useState(false);
-  const [pendingItemId, setPendingItemId] = useState<string | null>(null);
 
   const reviewQuery = useReviewItems(activeTab);
   const items = useMemo(
@@ -78,74 +92,18 @@ export function StudyHubContent() {
     });
   }
 
-  async function invalidateReviewItems() {
-    await queryClient.invalidateQueries({ queryKey: ["review-items"] });
+  function handleMarkLearned(itemId: string) {
+    removeFromSelection(setSelectedIds, itemId);
+    updateStatus.mutate({ itemId, status: "learned" });
   }
 
-  async function handleMarkLearned(itemId: string) {
-    setPendingItemId(itemId);
-    try {
-      await fetchWithAuth((token) =>
-        reviewItemsApi.patchStatus(token, itemId, "learned"),
-      );
-      toast.success("Topic marked as learned");
-      setSelectedIds((prev) => {
-        if (!prev.has(itemId)) return prev;
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-      await invalidateReviewItems();
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError
-          ? err.message
-          : "Failed to mark topic as learned",
-      );
-      await invalidateReviewItems();
-    } finally {
-      setPendingItemId(null);
-    }
+  function handleReactivate(itemId: string) {
+    updateStatus.mutate({ itemId, status: "active" });
   }
 
-  async function handleReactivate(itemId: string) {
-    setPendingItemId(itemId);
-    try {
-      await fetchWithAuth((token) =>
-        reviewItemsApi.patchStatus(token, itemId, "active"),
-      );
-      toast.success("Topic reactivated");
-      await invalidateReviewItems();
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Failed to reactivate topic",
-      );
-      await invalidateReviewItems();
-    } finally {
-      setPendingItemId(null);
-    }
-  }
-
-  async function handleDelete(itemId: string) {
-    setPendingItemId(itemId);
-    try {
-      await fetchWithAuth((token) => reviewItemsApi.delete(token, itemId));
-      toast.success("Topic deleted");
-      setSelectedIds((prev) => {
-        if (!prev.has(itemId)) return prev;
-        const next = new Set(prev);
-        next.delete(itemId);
-        return next;
-      });
-      await invalidateReviewItems();
-    } catch (err) {
-      toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete topic",
-      );
-      await invalidateReviewItems();
-    } finally {
-      setPendingItemId(null);
-    }
+  function handleDelete(itemId: string) {
+    removeFromSelection(setSelectedIds, itemId);
+    deleteReviewItem.mutate(itemId);
   }
 
   async function handleStartSession() {
@@ -175,7 +133,7 @@ export function StudyHubContent() {
       );
       if (err instanceof ApiError && err.status === 404) {
         setSelectedIds(new Set());
-        await invalidateReviewItems();
+        void queryClient.invalidateQueries({ queryKey: ["review-items"] });
       }
     } finally {
       setIsStarting(false);
@@ -184,7 +142,9 @@ export function StudyHubContent() {
 
   const showSelection = activeTab === "active" && items.length > 0;
   const inactiveTab: StudyTab = activeTab === "active" ? "learned" : "active";
-  const isItemPending = (itemId: string) => pendingItemId === itemId;
+  const isItemPending = (itemId: string) =>
+    (updateStatus.isPending && updateStatus.variables?.itemId === itemId) ||
+    (deleteReviewItem.isPending && deleteReviewItem.variables === itemId);
 
   return (
     <div className="space-y-6 pb-20">

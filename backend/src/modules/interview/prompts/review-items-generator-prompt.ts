@@ -15,6 +15,7 @@ export const INSTRUCTIONS_SECTION_HEADER = "## Instructions";
 
 export type ExistingReviewItemForPrompt = {
   topic: string;
+  angle: string;
   description: string;
   priority: ReviewPriority;
 };
@@ -51,12 +52,17 @@ function buildInstructionsBlock(hasJobDescription: boolean): string {
     : "";
 
   return `${INSTRUCTIONS_SECTION_HEADER}
-Identify gaps and weaknesses from the interview. Emit one item per distinct topic.
+Identify gaps and weaknesses from the interview. Emit one item per distinct (topic, angle) pair.
 
-- New topic (not in existing list): create with an appropriate priority.
-- Existing topic match: reuse the exact topic string, update the description, and raise priority
+- topic: short subject label (1–4 words), e.g. "Caching".
+- angle: the specific interview probe/facet that exposed the gap (2–8 words), e.g. "write-path invalidation".
+  Do not use vague angles like "general" or "basics" for new items.
+- description: coaching narrative — what to practice and why.
+- New (topic, angle) not in existing list: create with an appropriate priority.
+- Existing (topic, angle) match: reuse the exact topic and angle strings, update the description, and raise priority
   if the interview reinforces the gap (low to medium or high; medium to high; never lower an existing priority).
-- No duplicate topics in a single response.${targetRoleClause}`;
+- Same topic with a meaningfully different angle is a new item.
+- No duplicate (topic, angle) pairs in a single response.${targetRoleClause}`;
 }
 
 export function buildReviewItemsGeneratorPrompt(

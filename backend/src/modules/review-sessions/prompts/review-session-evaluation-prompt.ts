@@ -7,6 +7,7 @@ import {
 
 export const PERSONA_SECTION_HEADER = "## Role";
 export const TOPIC_SECTION_HEADER = "## Topic";
+export const ANGLE_SECTION_HEADER = "## Angle";
 export const DESCRIPTION_SECTION_HEADER = "## Description";
 export const CURRENT_PRIORITY_SECTION_HEADER = "## Current priority";
 export const TURNS_SECTION_HEADER = "## Review Q&A";
@@ -14,6 +15,7 @@ export const INSTRUCTIONS_SECTION_HEADER = "## Instructions";
 
 export type BuildReviewSessionEvaluationPromptParams = {
   topic: string;
+  angle: string;
   description: string;
   currentPriority: ReviewPriority;
   turns: ReviewSessionTurn[];
@@ -22,7 +24,7 @@ export type BuildReviewSessionEvaluationPromptParams = {
 
 function buildPersonaBlock(): string {
   return `${PERSONA_SECTION_HEADER}
-You are a Tech Lead evaluating whether a candidate has sufficiently addressed a single review topic based only on their review-session answers.`;
+You are a Tech Lead evaluating whether a candidate has sufficiently addressed a specific angle within a review topic based only on their review-session answers.`;
 }
 
 function buildTurnsBlock(turns: ReviewSessionTurn[]): string {
@@ -45,14 +47,14 @@ function buildInstructionsBlock(): string {
   return `${INSTRUCTIONS_SECTION_HEADER}
 Suggest whether this single review item should stay active or be marked learned, and what priority to use if it stays active.
 
-- Mark \`status: "learned"\` only when the answers demonstrate **sufficient** understanding of the topic — not merely getting one question right. When learned, set \`priority\` to \`null\`.
+- Mark \`status: "learned"\` only when the answers demonstrate **sufficient** understanding of the angle within the topic — not merely getting one question right. When learned, set \`priority\` to \`null\`.
 - When \`status: "active"\`, you **must** set \`priority\` to \`low\`, \`medium\`, or \`high\` (never \`null\`).
 - Raise priority when the answers reinforce the existing gap.
 - Lower priority only with **clear evidence of improvement** across the answers; never lower below \`low\`.
 - If answers show no clear change (neither strong improvement nor reinforcement), keep the same priority.
 - If answers reinforce the gap but the priority would otherwise stay unchanged, bump one step: \`low\` → \`medium\`, \`medium\` → \`high\`, \`high\` stays \`high\`.
 - When the signal is ambiguous, prefer no change: keep \`status: "active"\` with the current priority.
-- Base your decision only on the topic, description, current priority, and review Q&A above — ignore any other context.`;
+- Base your decision only on the topic, angle, description, current priority, and review Q&A above — ignore any other context.`;
 }
 
 export function buildReviewSessionEvaluationPrompt(
@@ -62,6 +64,8 @@ export function buildReviewSessionEvaluationPrompt(
     buildPersonaBlock(),
     `${TOPIC_SECTION_HEADER}
 ${params.topic}`,
+    `${ANGLE_SECTION_HEADER}
+${params.angle}`,
     `${DESCRIPTION_SECTION_HEADER}
 ${params.description}`,
     `${CURRENT_PRIORITY_SECTION_HEADER}

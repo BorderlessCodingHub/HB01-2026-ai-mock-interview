@@ -34,6 +34,7 @@ function createSessionItem(
     reviewItemId: `review-item-${overrides.order ?? 0}`,
     order: overrides.order ?? 0,
     topic: overrides.topic ?? "system design",
+    angle: overrides.angle ?? "sharding strategies",
     description: overrides.description ?? "Need to study sharding",
     currentPriority: overrides.currentPriority ?? "high",
     turns: overrides.turns ?? [],
@@ -236,6 +237,7 @@ describe("ReviewSessionStreamService", () => {
     expect(questionGenerator.streamQuestion).toHaveBeenCalledWith(
       {
         topic: "system design",
+        angle: "sharding strategies",
         description: "Need to study sharding",
         turns: [],
         interviewLocale: "en",
@@ -334,6 +336,7 @@ describe("ReviewSessionStreamService", () => {
     expect(questionGenerator.streamQuestion).toHaveBeenCalledWith(
       {
         topic: "topic-b",
+        angle: "sharding strategies",
         description: "desc-b",
         turns: [
           ...itemTwoTurns,
@@ -382,6 +385,7 @@ describe("ReviewSessionStreamService", () => {
     expect(questionGenerator.streamQuestion).toHaveBeenCalledWith(
       {
         topic: "rest apis",
+        angle: "sharding strategies",
         description: "Need REST practice",
         turns: [],
         interviewLocale: "en",

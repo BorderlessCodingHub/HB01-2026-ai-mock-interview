@@ -121,11 +121,13 @@ describe("ReviewGenerationService", () => {
     function mockHappyPathDeps(
       items: Array<{
         topic: string;
+        angle: string;
         description: string;
         priority: "low" | "medium" | "high";
       }> = [
         {
           topic: "Communication",
+          angle: "conciseness under pressure",
           description: "Be concise",
           priority: "medium",
         },
@@ -188,6 +190,7 @@ describe("ReviewGenerationService", () => {
         [
           {
             topic: "Communication",
+            angle: "conciseness under pressure",
             description: "Be concise",
             priority: "medium",
           },

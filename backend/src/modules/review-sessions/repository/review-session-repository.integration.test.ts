@@ -37,6 +37,7 @@ async function seedReviewItems() {
     userId: user.id,
     sessionId: interviewSession.id,
     topic: "System Design",
+    angle: "scalability patterns",
     description: "Practice scalability patterns",
     priority: ReviewPriority.high,
   });
@@ -44,6 +45,7 @@ async function seedReviewItems() {
     userId: user.id,
     sessionId: interviewSession.id,
     topic: "Algorithms",
+    angle: "dynamic programming",
     description: "Review dynamic programming",
     priority: ReviewPriority.medium,
   });
@@ -66,12 +68,14 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: second.id,
           topic: second.topic,
+          angle: second.angle,
           description: second.description,
           currentPriority: second.priority,
         },
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -91,6 +95,7 @@ describe("ReviewSessionRepository (integration)", () => {
       reviewItemId: second.id,
       order: 0,
       topic: "algorithms",
+      angle: "dynamic programming",
       description: "Review dynamic programming",
       currentPriority: ReviewPriority.medium,
       turns: [],
@@ -105,6 +110,7 @@ describe("ReviewSessionRepository (integration)", () => {
       reviewItemId: first.id,
       order: 1,
       topic: "system design",
+      angle: "scalability patterns",
       description: "Practice scalability patterns",
       currentPriority: ReviewPriority.high,
     });
@@ -119,6 +125,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -141,6 +148,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -170,6 +178,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -204,6 +213,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -230,6 +240,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -266,6 +277,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -292,12 +304,14 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
         {
           reviewItemId: second.id,
           topic: second.topic,
+          angle: second.angle,
           description: second.description,
           currentPriority: second.priority,
         },
@@ -357,6 +371,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -369,6 +384,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: second.id,
           topic: second.topic,
+          angle: second.angle,
           description: second.description,
           currentPriority: second.priority,
         },
@@ -383,6 +399,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -402,6 +419,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: other.first.id,
           topic: other.first.topic,
+          angle: other.first.angle,
           description: other.first.description,
           currentPriority: other.first.priority,
         },
@@ -441,6 +459,7 @@ describe("ReviewSessionRepository (integration)", () => {
           {
             reviewItemId: first.id,
             topic: `${first.topic}-${i}`,
+            angle: first.angle,
             description: first.description,
             currentPriority: first.priority,
           },
@@ -481,6 +500,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: "older-completed",
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -493,6 +513,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: "newer-completed",
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -505,6 +526,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: "open-newer",
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -518,6 +540,7 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: first.id,
           topic: "open-older",
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },
@@ -569,12 +592,14 @@ describe("ReviewSessionRepository (integration)", () => {
         {
           reviewItemId: second.id,
           topic: second.topic,
+          angle: second.angle,
           description: second.description,
           currentPriority: second.priority,
         },
         {
           reviewItemId: first.id,
           topic: first.topic,
+          angle: first.angle,
           description: first.description,
           currentPriority: first.priority,
         },

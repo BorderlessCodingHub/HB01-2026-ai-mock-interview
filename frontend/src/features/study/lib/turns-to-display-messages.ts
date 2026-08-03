@@ -1,8 +1,12 @@
 import type { ReviewSessionItemReport } from "@/types/review-sessions";
 
+import { formatTopicAngleLabel } from "./format-topic-angle";
 import type { ReviewDisplayMessage } from "./review-display-messages";
 
-type TurnsSourceItem = Pick<ReviewSessionItemReport, "id" | "topic" | "turns">;
+type TurnsSourceItem = Pick<
+  ReviewSessionItemReport,
+  "id" | "topic" | "angle" | "turns"
+>;
 
 /**
  * Maps completed session items + turns into display messages with stable ids
@@ -19,7 +23,7 @@ export function turnsToDisplayMessages(
     messages.push({
       id: `${item.id}-topic`,
       kind: "topic",
-      topic: item.topic,
+      topic: formatTopicAngleLabel(item.topic, item.angle),
       itemIndex,
     });
 

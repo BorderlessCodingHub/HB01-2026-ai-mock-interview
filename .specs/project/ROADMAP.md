@@ -10,6 +10,7 @@
 | P2 | Interview Human Feedback (frontend integration) | Specified | [spec.md](../../frontend/.specs/features/interview-human-feedback/spec.md) |
 | P2 | Interview Speech-to-Text (AssemblyAI batch) | Implemented (E2E/UAT/commit pending) | [spec.md](../features/interview-speech-to-text/spec.md) · [context.md](../features/interview-speech-to-text/context.md) · [design.md](../features/interview-speech-to-text/design.md) · [tasks.md](../features/interview-speech-to-text/tasks.md) |
 | P2 | Study Session History (completed review sessions on `/study`) | Implemented (commit deferred) | [spec.md](../../frontend/.specs/features/study-session-history/spec.md) · [context.md](../../frontend/.specs/features/study-session-history/context.md) · [design.md](../../frontend/.specs/features/study-session-history/design.md) · [tasks.md](../../frontend/.specs/features/study-session-history/tasks.md) |
+| P2 | Review Item Angles (practice variety + study reinforcement) | Implemented (awaiting commit) | [spec.md](../features/review-item-angles/spec.md) · [context.md](../features/review-item-angles/context.md) · [design.md](../features/review-item-angles/design.md) · [tasks.md](../features/review-item-angles/tasks.md) |
 
 ## Milestones
 

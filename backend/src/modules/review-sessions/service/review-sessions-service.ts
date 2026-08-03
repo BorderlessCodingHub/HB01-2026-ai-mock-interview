@@ -28,6 +28,7 @@ export type ReviewSessionSummaryItem = {
   id: string;
   reviewItemId: string;
   topic: string;
+  angle: string;
   currentPriority: ReviewPriority;
 };
 
@@ -56,6 +57,7 @@ export type ReviewSessionReportItem = {
   id: string;
   reviewItemId: string;
   topic: string;
+  angle: string;
   currentPriority: ReviewPriority;
   turns: ReviewSessionTurn[];
   suggestedStatus: ReviewItemStatus | null;
@@ -70,6 +72,10 @@ export type ReviewSessionReport = {
   items: ReviewSessionReportItem[];
 };
 
+function formatTopicAngleLabel(topic: string, angle: string): string {
+  return `${topic} — ${angle}`;
+}
+
 function toSummaryItem(
   item: ReviewSessionItemRecord,
 ): ReviewSessionSummaryItem {
@@ -77,6 +83,7 @@ function toSummaryItem(
     id: item.id,
     reviewItemId: item.reviewItemId,
     topic: item.topic,
+    angle: item.angle,
     currentPriority: item.currentPriority,
   };
 }
@@ -86,6 +93,7 @@ function toReportItem(item: ReviewSessionItemRecord): ReviewSessionReportItem {
     id: item.id,
     reviewItemId: item.reviewItemId,
     topic: item.topic,
+    angle: item.angle,
     currentPriority: item.currentPriority,
     turns: item.turns,
     suggestedStatus: item.suggestedStatus,
@@ -107,7 +115,9 @@ function toListSummary(session: ReviewSessionRecord): ReviewSessionListSummary {
   return {
     id: session.id,
     status: session.status,
-    topics: session.items.map((item) => item.topic),
+    topics: session.items.map((item) =>
+      formatTopicAngleLabel(item.topic, item.angle),
+    ),
     createdAt: session.createdAt.toISOString(),
     completedAt: session.completedAt?.toISOString() ?? null,
   };
@@ -155,6 +165,7 @@ function buildCreateInputs(
     return {
       reviewItemId: item.id,
       topic: item.topic,
+      angle: item.angle,
       description: item.description,
       currentPriority: item.priority,
     };

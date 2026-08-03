@@ -4,6 +4,7 @@ import {
   buildInterviewContextPrompt,
   buildInterviewerChatPromptTemplate,
   buildInterviewerSystemPrompt,
+  COVERED_ANGLES_SECTION_HEADER,
   INTERVIEW_CONTEXT_SECTION_HEADER,
   JOB_DESCRIPTION_SECTION_HEADER,
   LANGUAGE_SECTION_HEADER,
@@ -58,6 +59,42 @@ describe("buildInterviewerSystemPrompt job description", () => {
 
     expect(prompt).not.toContain(INTERVIEW_CONTEXT_SECTION_HEADER);
     expect(prompt).not.toContain("Turn ");
+  });
+});
+
+describe("buildInterviewerSystemPrompt covered angles", () => {
+  const baseParams = {
+    level: "mid" as const,
+    resumeSummary: sampleResumeSummary,
+    interviewLocale: "en" as const,
+  };
+
+  it("omits covered angles section when list is empty or absent", () => {
+    expect(buildInterviewerSystemPrompt(baseParams)).not.toContain(
+      COVERED_ANGLES_SECTION_HEADER,
+    );
+    expect(
+      buildInterviewerSystemPrompt({ ...baseParams, coveredAngles: [] }),
+    ).not.toContain(COVERED_ANGLES_SECTION_HEADER);
+  });
+
+  it("includes covered angles and variety guidance when present", () => {
+    const coveredAngles = [
+      { topic: "caching", angle: "write-path invalidation" },
+      { topic: "caching", angle: "ttl eviction" },
+    ];
+    const prompt = buildInterviewerSystemPrompt({
+      ...baseParams,
+      coveredAngles,
+    });
+
+    expect(prompt).toContain(COVERED_ANGLES_SECTION_HEADER);
+    expect(prompt).toContain("Prefer facets not in this list");
+    expect(prompt).toContain("write-path invalidation");
+    expect(prompt).toContain("ttl eviction");
+    expect(prompt.indexOf(COVERED_ANGLES_SECTION_HEADER)).toBeLessThan(
+      prompt.indexOf(SECURITY_SECTION_HEADER),
+    );
   });
 });
 

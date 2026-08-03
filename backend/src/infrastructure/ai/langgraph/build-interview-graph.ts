@@ -83,6 +83,8 @@ export function buildInterviewGraph(
           isFinished: input.isFinished,
 
           runReview: input.runReview,
+
+          coveredAngles: input.coveredAngles ?? [],
         },
 
         {
