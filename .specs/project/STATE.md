@@ -1,11 +1,19 @@
 # State
 
-**Last Updated:** 2026-08-02  
-**Current Work:** Review Item Angles — Execute complete (no commits; await user commit / UAT)
+**Last Updated:** 2026-08-03  
+**Current Work:** Auto-start interview ready message (EN/PT) — Execute complete (no commits; await user commit / UAT)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-017: Auto-send locale-aware ready message on empty interview chat (2026-08-03)
+
+**Decision:** When `InterviewChat` loads an empty session (outcome of Start New Practice), auto-send a fixed ready string once per session mount. Copy is mapped from `interviewLocale`: EN `Hi, I'm ready for the interview!` / PT `Olá, estou pronto para a entrevista!`. Welcome CTA kept as fallback with the same strings.
+**Reason:** Remove second-click friction; keep kickoff transcript aligned with interview language.
+**Trade-off:** Any empty session auto-starts (not only via query flag); Strict Mode abort may leave fallback CTA until manual click in dev.
+**Impact:** FE only — `interview-ready-message.ts`, `interview-chat.tsx`, `interview-message-list.tsx`.
+**Spec:** `.specs/features/auto-start-interview-ready/spec.md`
 
 ### AD-016: Review item angles as missed-facet ledger (2026-08-02)
 
@@ -154,6 +162,9 @@ _None_
 
 ## Todos
 
+- [x] Specify + Execute auto-start-interview-ready (helper + InterviewChat auto-send + localized CTA)
+- [ ] Interactive UAT for auto-start-interview-ready (EN/PT Start New Practice; no double-send on existing session)
+- [x] Commit auto-start-interview-ready (atomic commits on `refact/interview-auto-start`)
 - [x] Specify + context review-item-angles (2026-08-02)
 - [x] Design + tasks review-item-angles (2026-08-02)
 - [x] Execute review-item-angles (schema, merge, practice, study, FE)
