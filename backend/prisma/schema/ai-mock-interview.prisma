@@ -97,6 +97,7 @@ model InterviewSession {
   reviewItems        ReviewItem[]
   interviewFeedbacks InterviewFeedback[]
   weakAnswers        WeakAnswer[]
+  topicCoverages     TopicCoverage[]
 
   @@map("interview_sessions")
   @@index([userId])
@@ -200,6 +201,22 @@ model WeakAnswer {
 
   @@map("weak_answers")
   @@index([userId])
+  @@index([sessionId])
+}
+
+model TopicCoverage {
+  id        String   @id @default(uuid())
+  userId    Int      @map("user_id")
+  sessionId String   @map("session_id")
+  topic     String
+  angle     String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("topic_coverage")
+  @@index([userId, createdAt(sort: Desc)])
   @@index([sessionId])
 }
 

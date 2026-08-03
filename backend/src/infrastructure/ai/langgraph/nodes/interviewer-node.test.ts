@@ -16,6 +16,7 @@ import {
   CONDUCT_SECTION_HEADER,
   FORMAT_SECTION_HEADER,
   INTERVIEW_CONTEXT_SECTION_HEADER,
+  PRIOR_COVERAGE_SECTION_HEADER,
 } from "@/modules/interview/prompts/interviewer-system-prompt";
 
 import { createInitialInterviewState } from "../interview-state";
@@ -94,6 +95,60 @@ describe("createInterviewerNode", () => {
     expect(systemContent).not.toContain(INTERVIEW_CONTEXT_SECTION_HEADER);
     expect(systemContent).not.toContain(CLOSING_EVALUATE_HEADER);
     expect(lastContent).toBe(expectedContext);
+  });
+
+  it("passes soft coverage hints into interviewer prompt when runReview is false", async () => {
+    const { invoke, model } = createMockModel("Follow-up on databases?");
+    const node = createInterviewerNode({ model });
+    const recentCoverage = [{ topic: "PostgreSQL", angle: "indexing" }];
+    const activeReviewTopics = [
+      { topic: "Caching", priority: "high", description: "Redis basics" },
+    ];
+    const state = {
+      ...baseState,
+      runReview: false,
+      recentCoverage,
+      activeReviewTopics,
+    };
+
+    await node(state);
+
+    const expectedSystemPrompt = buildInterviewerSystemPrompt({
+      level: state.level,
+      resumeSummary: state.resumeSummary,
+      interviewLocale: state.interviewLocale,
+      recentCoverage,
+      activeReviewTopics,
+    });
+    const systemContent = getRenderedSystemContent(
+      getChainInputMessages(invoke.mock.calls[0]?.[0]),
+    );
+
+    expect(systemContent).toBe(expectedSystemPrompt);
+    expect(systemContent).toContain(PRIOR_COVERAGE_SECTION_HEADER);
+    expect(systemContent).toContain("PostgreSQL");
+    expect(systemContent).toContain("Caching");
+  });
+
+  it("omits soft coverage section on closing path even when state has hints", async () => {
+    const { invoke, model } = createMockModel("## What you did well\n\n- Good depth");
+    const node = createInterviewerNode({ model });
+    const state = {
+      ...baseState,
+      runReview: true,
+      recentCoverage: [{ topic: "PostgreSQL", angle: "indexing" }],
+      activeReviewTopics: [{ topic: "Caching", priority: "high" }],
+    };
+
+    await node(state);
+
+    const systemContent = getRenderedSystemContent(
+      getChainInputMessages(invoke.mock.calls[0]?.[0]),
+    );
+
+    expect(systemContent).not.toContain(PRIOR_COVERAGE_SECTION_HEADER);
+    expect(systemContent).not.toContain("PostgreSQL");
+    expect(systemContent).toContain(CLOSING_EVALUATE_HEADER);
   });
 
   it("passes promptCacheKey from thread_id when runReview is false", async () => {

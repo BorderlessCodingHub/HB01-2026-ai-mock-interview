@@ -4,11 +4,13 @@ import { createUsageCaptureCallback } from "@/modules/token-usage/callbacks/toke
 import type { TokenUsageService } from "@/modules/token-usage/service/token-usage-service";
 import type { LlmUsage } from "@/modules/token-usage/types/llm-usage";
 import type { IInterviewGraph } from "@/modules/interview/protocols/interview-graph";
+import type { ICoverageExtractionQueue } from "@/modules/interview/protocols/coverage-extraction-queue";
 import type { IReviewGenerationQueue } from "@/modules/interview/protocols/review-generation-queue";
 import type { IWeakAnswerQueue } from "@/modules/interview/protocols/weak-answer-queue";
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
 import type { ReviewRepository } from "@/modules/interview/repository/review-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
+import type { SoftCoveragePromptLoader } from "@/modules/interview/service/soft-coverage-prompt-loader";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 import {
@@ -33,6 +35,8 @@ export class InterviewStreamService {
     private readonly graph: IInterviewGraph,
     private readonly reviewGenerationQueue: IReviewGenerationQueue,
     private readonly weakAnswerQueue: IWeakAnswerQueue,
+    private readonly coverageExtractionQueue: ICoverageExtractionQueue,
+    private readonly softCoveragePromptLoader: SoftCoveragePromptLoader,
     private readonly tokenUsageService: TokenUsageService,
     private readonly reviewRepository: ReviewRepository,
   ) {}
@@ -95,6 +99,30 @@ export class InterviewStreamService {
 
     res.on("close", onClose);
 
+    let recentCoverage: { topic: string; angle: string }[] = [];
+    let activeReviewTopics: {
+      topic: string;
+      priority: string;
+      description?: string;
+    }[] = [];
+
+    try {
+      const hints =
+        await this.softCoveragePromptLoader.loadSoftCoverageHints(userId);
+      recentCoverage = hints.coverage.map(({ topic, angle }) => ({
+        topic,
+        angle,
+      }));
+      activeReviewTopics = hints.activeReviews;
+    } catch (loadErr) {
+      logStreamError({
+        flow: "interview",
+        userId,
+        sessionId,
+        err: loadErr,
+      });
+    }
+
     const stream = this.graph.streamMessages(
       {
         messages: [{ role: "human", content }],
@@ -107,7 +135,8 @@ export class InterviewStreamService {
         interviewLocale,
         isFinished: session.isFinished,
         runReview: isFinalTurn,
-        coveredAngles,
+        recentCoverage,
+        activeReviewTopics,
       },
       {
         threadId: sessionId,
@@ -217,6 +246,17 @@ export class InterviewStreamService {
 
         try {
           await this.weakAnswerQueue.add({ sessionId });
+        } catch (enqueueErr) {
+          logStreamError({
+            flow: "interview",
+            userId,
+            sessionId,
+            err: enqueueErr,
+          });
+        }
+
+        try {
+          await this.coverageExtractionQueue.add({ sessionId });
         } catch (enqueueErr) {
           logStreamError({
             flow: "interview",

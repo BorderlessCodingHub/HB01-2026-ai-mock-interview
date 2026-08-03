@@ -84,7 +84,9 @@ export function buildInterviewGraph(
 
           runReview: input.runReview,
 
-          coveredAngles: input.coveredAngles ?? [],
+          recentCoverage: input.recentCoverage ?? [],
+
+          activeReviewTopics: input.activeReviewTopics ?? [],
         },
 
         {

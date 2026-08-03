@@ -6,6 +6,7 @@ import type {
   InterviewGraphStreamCompletion,
   InterviewGraphStreamToken,
 } from "@/modules/interview/protocols/interview-graph";
+import type { ICoverageExtractionQueue } from "@/modules/interview/protocols/coverage-extraction-queue";
 import type { IReviewGenerationQueue } from "@/modules/interview/protocols/review-generation-queue";
 import type { IWeakAnswerQueue } from "@/modules/interview/protocols/weak-answer-queue";
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
@@ -15,6 +16,7 @@ import type { ResumeRepository } from "@/modules/resumes/repository/resume-repos
 import type { TokenUsageService } from "@/modules/token-usage/service/token-usage-service";
 import { ConflictError, NotFoundError, TokenLimitExceededError } from "@/shared";
 
+import type { SoftCoveragePromptLoader } from "./soft-coverage-prompt-loader";
 import { InterviewStreamService } from "./stream-service";
 
 const structuredSummary = {
@@ -102,6 +104,8 @@ describe("InterviewStreamService", () => {
   let graph: IInterviewGraph;
   let reviewGenerationQueue: IReviewGenerationQueue;
   let weakAnswerQueue: IWeakAnswerQueue;
+  let coverageExtractionQueue: ICoverageExtractionQueue;
+  let softCoveragePromptLoader: SoftCoveragePromptLoader;
   let tokenUsageService: TokenUsageService;
   let reviewRepository: ReviewRepository;
   let service: InterviewStreamService;
@@ -137,6 +141,17 @@ describe("InterviewStreamService", () => {
       add: vi.fn().mockResolvedValue(undefined),
     };
 
+    coverageExtractionQueue = {
+      add: vi.fn().mockResolvedValue(undefined),
+    };
+
+    softCoveragePromptLoader = {
+      loadSoftCoverageHints: vi.fn().mockResolvedValue({
+        coverage: [],
+        activeReviews: [],
+      }),
+    } as unknown as SoftCoveragePromptLoader;
+
     tokenUsageService = {
       assertWithinLimit: vi.fn().mockResolvedValue(undefined),
       recordUsage: vi.fn().mockResolvedValue(undefined),
@@ -154,6 +169,8 @@ describe("InterviewStreamService", () => {
       graph,
       reviewGenerationQueue,
       weakAnswerQueue,
+      coverageExtractionQueue,
+      softCoveragePromptLoader,
       tokenUsageService,
       reviewRepository,
     );
@@ -638,6 +655,211 @@ describe("InterviewStreamService", () => {
     expect(messageRepository.createAi).not.toHaveBeenCalled();
     expect(sessionRepository.incrementTurnCount).not.toHaveBeenCalled();
     expect(reviewGenerationQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("loads soft coverage hints and passes them to streamMessages each turn", async () => {
+    const hints = {
+      coverage: [{ topic: "PostgreSQL", angle: "indexing", createdAt: new Date() }],
+      activeReviews: [
+        { topic: "Caching", priority: "high" as const, description: "Redis" },
+      ],
+    };
+
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue(
+      baseSession,
+    );
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(softCoveragePromptLoader.loadSoftCoverageHints).mockResolvedValue(
+      hints,
+    );
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Ok" };
+        return { content: "Ok" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 1,
+    });
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res);
+
+    expect(softCoveragePromptLoader.loadSoftCoverageHints).toHaveBeenCalledWith(1);
+    expect(graph.streamMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recentCoverage: [{ topic: "PostgreSQL", angle: "indexing" }],
+        activeReviewTopics: [
+          { topic: "Caching", priority: "high", description: "Redis" },
+        ],
+      }),
+      expect.any(Object),
+    );
+    expect(coverageExtractionQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("does not enqueue coverage extraction on mid-turn", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue(
+      baseSession,
+    );
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Ok" };
+        return { content: "Ok" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 1,
+    });
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res);
+
+    expect(coverageExtractionQueue.add).not.toHaveBeenCalled();
+  });
+
+  it("enqueues coverage extraction on final turn after weak-answer enqueue", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue({
+      ...baseSession,
+      turnCount: 4,
+      maxTurns: 5,
+    });
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Final answer" };
+        return { content: "Final answer" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 5,
+    });
+    vi.mocked(sessionRepository.markFinished).mockResolvedValue({
+      ...baseSession,
+      turnCount: 5,
+      isFinished: true,
+      reviewGenerationStatus: "pending",
+    });
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res);
+
+    expect(weakAnswerQueue.add).toHaveBeenCalledWith({
+      sessionId: baseSession.id,
+    });
+    expect(coverageExtractionQueue.add).toHaveBeenCalledWith({
+      sessionId: baseSession.id,
+    });
+  });
+
+  it("continues with empty hints when soft coverage load fails", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue(
+      baseSession,
+    );
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(softCoveragePromptLoader.loadSoftCoverageHints).mockRejectedValue(
+      new Error("DB unavailable"),
+    );
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Ok" };
+        return { content: "Ok" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 1,
+    });
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res);
+
+    expect(graph.streamMessages).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recentCoverage: [],
+        activeReviewTopics: [],
+      }),
+      expect.any(Object),
+    );
+
+    const output = res.chunks.join("");
+    expect(output).toContain("data: [DONE]");
+    expect(output).not.toContain("event: error");
+  });
+
+  it("still finishes the turn when coverage extraction enqueue fails", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue({
+      ...baseSession,
+      turnCount: 4,
+      maxTurns: 5,
+    });
+    vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+      id: "resume-1",
+      structuredSummary,
+    } as unknown as Awaited<ReturnType<ResumeRepository["findByIdAndUserId"]>>);
+    vi.mocked(graph.streamMessages).mockReturnValue(
+      (async function* () {
+        yield { content: "Final answer" };
+        return { content: "Final answer" };
+      })(),
+    );
+    vi.mocked(sessionRepository.incrementTurnCount).mockResolvedValue({
+      ...baseSession,
+      turnCount: 5,
+    });
+    vi.mocked(sessionRepository.markFinished).mockResolvedValue({
+      ...baseSession,
+      turnCount: 5,
+      isFinished: true,
+      reviewGenerationStatus: "pending",
+    });
+    vi.mocked(coverageExtractionQueue.add).mockRejectedValue(
+      new Error("Redis unavailable"),
+    );
+    vi.mocked(messageRepository.createHuman).mockResolvedValue({} as never);
+    vi.mocked(messageRepository.createAi).mockResolvedValue({} as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res);
+
+    expect(coverageExtractionQueue.add).toHaveBeenCalledWith({
+      sessionId: baseSession.id,
+    });
+
+    const output = res.chunks.join("");
+    expect(output).toContain("event: meta");
+    expect(output).toContain('"isFinished":true');
+    expect(output).toContain("data: [DONE]");
+    expect(output).not.toContain("event: error");
   });
 
   it("emits error SSE event and DONE when graph stream fails", async () => {

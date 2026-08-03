@@ -77,6 +77,11 @@ export type ReviewSessionItem = Prisma.ReviewSessionItemModel
  */
 export type WeakAnswer = Prisma.WeakAnswerModel
 /**
+ * Model TopicCoverage
+ * 
+ */
+export type TopicCoverage = Prisma.TopicCoverageModel
+/**
  * Model InterviewFeedback
  * 
  */
