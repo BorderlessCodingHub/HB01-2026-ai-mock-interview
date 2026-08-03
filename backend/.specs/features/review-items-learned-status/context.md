@@ -127,7 +127,7 @@ Exact schema (columns vs JSON, Prisma model names) is a **Design-phase** decisio
 
 ## Deferred Ideas
 
-- **Normal-interview topic diversity + "mastered topic" tracking**: a new `topic_coverage` (or similarly named) table recording `gap | mastered` outcomes per topic, used to exclude already-covered/mastered topics from future normal-interview topic selection, so normal interviews keep surfacing genuinely new material instead of repeating. This is a **separate feature** to design after (or alongside) this one; normal interviews should stop mutating existing review items regardless of when that feature lands.
+- **Normal-interview topic diversity + "mastered topic" tracking**: originally envisioned as hard exclude via `topic_coverage`. **Superseded for MVP by** [Interview Soft Coverage](../interview-soft-coverage/spec.md) (soft prompt guidance with free-text topic+angle; no hard exclude). Hard exclude / mastered tracking remains a possible follow-up if soft guidance is insufficient.
 - System-suggested Review Session prompts (e.g. "you have 5 high-priority items, want to review them?") — deferred; manual trigger only for now.
 - User-configurable `N` (number of questions per item) — deferred; fixed default for MVP.
 - Automatic priority **decay** for active items not reviewed in a while — still deferred, unchanged from original discovery.

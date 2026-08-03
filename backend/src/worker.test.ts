@@ -15,6 +15,10 @@ vi.mock("@/infrastructure/queue/weak-answer-queue", () => ({
   WEAK_ANSWER_QUEUE_NAME: "weak-answer-generation",
 }));
 
+vi.mock("@/infrastructure/queue/coverage-extraction-queue", () => ({
+  COVERAGE_EXTRACTION_QUEUE_NAME: "coverage-extraction",
+}));
+
 vi.mock("@/factories/resumes/resume-service-factory", () => ({
   makeResumeService: vi.fn(() => ({ process: vi.fn() })),
 }));
@@ -25,6 +29,10 @@ vi.mock("@/factories/interview/review-generation-service-factory", () => ({
 
 vi.mock("@/factories/interview/weak-answer-generation-service-factory", () => ({
   makeWeakAnswerGenerationService: vi.fn(() => ({ process: vi.fn() })),
+}));
+
+vi.mock("@/factories/interview/coverage-extraction-service-factory", () => ({
+  makeCoverageExtractionService: vi.fn(() => ({ process: vi.fn() })),
 }));
 
 vi.mock("@/modules/interview/repository/session-repository", () => ({
@@ -39,9 +47,11 @@ vi.mock("bullmq", () => ({
 
 import {
   handleReviewJobExhaustedFailure,
+  logCoverageExtractionJobResult,
   logResumeJobResult,
   logReviewJobResult,
   logWeakAnswerJobResult,
+  processCoverageExtractionJob,
   processResumeJob,
   processReviewJob,
   processWeakAnswerJob,
@@ -253,6 +263,57 @@ describe("logWeakAnswerJobResult", () => {
 
     expect(warnSpy).toHaveBeenCalledWith(
       "Weak answer job job-2 skipped (session session-2): not_finished",
+    );
+  });
+});
+
+describe("processCoverageExtractionJob", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("delegates to coverageExtractionService.process and returns the result", async () => {
+    const ready = { status: "ready" as const, sessionId: "session-1" };
+    const process = vi.fn().mockResolvedValue(ready);
+
+    const result = await processCoverageExtractionJob("session-1", {
+      process,
+    });
+
+    expect(process).toHaveBeenCalledWith("session-1");
+    expect(result).toEqual(ready);
+  });
+});
+
+describe("logCoverageExtractionJobResult", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("logs info when processing succeeds", () => {
+    const infoSpy = vi.spyOn(logger, "info");
+
+    logCoverageExtractionJobResult("job-1", {
+      status: "ready",
+      sessionId: "session-1",
+    });
+
+    expect(infoSpy).toHaveBeenCalledWith(
+      "Coverage extraction job job-1 succeeded (session session-1)",
+    );
+  });
+
+  it("logs warn when skipped", () => {
+    const warnSpy = vi.spyOn(logger, "warn");
+
+    logCoverageExtractionJobResult("job-2", {
+      status: "skipped",
+      sessionId: "session-2",
+      reason: "already_processed",
+    });
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      "Coverage extraction job job-2 skipped (session session-2): already_processed",
     );
   });
 });

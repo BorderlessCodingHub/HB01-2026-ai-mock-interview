@@ -5,6 +5,7 @@ import {
   reviewItemsGeneratorOutputSchema,
   streamMessageSchema,
   submitFeedbackSchema,
+  topicCoverageGeneratorOutputSchema,
   weakAnswersGeneratorOutputSchema,
 } from "./interview-schemas";
 
@@ -397,6 +398,104 @@ describe("weakAnswersGeneratorOutputSchema", () => {
 
   it("rejects missing items field", () => {
     const result = weakAnswersGeneratorOutputSchema.safeParse({});
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("topicCoverageGeneratorOutputSchema", () => {
+  const validOutput = {
+    items: [
+      {
+        topic: "System design trade-offs",
+        angle: "Compare caching strategies for read-heavy APIs.",
+      },
+      {
+        topic: "Concurrency",
+        angle: "Explain race conditions and mitigation patterns.",
+      },
+    ],
+  };
+
+  it("accepts a valid items array", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse(validOutput);
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual(validOutput);
+    }
+  });
+
+  it("accepts an empty items array", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({ items: [] });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects more than 8 items", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: Array.from({ length: 9 }, (_, index) => ({
+        topic: `Topic ${index + 1}`,
+        angle: `Angle ${index + 1}`,
+      })),
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("trims surrounding whitespace from topic and angle", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: [
+        {
+          topic: "  Distributed systems  ",
+          angle: "  CAP theorem trade-offs  ",
+        },
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.items[0]).toEqual({
+        topic: "Distributed systems",
+        angle: "CAP theorem trade-offs",
+      });
+    }
+  });
+
+  it("rejects item with empty topic", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: [{ topic: "  ", angle: "Valid angle." }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects item with empty angle", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: [{ topic: "Valid topic", angle: "  " }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects topic over 120 characters", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: [{ topic: "x".repeat(121), angle: "Valid angle." }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects angle over 200 characters", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({
+      items: [{ topic: "Valid topic", angle: "x".repeat(201) }],
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects missing items field", () => {
+    const result = topicCoverageGeneratorOutputSchema.safeParse({});
 
     expect(result.success).toBe(false);
   });

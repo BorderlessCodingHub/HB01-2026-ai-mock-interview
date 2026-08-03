@@ -57,6 +57,15 @@ export const weakAnswersGeneratorOutputSchema = z.object({
   items: z.array(weakAnswerItemSchema),
 });
 
+const topicCoverageItemSchema = z.object({
+  topic: z.string().trim().min(1).max(120),
+  angle: z.string().trim().min(1).max(200),
+});
+
+export const topicCoverageGeneratorOutputSchema = z.object({
+  items: z.array(topicCoverageItemSchema).max(8),
+});
+
 export const feedbackRatingSchema = z.enum(["up", "down"]);
 
 export const submitFeedbackSchema = z.object({
@@ -75,6 +84,10 @@ export type AnswerEvaluation = z.infer<typeof answerEvaluationSchema>;
 export type WeakAnswerItem = z.infer<typeof weakAnswerItemSchema>;
 export type WeakAnswersGeneratorOutput = z.infer<
   typeof weakAnswersGeneratorOutputSchema
+>;
+export type TopicCoverageItem = z.infer<typeof topicCoverageItemSchema>;
+export type TopicCoverageGeneratorOutput = z.infer<
+  typeof topicCoverageGeneratorOutputSchema
 >;
 export type FeedbackRating = z.infer<typeof feedbackRatingSchema>;
 export type SubmitFeedbackInput = z.infer<typeof submitFeedbackSchema>;

@@ -1,4 +1,8 @@
 import type { BaseCallbackHandler } from "@langchain/core/callbacks/base";
+import type {
+  ActiveReviewTopicItem,
+  RecentCoverageItem,
+} from "@/modules/interview/prompts/interviewer-system-prompt";
 import type { InterviewLevel } from "@/modules/interview/validations/interview-schemas";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 import type { LlmUsage } from "@/modules/token-usage/types/llm-usage";
@@ -26,7 +30,8 @@ export type InterviewGraphInput = {
   interviewLocale: InterviewLocale;
   isFinished: boolean;
   runReview: boolean;
-  coveredAngles?: { topic: string; angle: string }[];
+  recentCoverage?: RecentCoverageItem[];
+  activeReviewTopics?: ActiveReviewTopicItem[];
 };
 
 export type InterviewGraphStreamOptions = {

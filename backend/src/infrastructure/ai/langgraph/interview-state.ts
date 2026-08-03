@@ -1,6 +1,10 @@
 import type { BaseMessage } from "@langchain/core/messages";
 import { Annotation, messagesStateReducer } from "@langchain/langgraph";
 
+import type {
+  ActiveReviewTopicItem,
+  RecentCoverageItem,
+} from "@/modules/interview/prompts/interviewer-system-prompt";
 import type { InterviewLevel } from "@/modules/interview/validations/interview-schemas";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 import type { InterviewLocale } from "@/shared/interview-locale/interview-locale";
@@ -19,7 +23,8 @@ export const InterviewGraphStateAnnotation = Annotation.Root({
   interviewLocale: Annotation<InterviewLocale>,
   isFinished: Annotation<boolean>,
   runReview: Annotation<boolean>,
-  coveredAngles: Annotation<{ topic: string; angle: string }[]>,
+  recentCoverage: Annotation<RecentCoverageItem[]>(),
+  activeReviewTopics: Annotation<ActiveReviewTopicItem[]>(),
 });
 
 export type InterviewGraphState = typeof InterviewGraphStateAnnotation.State;
@@ -35,7 +40,8 @@ export type CreateInitialInterviewStateParams = {
   jobDescription?: string | null;
   isFinished?: boolean;
   runReview?: boolean;
-  coveredAngles?: { topic: string; angle: string }[];
+  recentCoverage?: RecentCoverageItem[];
+  activeReviewTopics?: ActiveReviewTopicItem[];
 };
 
 export function createInitialInterviewState(
@@ -52,6 +58,7 @@ export function createInitialInterviewState(
     interviewLocale: params.interviewLocale,
     isFinished: params.isFinished ?? false,
     runReview: params.runReview ?? false,
-    coveredAngles: params.coveredAngles ?? [],
+    recentCoverage: params.recentCoverage ?? [],
+    activeReviewTopics: params.activeReviewTopics ?? [],
   };
 }
