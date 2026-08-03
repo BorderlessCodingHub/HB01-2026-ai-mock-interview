@@ -6,10 +6,7 @@ import {
   INSTRUCTIONS_SECTION_HEADER,
   TRANSCRIPT_SECTION_HEADER,
 } from "@/modules/interview/prompts/topic-coverage-generator-prompt";
-import {
-  buildInterviewLocalePromptBlock,
-  LANGUAGE_SECTION_HEADER,
-} from "@/shared/interview-locale/interview-locale";
+import { LANGUAGE_SECTION_HEADER } from "@/shared/interview-locale/interview-locale";
 
 const sampleTranscript =
   "Human: How do you handle caching?\nAI: What trade-offs did you consider?";
@@ -17,24 +14,7 @@ const sampleTranscript =
 describe("buildTopicCoverageGeneratorPrompt", () => {
   const baseParams = {
     transcript: sampleTranscript,
-    interviewLocale: "en" as const,
   };
-
-  it.each(["en", "pt"] as const)(
-    "ends with the %s locale language block after instructions",
-    (interviewLocale) => {
-      const prompt = buildTopicCoverageGeneratorPrompt({
-        transcript: sampleTranscript,
-        interviewLocale,
-      });
-      const localeBlock = buildInterviewLocalePromptBlock(interviewLocale);
-
-      expect(prompt.endsWith(localeBlock)).toBe(true);
-      expect(prompt.indexOf(INSTRUCTIONS_SECTION_HEADER)).toBeLessThan(
-        prompt.lastIndexOf(LANGUAGE_SECTION_HEADER),
-      );
-    },
-  );
 
   it("includes the interview transcript", () => {
     const prompt = buildTopicCoverageGeneratorPrompt(baseParams);
@@ -59,12 +39,23 @@ describe("buildTopicCoverageGeneratorPrompt", () => {
     expect(prompt).toMatch(/vague|overview|discussion/i);
   });
 
-  it("still ends with locale block when job description is present", () => {
+  it("requires English topic and angle labels regardless of transcript language", () => {
+    const prompt = buildTopicCoverageGeneratorPrompt(baseParams);
+
+    expect(prompt).toMatch(/Always write topic and angle in English only/i);
+    expect(prompt).toMatch(/internal labels|English system prompt/i);
+    expect(prompt).not.toContain(LANGUAGE_SECTION_HEADER);
+    expect(prompt.indexOf(INSTRUCTIONS_SECTION_HEADER)).toBeGreaterThan(-1);
+  });
+
+  it("ends with instructions when job description is present", () => {
     const prompt = buildTopicCoverageGeneratorPrompt({
       ...baseParams,
       jobDescription: "Senior backend engineer",
     });
 
-    expect(prompt.endsWith(buildInterviewLocalePromptBlock("en"))).toBe(true);
+    expect(prompt).toContain("Senior backend engineer");
+    expect(prompt).not.toContain(LANGUAGE_SECTION_HEADER);
+    expect(prompt.includes(INSTRUCTIONS_SECTION_HEADER)).toBe(true);
   });
 });
