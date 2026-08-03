@@ -6,6 +6,7 @@ import {
 } from "@/shared/interview-locale/interview-locale";
 
 import {
+  ANGLE_SECTION_HEADER,
   buildReviewSessionQuestionPrompt,
   DESCRIPTION_SECTION_HEADER,
   INSTRUCTIONS_SECTION_HEADER,
@@ -16,20 +17,24 @@ import {
 
 describe("buildReviewSessionQuestionPrompt", () => {
   const topic = "System design trade-offs";
+  const angle = "CAP theorem implications";
   const description = "Practice articulating CAP theorem implications.";
 
-  it("includes persona, topic, description, and single-question instruction for question 1", () => {
+  it("includes persona, topic, angle, description, and single-question instruction for question 1", () => {
     const prompt = buildReviewSessionQuestionPrompt({
       topic,
+      angle,
       description,
       turns: [],
       interviewLocale: "en",
     });
 
     expect(prompt).toContain(PERSONA_SECTION_HEADER);
-    expect(prompt).toContain("exactly one topic");
+    expect(prompt).toContain("specific angle within a topic");
     expect(prompt).toContain(TOPIC_SECTION_HEADER);
     expect(prompt).toContain(topic);
+    expect(prompt).toContain(ANGLE_SECTION_HEADER);
+    expect(prompt).toContain(angle);
     expect(prompt).toContain(DESCRIPTION_SECTION_HEADER);
     expect(prompt).toContain(description);
     expect(prompt).toContain(INSTRUCTIONS_SECTION_HEADER);
@@ -52,6 +57,7 @@ describe("buildReviewSessionQuestionPrompt", () => {
 
     const prompt = buildReviewSessionQuestionPrompt({
       topic,
+      angle,
       description,
       turns,
       interviewLocale: "en",
@@ -71,6 +77,7 @@ describe("buildReviewSessionQuestionPrompt", () => {
     (interviewLocale) => {
       const prompt = buildReviewSessionQuestionPrompt({
         topic,
+        angle,
         description,
         turns: [],
         interviewLocale,

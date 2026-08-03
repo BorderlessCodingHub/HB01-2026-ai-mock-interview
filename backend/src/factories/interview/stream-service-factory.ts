@@ -26,5 +26,6 @@ export function makeInterviewStreamService(): InterviewStreamService {
       new ReviewRepository(),
     ),
     makeTokenUsageService(),
+    new ReviewRepository(),
   );
 }

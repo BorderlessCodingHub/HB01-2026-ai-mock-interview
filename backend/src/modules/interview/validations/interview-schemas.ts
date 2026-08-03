@@ -28,6 +28,7 @@ export const reviewPrioritySchema = z.enum(["low", "medium", "high"]);
 
 const reviewItemSchema = z.object({
   topic: z.string().trim().min(1, "Topic is required"),
+  angle: z.string().trim().min(1, "Angle is required"),
   description: z.string().trim().min(1, "Description is required"),
   priority: reviewPrioritySchema,
 });
