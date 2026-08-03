@@ -391,6 +391,7 @@ export const ModelName = {
   ReviewSession: 'ReviewSession',
   ReviewSessionItem: 'ReviewSessionItem',
   WeakAnswer: 'WeakAnswer',
+  TopicCoverage: 'TopicCoverage',
   InterviewFeedback: 'InterviewFeedback',
   User: 'User',
   UserTokenUsage: 'UserTokenUsage'
@@ -409,7 +410,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "resume" | "interviewSession" | "interviewMessage" | "reviewItem" | "reviewSession" | "reviewSessionItem" | "weakAnswer" | "interviewFeedback" | "user" | "userTokenUsage"
+    modelProps: "resume" | "interviewSession" | "interviewMessage" | "reviewItem" | "reviewSession" | "reviewSessionItem" | "weakAnswer" | "topicCoverage" | "interviewFeedback" | "user" | "userTokenUsage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -931,6 +932,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    TopicCoverage: {
+      payload: Prisma.$TopicCoveragePayload<ExtArgs>
+      fields: Prisma.TopicCoverageFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.TopicCoverageFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.TopicCoverageFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        findFirst: {
+          args: Prisma.TopicCoverageFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.TopicCoverageFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        findMany: {
+          args: Prisma.TopicCoverageFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>[]
+        }
+        create: {
+          args: Prisma.TopicCoverageCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        createMany: {
+          args: Prisma.TopicCoverageCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.TopicCoverageCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>[]
+        }
+        delete: {
+          args: Prisma.TopicCoverageDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        update: {
+          args: Prisma.TopicCoverageUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        deleteMany: {
+          args: Prisma.TopicCoverageDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.TopicCoverageUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.TopicCoverageUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>[]
+        }
+        upsert: {
+          args: Prisma.TopicCoverageUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$TopicCoveragePayload>
+        }
+        aggregate: {
+          args: Prisma.TopicCoverageAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateTopicCoverage>
+        }
+        groupBy: {
+          args: Prisma.TopicCoverageGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TopicCoverageGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.TopicCoverageCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.TopicCoverageCountAggregateOutputType> | number
+        }
+      }
+    }
     InterviewFeedback: {
       payload: Prisma.$InterviewFeedbackPayload<ExtArgs>
       fields: Prisma.InterviewFeedbackFieldRefs
@@ -1302,6 +1377,18 @@ export const WeakAnswerScalarFieldEnum = {
 } as const
 
 export type WeakAnswerScalarFieldEnum = (typeof WeakAnswerScalarFieldEnum)[keyof typeof WeakAnswerScalarFieldEnum]
+
+
+export const TopicCoverageScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  sessionId: 'sessionId',
+  topic: 'topic',
+  angle: 'angle',
+  createdAt: 'createdAt'
+} as const
+
+export type TopicCoverageScalarFieldEnum = (typeof TopicCoverageScalarFieldEnum)[keyof typeof TopicCoverageScalarFieldEnum]
 
 
 export const InterviewFeedbackScalarFieldEnum = {
@@ -1729,6 +1816,7 @@ export type GlobalOmitConfig = {
   reviewSession?: Prisma.ReviewSessionOmit
   reviewSessionItem?: Prisma.ReviewSessionItemOmit
   weakAnswer?: Prisma.WeakAnswerOmit
+  topicCoverage?: Prisma.TopicCoverageOmit
   interviewFeedback?: Prisma.InterviewFeedbackOmit
   user?: Prisma.UserOmit
   userTokenUsage?: Prisma.UserTokenUsageOmit

@@ -48,6 +48,8 @@ export function createInterviewerNode(deps: InterviewerNodeDeps = {}) {
           maxTurns: state.maxTurns,
           interviewLocale: state.interviewLocale,
           jobDescription: state.jobDescription,
+          recentCoverage: state.recentCoverage ?? [],
+          activeReviewTopics: state.activeReviewTopics ?? [],
         });
 
     const promptCacheKey = state.runReview

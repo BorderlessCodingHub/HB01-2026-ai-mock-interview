@@ -30,7 +30,7 @@ This feature introduces a **`learned` lifecycle** for review items, allows **pri
 | Spaced repetition / reminders | Separate product feature |
 | Per-item confidence scores or rubric breakdown | LLM uses holistic per-item judgment only |
 | Editing `topic` or `description` manually | Still LLM/system-managed; manual status only |
-| Normal-interview topic diversity / "mastered topic" tracking (`topic_coverage`) | Separate follow-up feature; only the *removal* of review-item mutation from normal interviews is in scope here |
+| Normal-interview topic diversity / "mastered topic" tracking (`topic_coverage`) | Follow-up; MVP delivered as soft coverage — see [interview-soft-coverage](../interview-soft-coverage/spec.md) |
 | System-suggested Review Session prompts (e.g. "you have 5 high-priority items") | Manual trigger only for this iteration |
 | User-configurable number of questions per item (`N`) | Fixed default for MVP |
 | Automatic deletion of learned items | Archive only; user may DELETE explicitly |

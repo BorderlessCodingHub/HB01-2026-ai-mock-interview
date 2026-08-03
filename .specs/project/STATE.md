@@ -1,11 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-28  
-**Current Work:** Study Session History — Execute T1–T14 complete (no commits; await user commit / UAT)
+**Last Updated:** 2026-08-02  
+**Current Work:** Interview Soft Coverage — Execute complete (T1–T11); commits deferred per request
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-016: Practice soft coverage (topic+angle), not hard exclude (2026-08-02)
+
+**Decision:** Practice interviews get **balanced soft coverage**: async post-interview LLM extracts ≤8 free-text `{topic, angle}` rows (append-only, retain last ~100/user); next session injects ≤12 coverage + ≤8 active review topics once into the interviewer system prompt. Weak = active review backlog (mastery on `/study`); strong/covered = lower priority, different angle if revisited. Soft prompt only — no hard exclude, regenerate, angle enum, transcript dump, or Study CTA in MVP.
+**Reason:** Cross-session repetition is massante; full history in prompt is too expensive; hard novelty exhausts the CV and blurs Practice vs Study.
+**Trade-off:** Soft guidance can still occasionally echo; no candidate-facing coverage UI/status in MVP.
+**Impact:** New backend feature `interview-soft-coverage` (table + BullMQ job + interviewer prompt); finish path enqueues alongside review/weak-answer jobs.
+**Spec:** `backend/.specs/features/interview-soft-coverage/spec.md`  
+**Context:** `backend/.specs/features/interview-soft-coverage/context.md`
 
 ### AD-015: Study Session History on `/practice`-like `/study` shell (2026-07-28)
 
@@ -83,6 +92,13 @@ _None_
 
 ## Lessons Learned
 
+### L-006: ISC-21 soft-hint load every turn (2026-08-02)
+
+**Context:** Spec ISC-21 said inject soft coverage once per session into graph/checkpoint.  
+**Problem:** Approved design intentionally loads soft hints every `streamTurn` (same as résumé) to avoid LangGraph empty-array overwrite of checkpointed state.  
+**Solution:** Implemented per design; marked SPEC_DEVIATION on ISC-21 in feature `spec.md`.  
+**Prevents:** Reverting to once-only load and regressing prompt emptiness mid-session.
+
 ### L-005: Parallel Execute agents racing git commit (2026-07-21)
 
 **Context:** Interview STT Phase 2 launched T3–T8 in parallel with each agent committing.  
@@ -139,11 +155,16 @@ _None_
 - [ ] Export interview transcript as PDF
 - [ ] Bull Board / admin UI for queue ops — Captured during: async-review-items-generation
 - [ ] Persist STT audio/transcripts; use language_code to suggest interviewLocale; streaming STT; auto-send after transcribe — Captured during: interview-speech-to-text
+- [ ] Hard exclude / regenerate / embeddings / UI modes / Study CTA for practice coverage — Captured during: interview-soft-coverage (soft MVP first; replaces prior hard `topic_coverage` exclude idea from review-items-learned-status)
 
 ---
 
 ## Todos
 
+- [x] Grill-me + Specify interview-soft-coverage → `spec.md` + `context.md` (2026-08-02)
+- [x] Design phase for interview-soft-coverage (`design.md`) — approved
+- [x] Tasks breakdown for interview-soft-coverage (`tasks.md`) — approved via Execute
+- [x] Execute T1–T11 interview-soft-coverage (commits deferred) (2026-08-02)
 - [x] Grill-me + Specify study-session-history → `spec.md` + `context.md` (2026-07-28)
 - [x] Design phase for study-session-history (`design.md`) — approved
 - [x] Tasks breakdown for study-session-history (`tasks.md`) — draft, awaiting approval
@@ -186,7 +207,7 @@ _None_
 
 ## Preferences
 
-- Grill-me used for disambiguation before Specify on interview-locale and interview-speech-to-text
+- Grill-me used for disambiguation before Specify on interview-locale, interview-speech-to-text, and interview-soft-coverage
 - Spec-driven Specify used for async-review-items-generation (architecture pre-aligned in chat)
 - Prefer single end-of-feature commit over per-task commits when requested
 - External providers must stay behind ports/adapters (R2, mailer, LLM generators, STT)
