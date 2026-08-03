@@ -40,7 +40,6 @@ export function createTopicCoverageGeneratorNode(
   ): Promise<TopicCoverageGeneratorOutput> {
     const promptText = buildTopicCoverageGeneratorPrompt({
       transcript: input.transcript,
-      interviewLocale: input.interviewLocale,
       jobDescription: input.jobDescription,
     });
 
