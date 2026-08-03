@@ -146,6 +146,7 @@ _None_
 
 ## Deferred Ideas
 
+- [ ] Normal-interview topic diversity via angles on review_items (fulfilled by review-item-angles) — Captured during: review-items-learned-status / review-item-angles
 - [ ] App-wide UI i18n (`appLocale` or similar) — Captured during: interview-locale
 - [ ] DB table for editable language prompt instructions — Captured during: interview-locale
 - [ ] Analytics dashboard for EN vs PT session counts — Captured during: interview-locale

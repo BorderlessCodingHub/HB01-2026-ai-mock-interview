@@ -60,6 +60,7 @@ export function createReviewSessionQuestionNode(
     > {
       const promptText = buildReviewSessionQuestionPrompt({
         topic: input.topic,
+        angle: input.angle,
         description: input.description,
         turns: input.turns,
         interviewLocale: input.interviewLocale,

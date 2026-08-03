@@ -8,6 +8,7 @@ import type { ICoverageExtractionQueue } from "@/modules/interview/protocols/cov
 import type { IReviewGenerationQueue } from "@/modules/interview/protocols/review-generation-queue";
 import type { IWeakAnswerQueue } from "@/modules/interview/protocols/weak-answer-queue";
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
+import type { ReviewRepository } from "@/modules/interview/repository/review-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
 import type { SoftCoveragePromptLoader } from "@/modules/interview/service/soft-coverage-prompt-loader";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
@@ -37,6 +38,7 @@ export class InterviewStreamService {
     private readonly coverageExtractionQueue: ICoverageExtractionQueue,
     private readonly softCoveragePromptLoader: SoftCoveragePromptLoader,
     private readonly tokenUsageService: TokenUsageService,
+    private readonly reviewRepository: ReviewRepository,
   ) {}
 
   async streamTurn(
@@ -72,6 +74,12 @@ export class InterviewStreamService {
     const isFinalTurn = session.turnCount + 1 >= session.maxTurns;
 
     await this.tokenUsageService.assertWithinLimit(userId);
+
+    const reviewItems = await this.reviewRepository.listByUserId(userId);
+    const coveredAngles = reviewItems.map((item) => ({
+      topic: item.topic,
+      angle: item.angle,
+    }));
 
     const interviewerUsageCapture = createUsageCaptureCallback();
 

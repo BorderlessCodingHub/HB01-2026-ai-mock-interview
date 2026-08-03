@@ -13,6 +13,7 @@ function existingItem(
     userId: 1,
     sessionId: "old-session",
     topic: "communication",
+    angle: "conciseness under pressure",
     description: "Old",
     priority: "low",
     status: "active",
@@ -29,8 +30,8 @@ describe("ReviewMergeService", () => {
 
   beforeEach(() => {
     reviewRepository = {
-      findByUserIdAndTopicCaseInsensitive: vi.fn(),
-      findSimilarByUserIdAndTopic: vi.fn(),
+      findByUserIdAndTopicAngleCaseInsensitive: vi.fn(),
+      findSimilarByUserIdAndTopicAngle: vi.fn(),
       upsert: vi.fn(),
       updateByIdAndUserId: vi.fn(),
     } as unknown as ReviewRepository;
@@ -38,17 +39,18 @@ describe("ReviewMergeService", () => {
     service = new ReviewMergeService(reviewRepository);
   });
 
-  it("inserts a new review item when topic does not exist", async () => {
+  it("inserts a new review item when topic+angle does not exist", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(null);
-    vi.mocked(reviewRepository.findSimilarByUserIdAndTopic).mockResolvedValue(
-      null,
-    );
+    vi.mocked(
+      reviewRepository.findSimilarByUserIdAndTopicAngle,
+    ).mockResolvedValue(null);
 
     await service.upsertItems(1, "session-1", [
       {
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Be concise",
         priority: "medium",
       },
@@ -58,6 +60,7 @@ describe("ReviewMergeService", () => {
       userId: 1,
       sessionId: "session-1",
       topic: "Communication",
+      angle: "conciseness under pressure",
       description: "Be concise",
       priority: "medium",
     });
@@ -65,7 +68,7 @@ describe("ReviewMergeService", () => {
 
   it("uses max priority when LLM raises priority", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(
       existingItem({ topic: "communication", priority: "low" }),
     );
@@ -73,6 +76,7 @@ describe("ReviewMergeService", () => {
     await service.upsertItems(1, "session-1", [
       {
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Be concise",
         priority: "high",
       },
@@ -82,13 +86,14 @@ describe("ReviewMergeService", () => {
       expect.objectContaining({
         priority: "high",
         description: "Be concise",
+        angle: "conciseness under pressure",
       }),
     );
   });
 
-  it("bumps priority when LLM keeps same priority for existing topic", async () => {
+  it("bumps priority when LLM keeps same priority for existing pair", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(
       existingItem({ topic: "communication", priority: "medium" }),
     );
@@ -96,6 +101,7 @@ describe("ReviewMergeService", () => {
     await service.upsertItems(1, "session-1", [
       {
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Updated",
         priority: "medium",
       },
@@ -108,27 +114,33 @@ describe("ReviewMergeService", () => {
     );
   });
 
-  it("matches existing topics case-insensitively", async () => {
+  it("matches existing pairs case-insensitively", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(
-      existingItem({ topic: "system design", priority: "low" }),
+      existingItem({
+        topic: "system design",
+        angle: "sharding trade-offs",
+        priority: "low",
+      }),
     );
 
     await service.upsertItems(1, "session-1", [
       {
         topic: "System Design",
+        angle: "Sharding Trade-offs",
         description: "Updated",
         priority: "medium",
       },
     ]);
 
     expect(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
-    ).toHaveBeenCalledWith(1, "System Design");
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
+    ).toHaveBeenCalledWith(1, "System Design", "Sharding Trade-offs");
     expect(reviewRepository.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
         topic: "System Design",
+        angle: "Sharding Trade-offs",
         priority: "medium",
       }),
     );
@@ -136,7 +148,7 @@ describe("ReviewMergeService", () => {
 
   it("never decreases priority when LLM sends a lower priority", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(
       existingItem({ topic: "communication", priority: "high" }),
     );
@@ -144,6 +156,7 @@ describe("ReviewMergeService", () => {
     await service.upsertItems(1, "session-1", [
       {
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Updated",
         priority: "low",
       },
@@ -156,25 +169,35 @@ describe("ReviewMergeService", () => {
     );
   });
 
-  it("falls back to similarity lookup when exact normalized topic is missing", async () => {
+  it("falls back to similarity lookup when exact normalized pair is missing", async () => {
     vi.mocked(
-      reviewRepository.findByUserIdAndTopicCaseInsensitive,
+      reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
     ).mockResolvedValue(null);
-    vi.mocked(reviewRepository.findSimilarByUserIdAndTopic).mockResolvedValue(
-      existingItem({ topic: "distributed systems", priority: "medium" }),
+    vi.mocked(
+      reviewRepository.findSimilarByUserIdAndTopicAngle,
+    ).mockResolvedValue(
+      existingItem({
+        topic: "distributed systems",
+        angle: "consistency models",
+        priority: "medium",
+      }),
     );
 
     await service.upsertItems(1, "session-1", [
       {
         topic: "Distributed System Design",
+        angle: "consistency model trade-offs",
         description: "Clarify trade-offs",
         priority: "high",
       },
     ]);
 
-    expect(reviewRepository.findSimilarByUserIdAndTopic).toHaveBeenCalledWith(
+    expect(
+      reviewRepository.findSimilarByUserIdAndTopicAngle,
+    ).toHaveBeenCalledWith(
       1,
       "Distributed System Design",
+      "consistency model trade-offs",
     );
     expect(reviewRepository.upsert).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -186,15 +209,16 @@ describe("ReviewMergeService", () => {
   describe("insertNewTopicsOnly", () => {
     it("inserts a new review item when no existing or similar match", async () => {
       vi.mocked(
-        reviewRepository.findByUserIdAndTopicCaseInsensitive,
+        reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
       ).mockResolvedValue(null);
-      vi.mocked(reviewRepository.findSimilarByUserIdAndTopic).mockResolvedValue(
-        null,
-      );
+      vi.mocked(
+        reviewRepository.findSimilarByUserIdAndTopicAngle,
+      ).mockResolvedValue(null);
 
       await service.insertNewTopicsOnly(1, "session-1", [
         {
           topic: "Communication",
+          angle: "conciseness under pressure",
           description: "Be concise",
           priority: "medium",
         },
@@ -204,21 +228,52 @@ describe("ReviewMergeService", () => {
         userId: 1,
         sessionId: "session-1",
         topic: "Communication",
+        angle: "conciseness under pressure",
         description: "Be concise",
         priority: "medium",
       });
     });
 
-    it("skips when a case-insensitive match exists", async () => {
+    it("inserts when same topic has a different angle", async () => {
       vi.mocked(
-        reviewRepository.findByUserIdAndTopicCaseInsensitive,
+        reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
+      ).mockResolvedValue(null);
+      vi.mocked(
+        reviewRepository.findSimilarByUserIdAndTopicAngle,
+      ).mockResolvedValue(null);
+
+      await service.insertNewTopicsOnly(1, "session-1", [
+        {
+          topic: "Caching",
+          angle: "write-path invalidation",
+          description: "Practice invalidation strategies",
+          priority: "high",
+        },
+      ]);
+
+      expect(reviewRepository.upsert).toHaveBeenCalledWith(
+        expect.objectContaining({
+          topic: "Caching",
+          angle: "write-path invalidation",
+        }),
+      );
+    });
+
+    it("skips when a case-insensitive pair match exists", async () => {
+      vi.mocked(
+        reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
       ).mockResolvedValue(
-        existingItem({ topic: "system design", priority: "high" }),
+        existingItem({
+          topic: "system design",
+          angle: "sharding trade-offs",
+          priority: "high",
+        }),
       );
 
       await service.insertNewTopicsOnly(1, "session-1", [
         {
           topic: "System Design",
+          angle: "Sharding Trade-offs",
           description: "Updated",
           priority: "medium",
         },
@@ -226,31 +281,41 @@ describe("ReviewMergeService", () => {
 
       expect(reviewRepository.upsert).not.toHaveBeenCalled();
       expect(
-        reviewRepository.findSimilarByUserIdAndTopic,
+        reviewRepository.findSimilarByUserIdAndTopicAngle,
       ).not.toHaveBeenCalled();
     });
 
     it.each(["active", "learned"] as const)(
-      "skips when a similar match exists (%s status)",
+      "skips when a similar pair match exists (%s status)",
       async () => {
         vi.mocked(
-          reviewRepository.findByUserIdAndTopicCaseInsensitive,
+          reviewRepository.findByUserIdAndTopicAngleCaseInsensitive,
         ).mockResolvedValue(null);
-        vi.mocked(reviewRepository.findSimilarByUserIdAndTopic).mockResolvedValue(
-          existingItem({ topic: "distributed systems", priority: "medium" }),
+        vi.mocked(
+          reviewRepository.findSimilarByUserIdAndTopicAngle,
+        ).mockResolvedValue(
+          existingItem({
+            topic: "distributed systems",
+            angle: "consistency models",
+            priority: "medium",
+          }),
         );
 
         await service.insertNewTopicsOnly(1, "session-1", [
           {
             topic: "Distributed System Design",
+            angle: "consistency model trade-offs",
             description: "Clarify trade-offs",
             priority: "high",
           },
         ]);
 
-        expect(reviewRepository.findSimilarByUserIdAndTopic).toHaveBeenCalledWith(
+        expect(
+          reviewRepository.findSimilarByUserIdAndTopicAngle,
+        ).toHaveBeenCalledWith(
           1,
           "Distributed System Design",
+          "consistency model trade-offs",
         );
         expect(reviewRepository.upsert).not.toHaveBeenCalled();
       },

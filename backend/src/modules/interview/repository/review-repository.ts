@@ -16,12 +16,13 @@ export type UpsertReviewItemParams = {
   userId: number;
   sessionId: string;
   topic: string;
+  angle: string;
   description: string;
   priority: ReviewPriority;
 };
 
-function normalizeTopic(topic: string): string {
-  return topic.toLowerCase();
+function normalizeLabel(value: string): string {
+  return value.toLowerCase();
 }
 
 function toReviewItemRecord(row: PrismaReviewItem): ReviewItemRecord {
@@ -30,6 +31,7 @@ function toReviewItemRecord(row: PrismaReviewItem): ReviewItemRecord {
     userId: row.userId,
     sessionId: row.sessionId,
     topic: row.topic,
+    angle: row.angle,
     description: row.description,
     priority: row.priority as ReviewPriority,
     status: row.status,
@@ -39,7 +41,7 @@ function toReviewItemRecord(row: PrismaReviewItem): ReviewItemRecord {
   };
 }
 
-const TOPIC_SIMILARITY_THRESHOLD = 0.7;
+const PAIR_SIMILARITY_THRESHOLD = 0.7;
 
 export class ReviewRepository {
   async listByUserId(userId: number): Promise<ReviewItemRecord[]> {
@@ -75,6 +77,22 @@ export class ReviewRepository {
     return rows.map(toReviewItemRecord);
   }
 
+  async findByUserIdAndTopicAngleCaseInsensitive(
+    userId: number,
+    topic: string,
+    angle: string,
+  ): Promise<ReviewItemRecord | null> {
+    const row = await prisma.reviewItem.findFirst({
+      where: {
+        userId,
+        topic: normalizeLabel(topic),
+        angle: normalizeLabel(angle),
+      },
+    });
+    return row ? toReviewItemRecord(row) : null;
+  }
+
+  /** @deprecated Prefer findByUserIdAndTopicAngleCaseInsensitive */
   async findByUserIdAndTopicCaseInsensitive(
     userId: number,
     topic: string,
@@ -82,18 +100,41 @@ export class ReviewRepository {
     const row = await prisma.reviewItem.findFirst({
       where: {
         userId,
-        topic: normalizeTopic(topic),
+        topic: normalizeLabel(topic),
       },
     });
     return row ? toReviewItemRecord(row) : null;
   }
 
+  async findSimilarByUserIdAndTopicAngle(
+    userId: number,
+    topic: string,
+    angle: string,
+    threshold: number = PAIR_SIMILARITY_THRESHOLD,
+  ): Promise<ReviewItemRecord | null> {
+    const normalizedTopic = normalizeLabel(topic);
+    const normalizedAngle = normalizeLabel(angle);
+    const searchPhrase = `${normalizedTopic} ${normalizedAngle}`;
+    const matches = await prisma.$queryRaw<PrismaReviewItem[]>`
+      SELECT *
+      FROM "review_items"
+      WHERE "user_id" = ${userId}
+        AND similarity("topic" || ' ' || "angle", ${searchPhrase}) >= ${threshold}
+      ORDER BY similarity("topic" || ' ' || "angle", ${searchPhrase}) DESC
+      LIMIT 1
+    `;
+
+    const row = matches[0];
+    return row ? toReviewItemRecord(row) : null;
+  }
+
+  /** @deprecated Prefer findSimilarByUserIdAndTopicAngle */
   async findSimilarByUserIdAndTopic(
     userId: number,
     topic: string,
-    threshold: number = TOPIC_SIMILARITY_THRESHOLD,
+    threshold: number = PAIR_SIMILARITY_THRESHOLD,
   ): Promise<ReviewItemRecord | null> {
-    const normalizedTopic = normalizeTopic(topic);
+    const normalizedTopic = normalizeLabel(topic);
     const matches = await prisma.$queryRaw<PrismaReviewItem[]>`
       SELECT *
       FROM "review_items"
@@ -134,16 +175,18 @@ export class ReviewRepository {
 
   async upsert(params: UpsertReviewItemParams): Promise<ReviewItemRecord> {
     const { userId, sessionId, description, priority } = params;
-    const topic = normalizeTopic(params.topic);
+    const topic = normalizeLabel(params.topic);
+    const angle = normalizeLabel(params.angle);
 
     const row = await prisma.reviewItem.upsert({
       where: {
-        userId_topic: { userId, topic },
+        userId_topic_angle: { userId, topic, angle },
       },
       create: {
         userId,
         sessionId,
         topic,
+        angle,
         description,
         priority,
       },

@@ -14,6 +14,7 @@ const validReviewItem = {
   id: validReviewItemId,
   sessionId: validSessionId,
   topic: "System design trade-offs",
+  angle: "caching strategy comparison",
   description: "Candidate struggled to compare caching strategies.",
   priority: "high" as const,
   status: "active" as const,

@@ -16,7 +16,10 @@ const baseDate = new Date("2026-01-01T00:00:00.000Z");
 
 function createReviewItem(
   overrides: Partial<
-    Pick<ReviewItemRecord, "id" | "topic" | "description" | "priority">
+    Pick<
+      ReviewItemRecord,
+      "id" | "topic" | "angle" | "description" | "priority"
+    >
   > = {},
 ): ReviewItemRecord {
   return {
@@ -24,6 +27,7 @@ function createReviewItem(
     userId: 1,
     sessionId: "interview-session-id",
     topic: overrides.topic ?? "system design",
+    angle: overrides.angle ?? "sharding strategies",
     description: overrides.description ?? "Need to study sharding",
     priority: overrides.priority ?? "high",
     status: "active",
@@ -42,6 +46,7 @@ function createSessionItem(
     reviewItemId: overrides.reviewItemId ?? "review-item-1",
     order: overrides.order ?? 0,
     topic: overrides.topic ?? "system design",
+    angle: overrides.angle ?? "sharding strategies",
     description: overrides.description ?? "Need to study sharding",
     currentPriority: overrides.currentPriority ?? "high",
     turns: overrides.turns ?? [],
@@ -102,11 +107,13 @@ describe("ReviewSessionsService", () => {
       const itemOne = createReviewItem({
         id: "review-item-1",
         topic: "system design",
+        angle: "sharding strategies",
         priority: "high",
       });
       const itemTwo = createReviewItem({
         id: "review-item-2",
         topic: "rest apis",
+        angle: "http semantics",
         description: "Practice REST semantics",
         priority: "medium",
       });
@@ -122,6 +129,7 @@ describe("ReviewSessionsService", () => {
               id: "session-item-1",
               reviewItemId: "review-item-1",
               topic: "system design",
+              angle: "sharding strategies",
               currentPriority: "high",
             }),
             createSessionItem({
@@ -129,6 +137,7 @@ describe("ReviewSessionsService", () => {
               reviewItemId: "review-item-2",
               order: 1,
               topic: "rest apis",
+              angle: "http semantics",
               description: "Practice REST semantics",
               currentPriority: "medium",
             }),
@@ -151,12 +160,14 @@ describe("ReviewSessionsService", () => {
           {
             reviewItemId: "review-item-1",
             topic: "system design",
+            angle: "sharding strategies",
             description: "Need to study sharding",
             currentPriority: "high",
           },
           {
             reviewItemId: "review-item-2",
             topic: "rest apis",
+            angle: "http semantics",
             description: "Practice REST semantics",
             currentPriority: "medium",
           },
@@ -171,12 +182,14 @@ describe("ReviewSessionsService", () => {
             id: "session-item-1",
             reviewItemId: "review-item-1",
             topic: "system design",
+            angle: "sharding strategies",
             currentPriority: "high",
           },
           {
             id: "session-item-2",
             reviewItemId: "review-item-2",
             topic: "rest apis",
+            angle: "http semantics",
             currentPriority: "medium",
           },
         ],
@@ -227,6 +240,7 @@ describe("ReviewSessionsService", () => {
             id: "session-item-1",
             reviewItemId: "review-item-1",
             topic: "system design",
+            angle: "sharding strategies",
             currentPriority: "high",
             turns: [],
             suggestedStatus: "active",
@@ -321,14 +335,17 @@ describe("ReviewSessionsService", () => {
           {
             id: "session-a",
             status: "completed",
-            topics: ["system design", "rest apis"],
+            topics: [
+              "system design — sharding strategies",
+              "rest apis — sharding strategies",
+            ],
             createdAt: "2026-01-01T00:00:00.000Z",
             completedAt: "2026-01-02T12:00:00.000Z",
           },
           {
             id: "session-b",
             status: "in_progress",
-            topics: ["typescript"],
+            topics: ["typescript — sharding strategies"],
             createdAt: "2026-01-01T00:00:00.000Z",
             completedAt: null,
           },

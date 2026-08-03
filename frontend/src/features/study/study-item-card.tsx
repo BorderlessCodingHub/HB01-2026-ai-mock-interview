@@ -13,6 +13,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
+import { formatTopicAngleLabel } from "@/features/study/lib/format-topic-angle";
 import { cn } from "@/lib/utils";
 import type { ReviewItem } from "@/types/review-items";
 import { AppCard } from "@/components/app/app-card";
@@ -38,6 +39,7 @@ export function StudyItemCard({
 }: StudyItemCardProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const isActive = item.status === "active";
+  const topicAngleLabel = formatTopicAngleLabel(item.topic, item.angle);
 
   const handleConfirmDelete = () => {
     onDelete?.();
@@ -60,13 +62,13 @@ export function StudyItemCard({
               checked={selected}
               onChange={onSelectToggle}
               className="mt-1 h-4 w-4 cursor-pointer accent-jade focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-              aria-label={`Select ${item.topic}`}
+              aria-label={`Select ${topicAngleLabel}`}
             />
           )}
           <div className="space-y-2">
             <ReviewPriorityBadge priority={item.priority} />
             <div>
-              <h2 className="font-semibold text-ink-black">{item.topic}</h2>
+              <h2 className="font-semibold text-ink-black">{topicAngleLabel}</h2>
               <p className="mt-1 text-xs leading-relaxed text-text-base">
                 {item.description}
               </p>
@@ -126,7 +128,7 @@ export function StudyItemCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete review item?</AlertDialogTitle>
             <AlertDialogDescription>
-              Delete &ldquo;{item.topic}&rdquo; from your study backlog? This
+              Delete &ldquo;{topicAngleLabel}&rdquo; from your study backlog? This
               cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
