@@ -30,9 +30,9 @@ describe("SessionRepository (integration)", () => {
   afterAll(() => disconnectDatabase());
 
   it.each([
-    ["entry", 5],
-    ["mid", 7],
-    ["senior", 8],
+    ["entry", 6],
+    ["mid", 8],
+    ["senior", 9],
   ] as const)(
     "create sets maxTurns to %i for level %s",
     async (level, maxTurns) => {

@@ -32,6 +32,7 @@ export type InterviewGraphInput = {
   runReview: boolean;
   recentCoverage?: RecentCoverageItem[];
   activeReviewTopics?: ActiveReviewTopicItem[];
+  coveredAngles?: RecentCoverageItem[];
 };
 
 export type InterviewGraphStreamOptions = {

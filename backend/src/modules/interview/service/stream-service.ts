@@ -137,6 +137,7 @@ export class InterviewStreamService {
         runReview: isFinalTurn,
         recentCoverage,
         activeReviewTopics,
+        coveredAngles,
       },
       {
         threadId: sessionId,

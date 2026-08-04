@@ -5,10 +5,11 @@ import type {
   InterviewSession,
 } from "../../../../prisma/generated/client";
 
+/** Includes +1 for the automatic ready message that starts the interview flow. */
 export const MAX_TURNS_BY_LEVEL: Record<InterviewLevel, number> = {
-  entry: 5,
-  mid: 7,
-  senior: 8,
+  entry: 6,
+  mid: 8,
+  senior: 9,
 };
 
 export type CreateSessionParams = {

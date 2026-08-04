@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { BookOpen, Loader2 } from "lucide-react";
+import { AlertTriangle, BookOpen, Loader2 } from "lucide-react";
 
 import { useAuth } from "@/features/auth/session-provider";
 import { InterviewLocaleSelector } from "@/features/interview-locale/interview-locale-selector";
@@ -17,17 +17,21 @@ import {
   getStudyPanelId,
   getStudyTabId,
   StudyTabs,
+  type StudyTab,
 } from "@/features/study/study-tabs";
+import { WeakAnswerCard } from "@/features/study/weak-answer-card";
 import { setLastReviewSessionId } from "@/features/study/lib/review-session-storage";
 import { ApiError } from "@/lib/api/client";
 import { reviewSessionsApi } from "@/lib/api/review-sessions";
 import { useDeleteReviewItem } from "@/lib/query/hooks/use-delete-review-item";
+import { useDeleteWeakAnswer } from "@/lib/query/hooks/use-delete-weak-answer";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
 import { useUpdateReviewItemStatus } from "@/lib/query/hooks/use-update-review-item-status";
+import { useWeakAnswers } from "@/lib/query/hooks/use-weak-answers";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
-type StudyTab = "active" | "learned";
+const ALL_TABS: StudyTab[] = ["active", "learned", "insufficient"];
 
 const MAX_SELECTION = 10;
 
@@ -50,15 +54,24 @@ export function StudyHubContent() {
   const { locale } = useInterviewLocale();
   const updateStatus = useUpdateReviewItemStatus();
   const deleteReviewItem = useDeleteReviewItem();
+  const deleteWeakAnswer = useDeleteWeakAnswer();
 
   const [activeTab, setActiveTab] = useState<StudyTab>("active");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [isStarting, setIsStarting] = useState(false);
 
-  const reviewQuery = useReviewItems(activeTab);
+  const reviewQuery = useReviewItems(
+    activeTab === "learned" ? "learned" : "active",
+  );
   const items = useMemo(
     () => reviewQuery.data?.reviewItems ?? [],
     [reviewQuery.data?.reviewItems],
+  );
+
+  const weakAnswersQuery = useWeakAnswers();
+  const weakAnswers = useMemo(
+    () => weakAnswersQuery.data?.weakAnswers ?? [],
+    [weakAnswersQuery.data?.weakAnswers],
   );
 
   const visibleItemIds = useMemo(
@@ -106,6 +119,10 @@ export function StudyHubContent() {
     deleteReviewItem.mutate(itemId);
   }
 
+  function handleDeleteWeakAnswer(id: string) {
+    deleteWeakAnswer.mutate(id);
+  }
+
   async function handleStartSession() {
     if (effectiveSelectedIds.size === 0 || isStarting) {
       return;
@@ -141,10 +158,12 @@ export function StudyHubContent() {
   }
 
   const showSelection = activeTab === "active" && items.length > 0;
-  const inactiveTab: StudyTab = activeTab === "active" ? "learned" : "active";
+  const inactiveTabs = ALL_TABS.filter((tab) => tab !== activeTab);
   const isItemPending = (itemId: string) =>
     (updateStatus.isPending && updateStatus.variables?.itemId === itemId) ||
     (deleteReviewItem.isPending && deleteReviewItem.variables === itemId);
+  const isWeakAnswerPending = (id: string) =>
+    deleteWeakAnswer.isPending && deleteWeakAnswer.variables === id;
 
   return (
     <div className="space-y-6 pb-20">
@@ -169,7 +188,7 @@ export function StudyHubContent() {
         tabIndex={0}
         className="space-y-6 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
       >
-        {reviewQuery.isLoading && (
+        {activeTab !== "insufficient" && reviewQuery.isLoading && (
           <div
             className="flex items-center gap-2 py-12 text-sm text-text-base"
             role="status"
@@ -179,7 +198,7 @@ export function StudyHubContent() {
           </div>
         )}
 
-        {reviewQuery.error && (
+        {activeTab !== "insufficient" && reviewQuery.error && (
           <p className="text-sm text-red-700" role="alert">
             {reviewQuery.error instanceof Error
               ? reviewQuery.error.message
@@ -187,7 +206,8 @@ export function StudyHubContent() {
           </p>
         )}
 
-        {!reviewQuery.isLoading &&
+        {activeTab !== "insufficient" &&
+          !reviewQuery.isLoading &&
           !reviewQuery.error &&
           items.length === 0 &&
           activeTab === "active" && (
@@ -206,45 +226,49 @@ export function StudyHubContent() {
             />
           )}
 
-        {!reviewQuery.isLoading &&
+        {activeTab !== "insufficient" &&
+          !reviewQuery.isLoading &&
           !reviewQuery.error &&
           items.length === 0 &&
           activeTab === "learned" && (
             <AppEmptyState title="No mastered topics yet" />
           )}
 
-        {!reviewQuery.isLoading && !reviewQuery.error && items.length > 0 && (
-          <ul className="list-none space-y-4">
-            {items.map((item) => (
-              <StudyItemCard
-                key={item.id}
-                item={item}
-                selectable={showSelection}
-                selected={effectiveSelectedIds.has(item.id)}
-                onSelectToggle={
-                  showSelection && !isItemPending(item.id)
-                    ? () => handleSelectToggle(item.id)
-                    : undefined
-                }
-                onMarkLearned={
-                  !isItemPending(item.id)
-                    ? () => void handleMarkLearned(item.id)
-                    : undefined
-                }
-                onReactivate={
-                  !isItemPending(item.id)
-                    ? () => void handleReactivate(item.id)
-                    : undefined
-                }
-                onDelete={
-                  !isItemPending(item.id)
-                    ? () => void handleDelete(item.id)
-                    : undefined
-                }
-              />
-            ))}
-          </ul>
-        )}
+        {activeTab !== "insufficient" &&
+          !reviewQuery.isLoading &&
+          !reviewQuery.error &&
+          items.length > 0 && (
+            <ul className="list-none space-y-4">
+              {items.map((item) => (
+                <StudyItemCard
+                  key={item.id}
+                  item={item}
+                  selectable={showSelection}
+                  selected={effectiveSelectedIds.has(item.id)}
+                  onSelectToggle={
+                    showSelection && !isItemPending(item.id)
+                      ? () => handleSelectToggle(item.id)
+                      : undefined
+                  }
+                  onMarkLearned={
+                    !isItemPending(item.id)
+                      ? () => void handleMarkLearned(item.id)
+                      : undefined
+                  }
+                  onReactivate={
+                    !isItemPending(item.id)
+                      ? () => void handleReactivate(item.id)
+                      : undefined
+                  }
+                  onDelete={
+                    !isItemPending(item.id)
+                      ? () => void handleDelete(item.id)
+                      : undefined
+                  }
+                />
+              ))}
+            </ul>
+          )}
 
         {showSelection && (
           <StudySelectionBar
@@ -253,14 +277,65 @@ export function StudyHubContent() {
             isStarting={isStarting}
           />
         )}
+
+        {activeTab === "insufficient" && weakAnswersQuery.isLoading && (
+          <div
+            className="flex items-center gap-2 py-12 text-sm text-text-base"
+            role="status"
+          >
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Loading answers…
+          </div>
+        )}
+
+        {activeTab === "insufficient" && weakAnswersQuery.error && (
+          <p className="text-sm text-red-700" role="alert">
+            {weakAnswersQuery.error instanceof Error
+              ? weakAnswersQuery.error.message
+              : "Failed to load insufficient answers"}
+          </p>
+        )}
+
+        {activeTab === "insufficient" &&
+          !weakAnswersQuery.isLoading &&
+          !weakAnswersQuery.error &&
+          weakAnswers.length === 0 && (
+            <AppEmptyState
+              icon={<AlertTriangle className="h-6 w-6" />}
+              title="No insufficient answers yet"
+              description="Answers that need more work will show up here after a mock interview."
+            />
+          )}
+
+        {activeTab === "insufficient" &&
+          !weakAnswersQuery.isLoading &&
+          !weakAnswersQuery.error &&
+          weakAnswers.length > 0 && (
+            <ul className="list-none space-y-4">
+              {weakAnswers.map((item) => (
+                <WeakAnswerCard
+                  key={item.id}
+                  item={item}
+                  onDelete={
+                    !isWeakAnswerPending(item.id)
+                      ? () => handleDeleteWeakAnswer(item.id)
+                      : undefined
+                  }
+                />
+              ))}
+            </ul>
+          )}
       </div>
 
-      <div
-        id={getStudyPanelId(inactiveTab)}
-        role="tabpanel"
-        aria-labelledby={getStudyTabId(inactiveTab)}
-        hidden
-      />
+      {inactiveTabs.map((tab) => (
+        <div
+          key={tab}
+          id={getStudyPanelId(tab)}
+          role="tabpanel"
+          aria-labelledby={getStudyTabId(tab)}
+          hidden
+        />
+      ))}
     </div>
   );
 }

@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 const TABS = [
   { value: "active", label: "Active" },
   { value: "learned", label: "Learned" },
+  { value: "insufficient", label: "Insufficient Answers" },
 ] as const;
 
-type StudyTab = (typeof TABS)[number]["value"];
+export type StudyTab = (typeof TABS)[number]["value"];
 
 export const getStudyTabId = (tab: StudyTab) => `study-tab-${tab}`;
 export const getStudyPanelId = (tab: StudyTab) => `study-panel-${tab}`;
