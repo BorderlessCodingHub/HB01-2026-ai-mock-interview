@@ -255,9 +255,9 @@ describe("SessionService", () => {
   });
 
   it.each([
-    ["entry", 5],
-    ["mid", 7],
-    ["senior", 8],
+    ["entry", 6],
+    ["mid", 8],
+    ["senior", 9],
   ] as const)(
     "creates a session with maxTurns %s for level %s",
     async (level, maxTurns) => {

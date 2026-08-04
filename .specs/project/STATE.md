@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-08-02  
-**Current Work:** Interview Soft Coverage — Execute complete (T1–T11); commits deferred per request
+**Last Updated:** 2026-08-04  
+**Current Work:** Quick fix — practice maxTurns +1 for auto ready message (done; commit deferred)
 
 ---
 
