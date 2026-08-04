@@ -59,8 +59,8 @@ Identify gaps and weaknesses from the interview. Emit one item per distinct (top
   Do not use vague angles like "general" or "basics" for new items.
 - description: coaching narrative — what to practice and why.
 - New (topic, angle) not in existing list: create with an appropriate priority.
-- Existing (topic, angle) match: reuse the exact topic and angle strings, update the description, and raise priority
-  if the interview reinforces the gap (low to medium or high; medium to high; never lower an existing priority).
+- Existing (topic, angle) match (exact or clearly the same gap): omit it — do not re-emit or change its priority.
+  Priority changes happen only in study/review sessions, not here.
 - Same topic with a meaningfully different angle is a new item.
 - No duplicate (topic, angle) pairs in a single response.${targetRoleClause}`;
 }
