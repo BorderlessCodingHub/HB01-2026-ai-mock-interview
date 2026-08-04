@@ -146,6 +146,10 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
   const streamingContentRef = useRef("");
   const lastItemIndexRef = useRef(-1);
   const sessionItemsRef = useRef(session?.items ?? []);
+  const autoStartedForSessionRef = useRef<string | null>(null);
+  const sendTurnRef = useRef<(answer: string | undefined) => Promise<void>>(
+    async () => {},
+  );
 
   useLayoutEffect(() => {
     sessionItemsRef.current = session?.items ?? [];
@@ -354,6 +358,26 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
       abortRef.current = null;
     }
   }
+
+  sendTurnRef.current = sendTurn;
+
+  useEffect(() => {
+    if (!sessionQuery.isSuccess) return;
+    if (session?.status !== "in_progress") return;
+    if (messages.length > 0) return;
+    if (isStreaming || isRedirecting) return;
+    if (autoStartedForSessionRef.current === sessionId) return;
+
+    autoStartedForSessionRef.current = sessionId;
+    void sendTurnRef.current(undefined);
+  }, [
+    sessionQuery.isSuccess,
+    session?.status,
+    messages.length,
+    isStreaming,
+    isRedirecting,
+    sessionId,
+  ]);
 
   function handleStart() {
     void sendTurn(undefined);
