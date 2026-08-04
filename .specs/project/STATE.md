@@ -1,11 +1,19 @@
 # State
 
 **Last Updated:** 2026-08-04  
-**Current Work:** Quick fix — practice maxTurns +1 for auto ready message (done; commit deferred)
+**Current Work:** Study review-session auto-start — executed on `refact/frontend/study`
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-018: Auto-start review session stream on empty Study chat (2026-08-04)
+
+**Decision:** When `ReviewSessionChat` loads an `in_progress` session with empty local messages, auto-call `sendTurn(undefined)` once per session mount (same kickoff as the welcome CTA). Welcome button remains as fallback.
+**Reason:** Mirror practice auto-start; remove second click on `/study` review sessions.
+**Trade-off:** Resume of in_progress with empty local message state also auto-starts (matches prior CTA behavior; no turn hydration yet).
+**Impact:** FE only — `review-session-chat.tsx`.
+**Branch:** `refact/frontend/study`
 
 ### AD-016: Practice soft coverage (topic+angle), not hard exclude (2026-08-02)
 
@@ -162,6 +170,7 @@ _None_
 
 ## Todos
 
+- [x] feat(study): auto-start review session on empty chat (`refact/frontend/study`)
 - [x] Grill-me + Specify interview-soft-coverage → `spec.md` + `context.md` (2026-08-02)
 - [x] Design phase for interview-soft-coverage (`design.md`) — approved
 - [x] Tasks breakdown for interview-soft-coverage (`tasks.md`) — approved via Execute

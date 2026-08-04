@@ -30,7 +30,7 @@ function createReviewItem(
   overrides: Partial<
     Pick<
       ReviewItemRecord,
-      "id" | "topic" | "description" | "priority" | "status" | "updatedAt"
+      "id" | "topic" | "angle" | "description" | "priority" | "status" | "updatedAt"
     >
   > = {},
 ): ReviewItemRecord {
@@ -39,6 +39,7 @@ function createReviewItem(
     userId: 1,
     sessionId: "session-id",
     topic: overrides.topic ?? "topic",
+    angle: overrides.angle ?? "general",
     description: overrides.description ?? "description",
     priority: overrides.priority ?? "medium",
     status: overrides.status ?? "active",
