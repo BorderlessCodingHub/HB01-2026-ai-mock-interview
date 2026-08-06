@@ -8,12 +8,20 @@ import { AppShell } from "@/features/dashboard/app-shell";
 import { useAuth } from "@/features/auth/session-provider";
 import { getStoredResumeId } from "@/features/auth/session-storage";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
+import {
+  getStoredInterviewLevel,
+  setStoredInterviewLevel,
+} from "@/features/interview/lib/interview-setup-storage";
 import { interviewApi } from "@/lib/api/interview";
 import { useResume } from "@/lib/query/hooks/use-resume";
 import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { CreateSessionInput, InterviewLevel } from "@/types/interview";
-import { MAX_JOB_DESCRIPTION_LENGTH } from "@/types/interview";
+import {
+  MAX_JOB_DESCRIPTION_LENGTH,
+  MAX_TURNS_BY_LEVEL,
+  MIN_INTERVIEW_TURNS,
+} from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
@@ -25,17 +33,35 @@ const LEVELS: { value: InterviewLevel; label: string; description: string }[] =
     { value: "senior", label: "Senior", description: "8 turns" },
   ];
 
+function turnOptions(level: InterviewLevel): number[] {
+  const max = MAX_TURNS_BY_LEVEL[level];
+  const options: number[] = [];
+  for (let n = MIN_INTERVIEW_TURNS; n <= max; n++) {
+    options.push(n);
+  }
+  return options;
+}
+
 function NewSessionContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const resumeId = searchParams.get("resumeId") ?? getStoredResumeId() ?? "";
   const { fetchWithAuth } = useAuth();
   const { locale } = useInterviewLocale();
-  const [level, setLevel] = useState<InterviewLevel>("mid");
+  const [level, setLevel] = useState<InterviewLevel>(
+    () => getStoredInterviewLevel() ?? "mid",
+  );
+  const [turns, setTurns] = useState<number>(() => MAX_TURNS_BY_LEVEL[level]);
   const [jobDescription, setJobDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resumeQuery = useResume(resumeId || null);
+
+  function handleLevelChange(nextLevel: InterviewLevel) {
+    setLevel(nextLevel);
+    setStoredInterviewLevel(nextLevel);
+    setTurns(MAX_TURNS_BY_LEVEL[nextLevel]);
+  }
 
   async function handleStart() {
     if (!resumeId) {
@@ -62,6 +88,7 @@ function NewSessionContent() {
         resumeId,
         level,
         interviewLocale: locale,
+        turns,
       };
       if (trimmedJobDescription) {
         body.jobDescription = trimmedJobDescription;
@@ -133,7 +160,7 @@ function NewSessionContent() {
             <button
               key={opt.value}
               type="button"
-              onClick={() => setLevel(opt.value)}
+              onClick={() => handleLevelChange(opt.value)}
               aria-pressed={level === opt.value}
               className={cn(
                 "flex min-h-11 w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
@@ -144,6 +171,30 @@ function NewSessionContent() {
             >
               <span className="font-medium text-ink-black">{opt.label}</span>
               <span className="text-xs text-text-base">{opt.description}</span>
+            </button>
+          ))}
+        </AppCard>
+      </fieldset>
+
+      <fieldset>
+        <legend className="mb-2 text-sm font-medium text-ink-black">
+          Number of turns
+        </legend>
+        <AppCard variant="mist" className="flex flex-wrap gap-2 p-5">
+          {turnOptions(level).map((option) => (
+            <button
+              key={option}
+              type="button"
+              onClick={() => setTurns(option)}
+              aria-pressed={turns === option}
+              className={cn(
+                "min-h-11 min-w-11 cursor-pointer rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
+                turns === option
+                  ? "border-jade bg-jade-pale text-jade-deep"
+                  : "border-border-hairline bg-paper-white text-ink-black hover:bg-fog-white",
+              )}
+            >
+              {option}
             </button>
           ))}
         </AppCard>
