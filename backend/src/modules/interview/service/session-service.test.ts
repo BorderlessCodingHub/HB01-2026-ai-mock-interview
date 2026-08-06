@@ -298,6 +298,43 @@ describe("SessionService", () => {
     },
   );
 
+  it("converts a user-chosen turns count into the stored maxTurns", async () => {
+    resumeRepository = createStubResumeRepository({
+      id: resumeId,
+      userId,
+      name: "resume.pdf",
+      pdfUrl: "resumes/1/file.pdf",
+      storageKey: "resumes/1/file.pdf",
+      structuredSummary: validStructuredSummary,
+      rawText: "text",
+      status: "ready",
+      errorMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    service = new SessionService(
+      sessionRepository,
+      messageRepository,
+      resumeRepository,
+    );
+
+    await service.createSession(userId, {
+      resumeId,
+      level: "mid",
+      interviewLocale: "en",
+      turns: 5,
+    });
+
+    expect(sessionRepository.createCalls[0]).toEqual({
+      userId,
+      resumeId,
+      level: "mid",
+      interviewLocale: "en",
+      jobDescription: null,
+      maxTurns: 6,
+    });
+  });
+
   it("sanitizes and stores an optional job description", async () => {
     resumeRepository = createStubResumeRepository({
       id: resumeId,

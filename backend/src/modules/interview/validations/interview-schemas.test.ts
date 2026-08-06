@@ -130,6 +130,63 @@ describe("createSessionSchema", () => {
 
     expect(result.success).toBe(false);
   });
+
+  it.each([
+    ["entry", 5],
+    ["mid", 7],
+    ["senior", 8],
+  ] as const)("accepts turns at the max allowed for level %s", (level, turns) => {
+    const result = createSessionSchema.safeParse({
+      resumeId: validResumeId,
+      level,
+      interviewLocale: "en",
+      turns,
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.turns).toBe(turns);
+    }
+  });
+
+  it.each([
+    ["entry", 6],
+    ["mid", 8],
+    ["senior", 9],
+  ] as const)("rejects turns above the max allowed for level %s", (level, turns) => {
+    const result = createSessionSchema.safeParse({
+      resumeId: validResumeId,
+      level,
+      interviewLocale: "en",
+      turns,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects turns below the minimum", () => {
+    const result = createSessionSchema.safeParse({
+      resumeId: validResumeId,
+      level: "senior",
+      interviewLocale: "en",
+      turns: 2,
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("omits turns when not provided", () => {
+    const result = createSessionSchema.safeParse({
+      resumeId: validResumeId,
+      level: "mid",
+      interviewLocale: "en",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.turns).toBeUndefined();
+    }
+  });
 });
 
 describe("streamMessageSchema", () => {

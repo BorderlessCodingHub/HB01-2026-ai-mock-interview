@@ -67,6 +67,7 @@ export class SessionService {
       jobDescription: input.jobDescription
         ? sanitizeJobDescription(input.jobDescription)
         : null,
+      maxTurns: input.turns !== undefined ? input.turns + 1 : undefined,
     });
 
     return { id: session.id };
