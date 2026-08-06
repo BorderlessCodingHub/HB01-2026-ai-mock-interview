@@ -18,7 +18,7 @@ import {
 
 export { LANGUAGE_SECTION_HEADER };
 
-export const DEFAULT_INTERVIEWER_NAME = "Heno";
+export const DEFAULT_INTERVIEWER_NAME = "Hone";
 
 export const INTERVIEW_HISTORY_PLACEHOLDER = "history";
 

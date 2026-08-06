@@ -51,7 +51,7 @@ Define persona (Tech Lead), idioma, conduta da entrevista, nível (`entry` | `mi
 
 ### Parâmetros dinâmicos
 
-- System estático: `level`, `resumeSummary`, `interviewLocale`, `jobDescription`, `interviewerName` (default: `Heno`)
+- System estático: `level`, `resumeSummary`, `interviewLocale`, `jobDescription`, `interviewerName` (default: `Hone`)
 - Mensagem de contexto (por turn): `turnCount`, `maxTurns`
 
 ### Texto completo (template)
