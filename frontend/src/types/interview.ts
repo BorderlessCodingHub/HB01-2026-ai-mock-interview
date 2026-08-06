@@ -9,7 +9,17 @@ export type CreateSessionInput = {
   level: InterviewLevel;
   interviewLocale: InterviewLocale;
   jobDescription?: string;
+  turns?: number;
 };
+
+/** Highest number of turns selectable per level; mirrors the backend's MAX_TURNS_BY_LEVEL - 1. */
+export const MAX_TURNS_BY_LEVEL: Record<InterviewLevel, number> = {
+  entry: 5,
+  mid: 7,
+  senior: 8,
+};
+
+export const MIN_INTERVIEW_TURNS = 3;
 
 export type ReviewGenerationStatus = "idle" | "pending" | "ready" | "failed";
 
