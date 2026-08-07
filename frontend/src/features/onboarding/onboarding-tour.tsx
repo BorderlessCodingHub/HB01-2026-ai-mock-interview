@@ -36,11 +36,32 @@ const STEPS: Step[] = [
     content: "Every past interview is listed here so you can reopen its feedback anytime.",
   },
   {
+    target: '[data-tour="tour-nav-practice"]',
+    title: "Practice",
+    content:
+      "Pick a level — Entry, Mid, or Senior — and start a new mock interview from here anytime.",
+  },
+  {
+    target: '[data-tour="tour-nav-feedback"]',
+    title: "Feedback",
+    content: "Read the closing feedback from every mock interview you've finished.",
+  },
+  {
+    target: '[data-tour="tour-nav-study"]',
+    title: "Study",
+    content:
+      "Work through your review items one topic at a time until you've closed each knowledge gap.",
+  },
+  {
+    target: '[data-tour="tour-nav-resumes"]',
+    title: "Resumes",
+    content: "Upload and manage the resumes Hone uses to tailor your interview questions.",
+  },
+  {
     target: "body",
     placement: "center",
     title: "You're all set",
-    content:
-      "Use the sidebar anytime to jump into Practice, Study, Feedback, or your Resumes. Good luck!",
+    content: "That's the whole app. Good luck with your practice!",
   },
 ];
 

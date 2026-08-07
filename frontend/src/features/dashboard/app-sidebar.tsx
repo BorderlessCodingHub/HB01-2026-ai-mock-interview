@@ -18,12 +18,12 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/session-provider";
 
 const NAV_ITEMS = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard" },
-  { icon: Dumbbell, label: "Practice", href: "/practice" },
-  { icon: MessageSquare, label: "Feedback", href: "/feedback" },
-  { icon: BookOpen, label: "Study", href: "/study" },
-  { icon: FileText, label: "Resumes", href: "/resumes" },
-  { icon: User, label: "Profile", href: "/profile" },
+  { icon: LayoutDashboard, label: "Dashboard", href: "/dashboard", tour: undefined },
+  { icon: Dumbbell, label: "Practice", href: "/practice", tour: "tour-nav-practice" },
+  { icon: MessageSquare, label: "Feedback", href: "/feedback", tour: "tour-nav-feedback" },
+  { icon: BookOpen, label: "Study", href: "/study", tour: "tour-nav-study" },
+  { icon: FileText, label: "Resumes", href: "/resumes", tour: "tour-nav-resumes" },
+  { icon: User, label: "Profile", href: "/profile", tour: undefined },
 ] as const;
 
 function isNavItemActive(pathname: string, href: string): boolean {
@@ -136,13 +136,14 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
       </div>
 
       <nav className="flex-1 space-y-1 px-3" aria-label="App navigation">
-        {NAV_ITEMS.map(({ icon: Icon, label, href }) => {
+        {NAV_ITEMS.map(({ icon: Icon, label, href, tour }) => {
           const active = isNavItemActive(pathname, href);
           return (
             <Link
               key={href}
               href={href}
               onClick={onClose}
+              data-tour={tour}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "flex w-full cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-deep focus-visible:ring-offset-2",
