@@ -93,17 +93,67 @@ export function OnboardingTour({ ready }: { ready: boolean }) {
         skip: "Skip tour",
       }}
       options={{
-        primaryColor: "#0a5c4a",
-        textColor: "#17191c",
-        backgroundColor: "#ffffff",
-        arrowColor: "#ffffff",
+        primaryColor: "var(--color-jade-deep)",
+        textColor: "var(--color-ink-black)",
+        backgroundColor: "var(--color-paper-white)",
+        arrowColor: "var(--color-paper-white)",
         overlayColor: "rgba(23, 25, 28, 0.55)",
         zIndex: 10000,
-        spotlightRadius: 10,
-        width: 360,
+        spotlightRadius: 16,
+        width: 380,
         buttons: ["back", "primary", "skip"],
         skipBeacon: true,
         showProgress: true,
+      }}
+      styles={{
+        tooltip: {
+          borderRadius: "var(--radius-elevatedcards)",
+          boxShadow: "var(--shadow-subtle-3)",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
+        },
+        tooltipContainer: {
+          textAlign: "left",
+          padding: "22px 24px 18px",
+        },
+        tooltipTitle: {
+          fontFamily: "var(--font-instrument-serif), Georgia, serif",
+          fontSize: "1.375rem",
+          fontWeight: 400,
+          lineHeight: 1.2,
+          color: "var(--color-ink-black)",
+          marginBottom: 8,
+        },
+        tooltipContent: {
+          padding: 0,
+          fontSize: "0.875rem",
+          lineHeight: 1.6,
+          color: "var(--text-base)",
+        },
+        tooltipFooter: {
+          marginTop: 20,
+        },
+        buttonPrimary: {
+          borderRadius: "var(--radius-buttons)",
+          padding: "10px 20px",
+          fontSize: "0.875rem",
+          fontWeight: 500,
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
+        },
+        buttonBack: {
+          borderRadius: "var(--radius-buttons)",
+          padding: "10px 14px",
+          fontSize: "0.875rem",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
+          color: "var(--color-jade-deep)",
+        },
+        buttonSkip: {
+          fontSize: "0.8125rem",
+          fontFamily: "var(--font-manrope), system-ui, sans-serif",
+          color: "var(--text-base)",
+        },
+        overlay: {
+          backdropFilter: "blur(1px)",
+        },
       }}
     />
   );
