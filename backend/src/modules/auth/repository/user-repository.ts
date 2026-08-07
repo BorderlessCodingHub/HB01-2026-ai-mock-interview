@@ -6,6 +6,7 @@ import type {
 } from "@/modules/auth/types/user";
 import type { InterviewLocale } from "@/shared";
 import prisma from "@/infrastructure/database";
+import { Prisma } from "../../../../prisma/generated/client";
 
 export class UserRepository {
   async getByEmail(email: string): Promise<User | null> {
@@ -85,13 +86,28 @@ export class UserRepository {
       });
     }
 
-    return prisma.user.create({
-      data: {
-        externalId: params.externalId,
-        email: params.email,
-        name: params.name,
-        password: null,
-      },
-    });
+    try {
+      return await prisma.user.create({
+        data: {
+          externalId: params.externalId,
+          email: params.email,
+          name: params.name,
+          password: null,
+        },
+      });
+    } catch (error) {
+      // Concurrent first-login requests can race to create the same user;
+      // fall back to whichever row won instead of surfacing a 401.
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        const existing =
+          (await this.getByExternalId(params.externalId)) ??
+          (await this.getByEmail(params.email));
+        if (existing) return existing;
+      }
+      throw error;
+    }
   }
 }
