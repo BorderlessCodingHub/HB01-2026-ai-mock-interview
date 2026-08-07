@@ -13,6 +13,7 @@ function makeUser(overrides?: Partial<User>): User {
     email: "ada@example.com",
     password: null,
     interviewLocale: "en",
+    hasCompletedTutorial: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,

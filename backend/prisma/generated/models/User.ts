@@ -41,6 +41,7 @@ export type UserMinAggregateOutputType = {
   email: string | null
   password: string | null
   interviewLocale: $Enums.InterviewLocale | null
+  hasCompletedTutorial: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -52,6 +53,7 @@ export type UserMaxAggregateOutputType = {
   email: string | null
   password: string | null
   interviewLocale: $Enums.InterviewLocale | null
+  hasCompletedTutorial: boolean | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -63,6 +65,7 @@ export type UserCountAggregateOutputType = {
   email: number
   password: number
   interviewLocale: number
+  hasCompletedTutorial: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -84,6 +87,7 @@ export type UserMinAggregateInputType = {
   email?: true
   password?: true
   interviewLocale?: true
+  hasCompletedTutorial?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -95,6 +99,7 @@ export type UserMaxAggregateInputType = {
   email?: true
   password?: true
   interviewLocale?: true
+  hasCompletedTutorial?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -106,6 +111,7 @@ export type UserCountAggregateInputType = {
   email?: true
   password?: true
   interviewLocale?: true
+  hasCompletedTutorial?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -204,6 +210,7 @@ export type UserGroupByOutputType = {
   email: string
   password: string | null
   interviewLocale: $Enums.InterviewLocale | null
+  hasCompletedTutorial: boolean
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -238,6 +245,7 @@ export type UserWhereInput = {
   email?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringNullableFilter<"User"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleNullableFilter<"User"> | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   resumes?: Prisma.ResumeListRelationFilter
@@ -257,6 +265,7 @@ export type UserOrderByWithRelationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   interviewLocale?: Prisma.SortOrderInput | Prisma.SortOrder
+  hasCompletedTutorial?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   resumes?: Prisma.ResumeOrderByRelationAggregateInput
@@ -279,6 +288,7 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   name?: Prisma.StringFilter<"User"> | string
   password?: Prisma.StringNullableFilter<"User"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleNullableFilter<"User"> | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   resumes?: Prisma.ResumeListRelationFilter
@@ -298,6 +308,7 @@ export type UserOrderByWithAggregationInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrderInput | Prisma.SortOrder
   interviewLocale?: Prisma.SortOrderInput | Prisma.SortOrder
+  hasCompletedTutorial?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -317,6 +328,7 @@ export type UserScalarWhereWithAggregatesInput = {
   email?: Prisma.StringWithAggregatesFilter<"User"> | string
   password?: Prisma.StringNullableWithAggregatesFilter<"User"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleNullableWithAggregatesFilter<"User"> | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolWithAggregatesFilter<"User"> | boolean
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -327,6 +339,7 @@ export type UserCreateInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -346,6 +359,7 @@ export type UserUncheckedCreateInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -364,6 +378,7 @@ export type UserUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -383,6 +398,7 @@ export type UserUncheckedUpdateInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -402,6 +418,7 @@ export type UserCreateManyInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -412,6 +429,7 @@ export type UserUpdateManyMutationInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -423,6 +441,7 @@ export type UserUncheckedUpdateManyInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -439,6 +458,7 @@ export type UserCountOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   interviewLocale?: Prisma.SortOrder
+  hasCompletedTutorial?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -454,6 +474,7 @@ export type UserMaxOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   interviewLocale?: Prisma.SortOrder
+  hasCompletedTutorial?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -465,6 +486,7 @@ export type UserMinOrderByAggregateInput = {
   email?: Prisma.SortOrder
   password?: Prisma.SortOrder
   interviewLocale?: Prisma.SortOrder
+  hasCompletedTutorial?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -595,6 +617,7 @@ export type UserCreateWithoutResumesInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   interviewSessions?: Prisma.InterviewSessionCreateNestedManyWithoutUserInput
@@ -613,6 +636,7 @@ export type UserUncheckedCreateWithoutResumesInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   interviewSessions?: Prisma.InterviewSessionUncheckedCreateNestedManyWithoutUserInput
@@ -646,6 +670,7 @@ export type UserUpdateWithoutResumesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   interviewSessions?: Prisma.InterviewSessionUpdateManyWithoutUserNestedInput
@@ -664,6 +689,7 @@ export type UserUncheckedUpdateWithoutResumesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   interviewSessions?: Prisma.InterviewSessionUncheckedUpdateManyWithoutUserNestedInput
@@ -681,6 +707,7 @@ export type UserCreateWithoutInterviewSessionsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -699,6 +726,7 @@ export type UserUncheckedCreateWithoutInterviewSessionsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -732,6 +760,7 @@ export type UserUpdateWithoutInterviewSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -750,6 +779,7 @@ export type UserUncheckedUpdateWithoutInterviewSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -767,6 +797,7 @@ export type UserCreateWithoutReviewItemsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -785,6 +816,7 @@ export type UserUncheckedCreateWithoutReviewItemsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -818,6 +850,7 @@ export type UserUpdateWithoutReviewItemsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -836,6 +869,7 @@ export type UserUncheckedUpdateWithoutReviewItemsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -853,6 +887,7 @@ export type UserCreateWithoutReviewSessionsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -871,6 +906,7 @@ export type UserUncheckedCreateWithoutReviewSessionsInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -904,6 +940,7 @@ export type UserUpdateWithoutReviewSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -922,6 +959,7 @@ export type UserUncheckedUpdateWithoutReviewSessionsInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -939,6 +977,7 @@ export type UserCreateWithoutWeakAnswersInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -957,6 +996,7 @@ export type UserUncheckedCreateWithoutWeakAnswersInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -990,6 +1030,7 @@ export type UserUpdateWithoutWeakAnswersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -1008,6 +1049,7 @@ export type UserUncheckedUpdateWithoutWeakAnswersInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -1025,6 +1067,7 @@ export type UserCreateWithoutTopicCoveragesInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -1043,6 +1086,7 @@ export type UserUncheckedCreateWithoutTopicCoveragesInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -1076,6 +1120,7 @@ export type UserUpdateWithoutTopicCoveragesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -1094,6 +1139,7 @@ export type UserUncheckedUpdateWithoutTopicCoveragesInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -1111,6 +1157,7 @@ export type UserCreateWithoutInterviewFeedbacksInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -1129,6 +1176,7 @@ export type UserUncheckedCreateWithoutInterviewFeedbacksInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -1162,6 +1210,7 @@ export type UserUpdateWithoutInterviewFeedbacksInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -1180,6 +1229,7 @@ export type UserUncheckedUpdateWithoutInterviewFeedbacksInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -1197,6 +1247,7 @@ export type UserCreateWithoutTokenUsageInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeCreateNestedManyWithoutUserInput
@@ -1215,6 +1266,7 @@ export type UserUncheckedCreateWithoutTokenUsageInput = {
   email: string
   password?: string | null
   interviewLocale?: $Enums.InterviewLocale | null
+  hasCompletedTutorial?: boolean
   createdAt?: Date | string
   updatedAt?: Date | string
   resumes?: Prisma.ResumeUncheckedCreateNestedManyWithoutUserInput
@@ -1248,6 +1300,7 @@ export type UserUpdateWithoutTokenUsageInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUpdateManyWithoutUserNestedInput
@@ -1266,6 +1319,7 @@ export type UserUncheckedUpdateWithoutTokenUsageInput = {
   email?: Prisma.StringFieldUpdateOperationsInput | string
   password?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.NullableEnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale | null
+  hasCompletedTutorial?: Prisma.BoolFieldUpdateOperationsInput | boolean
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   resumes?: Prisma.ResumeUncheckedUpdateManyWithoutUserNestedInput
@@ -1378,6 +1432,7 @@ export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = r
   email?: boolean
   password?: boolean
   interviewLocale?: boolean
+  hasCompletedTutorial?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   resumes?: boolean | Prisma.User$resumesArgs<ExtArgs>
@@ -1398,6 +1453,7 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   interviewLocale?: boolean
+  hasCompletedTutorial?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1409,6 +1465,7 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   email?: boolean
   password?: boolean
   interviewLocale?: boolean
+  hasCompletedTutorial?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -1420,11 +1477,12 @@ export type UserSelectScalar = {
   email?: boolean
   password?: boolean
   interviewLocale?: boolean
+  hasCompletedTutorial?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "externalId" | "name" | "email" | "password" | "interviewLocale" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "externalId" | "name" | "email" | "password" | "interviewLocale" | "hasCompletedTutorial" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   resumes?: boolean | Prisma.User$resumesArgs<ExtArgs>
   interviewSessions?: boolean | Prisma.User$interviewSessionsArgs<ExtArgs>
@@ -1458,6 +1516,7 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     email: string
     password: string | null
     interviewLocale: $Enums.InterviewLocale | null
+    hasCompletedTutorial: boolean
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1897,6 +1956,7 @@ export interface UserFieldRefs {
   readonly email: Prisma.FieldRef<"User", 'String'>
   readonly password: Prisma.FieldRef<"User", 'String'>
   readonly interviewLocale: Prisma.FieldRef<"User", 'InterviewLocale'>
+  readonly hasCompletedTutorial: Prisma.FieldRef<"User", 'Boolean'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }

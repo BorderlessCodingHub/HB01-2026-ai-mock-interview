@@ -8,6 +8,7 @@ export type User = {
   email: string;
   password: string | null;
   interviewLocale: InterviewLocale | null;
+  hasCompletedTutorial: boolean;
   createdAt: Date;
   updatedAt: Date;
 };

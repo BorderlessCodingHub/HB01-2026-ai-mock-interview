@@ -48,6 +48,13 @@ export class UserRepository {
     });
   }
 
+  async completeTutorial(userId: number): Promise<User> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: { hasCompletedTutorial: true },
+    });
+  }
+
   /**
    * Upsert by externalId. Preserves interviewLocale.
    * If a row exists with the same email but no/different externalId, link and update.

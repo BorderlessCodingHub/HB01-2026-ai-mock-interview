@@ -5,6 +5,7 @@ model User {
   email           String           @unique
   password        String?
   interviewLocale InterviewLocale? @map("interview_locale")
+  hasCompletedTutorial Boolean     @default(false) @map("has_completed_tutorial")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 

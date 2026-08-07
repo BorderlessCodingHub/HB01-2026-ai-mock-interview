@@ -40,6 +40,7 @@ function makeUser(): User {
     email: "a@example.com",
     password: null,
     interviewLocale: null,
+    hasCompletedTutorial: false,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
