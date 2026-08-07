@@ -26,6 +26,7 @@ export function getStoredSession(): AuthSession | null {
       user: {
         ...user,
         interviewLocale: locale ?? user.interviewLocale ?? null,
+        hasCompletedTutorial: user.hasCompletedTutorial ?? false,
       },
     };
   } catch {

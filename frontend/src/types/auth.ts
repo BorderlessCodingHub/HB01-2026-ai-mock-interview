@@ -4,6 +4,7 @@ export type UserWithoutPassword = {
   name: string;
   email: string;
   interviewLocale: "en" | "pt" | null;
+  hasCompletedTutorial: boolean;
 };
 
 export type MessageResponse = {

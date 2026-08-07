@@ -8,6 +8,7 @@ import { useAuth } from "@/features/auth/session-provider";
 import { AppShell } from "@/features/dashboard/app-shell";
 import { DashboardStats } from "@/features/dashboard/dashboard-stats";
 import { deriveDashboardStats } from "@/features/dashboard/lib/stats";
+import { OnboardingTour } from "@/features/onboarding/onboarding-tour";
 import {
   ReviewItemsGrid,
   ReviewItemsSectionHeader,
@@ -138,6 +139,7 @@ export default function DashboardPage() {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <Link
                     href="/practice"
+                    data-tour="tour-start-practice"
                     className="manrope inline-flex h-11 items-center justify-center rounded-full border border-jade-deep bg-jade-deep px-5 text-sm font-medium text-paper-white transition-colors hover:border-ink-black hover:bg-ink-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jade-deep"
                   >
                     Start practice
@@ -152,19 +154,21 @@ export default function DashboardPage() {
               </div>
             </section>
 
-            <DashboardStats
-              completedCount={stats.completedCount}
-              activeCount={stats.activeCount}
-              reviewItemsCount={reviewItems.length}
-              highestLevel={stats.highestLevel}
-            />
+            <div data-tour="tour-stats">
+              <DashboardStats
+                completedCount={stats.completedCount}
+                activeCount={stats.activeCount}
+                reviewItemsCount={reviewItems.length}
+                highestLevel={stats.highestLevel}
+              />
+            </div>
 
-            <div className="space-y-4">
+            <div data-tour="tour-review-items" className="space-y-4">
               <ReviewItemsSectionHeader />
               <ReviewItemsGrid items={reviewItems} limit={3} />
             </div>
 
-            <div className="space-y-4">
+            <div data-tour="tour-sessions" className="space-y-4">
               <div>
                 <p className="landing-tag mb-1 text-text-base!">
                   Practice history
@@ -178,6 +182,8 @@ export default function DashboardPage() {
           </>
         )}
       </div>
+
+      {!isLoading && !error && <OnboardingTour ready />}
 
       <div
         id="dashboard-panel-feedback"

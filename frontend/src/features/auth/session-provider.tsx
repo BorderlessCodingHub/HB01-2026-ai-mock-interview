@@ -161,6 +161,7 @@ export function AuthSessionProvider({
             email: sessionUser.email ?? userEmail,
             name: sessionUser.name ?? userName,
             interviewLocale: null,
+            hasCompletedTutorial: false,
           },
         });
       } else {
@@ -171,6 +172,7 @@ export function AuthSessionProvider({
             email: userEmail,
             name: userName,
             interviewLocale: null,
+            hasCompletedTutorial: false,
           },
         });
       }
