@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter, useSearchParams } from "next/navigation";
 import { EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
 
 import { useOnboardingTutorial } from "./use-onboarding-tutorial";
@@ -67,6 +68,9 @@ const STEPS: Step[] = [
 
 export function OnboardingTour({ ready }: { ready: boolean }) {
   const { shouldRun, complete } = useOnboardingTutorial();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const manualTrigger = searchParams.get("tour") === "1";
 
   function handleEvent(data: EventData) {
     if (
@@ -74,12 +78,15 @@ export function OnboardingTour({ ready }: { ready: boolean }) {
       (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED)
     ) {
       complete();
+      if (manualTrigger) {
+        router.replace("/dashboard", { scroll: false });
+      }
     }
   }
 
   return (
     <Joyride
-      run={shouldRun && ready}
+      run={(shouldRun || manualTrigger) && ready}
       steps={STEPS}
       continuous
       scrollToFirstStep

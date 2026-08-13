@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent } from "react";
+import { Suspense, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -183,7 +183,11 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {!isLoading && !error && <OnboardingTour ready />}
+      {!isLoading && !error && (
+        <Suspense fallback={null}>
+          <OnboardingTour ready />
+        </Suspense>
+      )}
 
       <div
         id="dashboard-panel-feedback"

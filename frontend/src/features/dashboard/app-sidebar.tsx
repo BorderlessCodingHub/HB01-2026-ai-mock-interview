@@ -11,6 +11,7 @@ import {
   LogOut,
   FileText,
   User,
+  HelpCircle,
   X,
 } from "lucide-react";
 
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { icon: BookOpen, label: "Study", href: "/study", tour: "tour-nav-study" },
   { icon: FileText, label: "Resumes", href: "/resumes", tour: "tour-nav-resumes" },
   { icon: User, label: "Profile", href: "/profile", tour: undefined },
+  { icon: HelpCircle, label: "How to use", href: "/dashboard?tour=1", tour: undefined },
 ] as const;
 
 function isNavItemActive(pathname: string, href: string): boolean {
