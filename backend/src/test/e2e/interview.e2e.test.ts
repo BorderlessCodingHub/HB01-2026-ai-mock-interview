@@ -715,7 +715,7 @@ describe("Interview API E2E", () => {
 
       await prisma.interviewSession.update({
         where: { id: sessionId },
-        data: { turnCount: 4 },
+        data: { turnCount: 5 },
       });
 
       const response = await request(app)
@@ -761,7 +761,7 @@ describe("Interview API E2E", () => {
 
       await prisma.interviewSession.update({
         where: { id: sessionId },
-        data: { turnCount: 4 },
+        data: { turnCount: 5 },
       });
 
       const streamResponse = await request(app)
