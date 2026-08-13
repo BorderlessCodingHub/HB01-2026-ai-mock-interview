@@ -5,6 +5,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      bun: path.resolve(__dirname, "./src/test/mocks/bun-password.ts"),
     },
   },
   test: {
