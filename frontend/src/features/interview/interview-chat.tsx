@@ -29,6 +29,7 @@ import {
   InterviewMessageList,
   type DisplayMessage,
 } from "./interview-message-list";
+import { toDisplayTurns } from "./lib/display-turns";
 import {
   getInterviewReadyMessage,
   getInterviewWelcomeText,
@@ -56,6 +57,10 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
   const [isRetrying, setIsRetrying] = useState(false);
 
   const session = sessionsQuery.data?.sessions.find((s) => s.id === sessionId);
+  const displayTurns =
+    session != null
+      ? toDisplayTurns(session.turnCount, session.maxTurns)
+      : null;
   const isFinished = session?.isFinished ?? false;
   const atTurnLimit = session != null && session.turnCount >= session.maxTurns;
   const isCompleted = isFinished || atTurnLimit;
@@ -344,9 +349,9 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
           <h2 className="instrument-serif shrink-0 text-2xl leading-tight text-ink-black">
             Mock interview
           </h2>
-          {session && (
+          {displayTurns && (
             <p className="shrink-0 text-xs text-text-base">
-              Turn {session.turnCount} / {session.maxTurns}
+              Turn {displayTurns.turnCount} / {displayTurns.maxTurns}
               {isCompleted && " · Finished"}
             </p>
           )}
