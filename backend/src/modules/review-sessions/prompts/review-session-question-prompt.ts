@@ -40,7 +40,8 @@ ${lines.join("\n")}`;
 
 function buildInstructionsBlock(): string {
   return `${INSTRUCTIONS_SECTION_HEADER}
-Ask exactly one focused question about the given angle within the topic. No preamble, introduction, or explanation before the question.`;
+Ask exactly one focused question about the given angle within the topic. No preamble, introduction, or explanation before the question.
+Never ask the candidate to write, paste, complete, or produce code of any kind (functions, snippets, algorithms, SQL, configs, or pseudocode). The question must be answerable in natural language about the given angle.`;
 }
 
 export function buildReviewSessionQuestionPrompt(

@@ -40,6 +40,10 @@ describe("buildReviewSessionQuestionPrompt", () => {
     expect(prompt).toContain(INSTRUCTIONS_SECTION_HEADER);
     expect(prompt).toContain("Ask exactly one focused question");
     expect(prompt).toContain("No preamble");
+    expect(prompt).toMatch(
+      /Never ask the candidate to write, paste, complete, or produce code/i,
+    );
+    expect(prompt).toMatch(/answerable in natural language/i);
     expect(prompt).not.toContain(PRIOR_TURNS_SECTION_HEADER);
   });
 
