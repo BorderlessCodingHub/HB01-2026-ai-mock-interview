@@ -22,6 +22,7 @@ import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
 import { interviewApi } from "@/lib/api/interview";
 import { InterviewChat } from "@/features/interview/interview-chat";
+import { toDisplayTurns } from "@/features/interview/lib/display-turns";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
 import type { CreateSessionInput, InterviewLevel } from "@/types/interview";
@@ -345,6 +346,7 @@ function PracticeContent() {
                 const isActive = resolvedSessionId === sess.id;
                 const resumeObj = resumes.find((r) => r.id === sess.resumeId);
                 const resumeName = resumeObj ? resumeObj.name : "Resume";
+                const display = toDisplayTurns(sess.turnCount, sess.maxTurns);
 
                 return (
                   <button
@@ -374,8 +376,7 @@ function PracticeContent() {
 
                     <div className="flex items-center justify-between text-[10px] text-text-base">
                       <span className="capitalize font-medium">
-                        {sess.level} level · {sess.turnCount}/{sess.maxTurns}{" "}
-                        turns
+                        {`${sess.level} level · ${display.turnCount}/${display.maxTurns} turns`}
                       </span>
                       <span>
                         {new Date(sess.createdAt).toLocaleDateString()}
