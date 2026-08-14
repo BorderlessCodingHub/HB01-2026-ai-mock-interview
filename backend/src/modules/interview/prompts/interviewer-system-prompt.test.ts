@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 
 import {
+  CONDUCT_SECTION_HEADER,
   PRIOR_COVERAGE_SECTION_HEADER,
   buildInterviewerSystemPrompt,
   buildPriorCoverageSoftGuidanceBlock,
@@ -98,6 +99,16 @@ describe("buildPriorCoverageSoftGuidanceBlock", () => {
     const visibleDescription = descriptionLine.replace(/^.*—\s*/, "");
     expect(visibleDescription.length).toBeLessThanOrEqual(120);
     expect(visibleDescription.endsWith("...")).toBe(true);
+  });
+});
+
+describe("buildInterviewerSystemPrompt conduct", () => {
+  it("forbids asking the candidate to produce code", () => {
+    const prompt = buildInterviewerSystemPrompt(basePromptParams);
+
+    expect(prompt).toContain(CONDUCT_SECTION_HEADER);
+    expect(prompt).toMatch(/NEVER ask the candidate to write, paste, complete, or produce code/i);
+    expect(prompt).toMatch(/answerable in natural language/i);
   });
 });
 
