@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { formatLevel } from "./lib/stats";
+import { toDisplayTurns } from "@/features/interview/lib/display-turns";
 import type { SessionSummary } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
@@ -55,35 +56,42 @@ export function SessionsTable({ sessions }: { sessions: SessionSummary[] }) {
             </tr>
           </thead>
           <tbody>
-            {sessions.map((session) => (
-              <tr
-                key={session.id}
-                className="border-b border-border-hairline transition-colors last:border-0 hover:bg-fog-white"
-              >
-                <td className="whitespace-nowrap px-5 py-4 text-xs text-text-base">
-                  {formatDate(session.createdAt)}
-                </td>
-                <td className="px-5 py-4">
-                  <span className="rounded-full bg-jade-pale px-2.5 py-1 text-[11px] font-medium text-jade-deep">
-                    {formatLevel(session.level)}
-                  </span>
-                </td>
-                <td className="whitespace-nowrap px-5 py-4 font-medium text-ink-black">
-                  {session.turnCount} / {session.maxTurns}
-                </td>
-                <td className="px-5 py-4 text-xs text-text-base">
-                  {session.isFinished ? "Finished" : "Active"}
-                </td>
-                <td className="px-5 py-4">
-                  <Link
-                    href={`/interview/${session.id}`}
-                    className="whitespace-nowrap text-xs font-medium text-jade-deep underline-offset-4 transition-colors hover:text-ink-black hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jade-deep"
-                  >
-                    {session.isFinished ? "View history" : "Continue"}
-                  </Link>
-                </td>
-              </tr>
-            ))}
+            {sessions.map((session) => {
+              const display = toDisplayTurns(
+                session.turnCount,
+                session.maxTurns,
+              );
+
+              return (
+                <tr
+                  key={session.id}
+                  className="border-b border-border-hairline transition-colors last:border-0 hover:bg-fog-white"
+                >
+                  <td className="whitespace-nowrap px-5 py-4 text-xs text-text-base">
+                    {formatDate(session.createdAt)}
+                  </td>
+                  <td className="px-5 py-4">
+                    <span className="rounded-full bg-jade-pale px-2.5 py-1 text-[11px] font-medium text-jade-deep">
+                      {formatLevel(session.level)}
+                    </span>
+                  </td>
+                  <td className="whitespace-nowrap px-5 py-4 font-medium text-ink-black">
+                    {display.turnCount} / {display.maxTurns}
+                  </td>
+                  <td className="px-5 py-4 text-xs text-text-base">
+                    {session.isFinished ? "Finished" : "Active"}
+                  </td>
+                  <td className="px-5 py-4">
+                    <Link
+                      href={`/interview/${session.id}`}
+                      className="whitespace-nowrap text-xs font-medium text-jade-deep underline-offset-4 transition-colors hover:text-ink-black hover:underline focus-visible:rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jade-deep"
+                    >
+                      {session.isFinished ? "View history" : "Continue"}
+                    </Link>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
