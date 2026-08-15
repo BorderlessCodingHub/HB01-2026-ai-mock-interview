@@ -14,6 +14,7 @@ export type SttCopy = {
   unsupported: string;
   cancel: string;
   timeout: string;
+  noSpeechDetected: string;
 };
 
 const sttCopy: Record<InterviewLocale, SttCopy> = {
@@ -31,6 +32,7 @@ const sttCopy: Record<InterviewLocale, SttCopy> = {
     unsupported: "Your browser doesn't support audio recording.",
     cancel: "Cancel",
     timeout: "Transcription timed out. Please try again.",
+    noSpeechDetected: "No speech detected in the recording. Please try again.",
   },
   pt: {
     record: "Gravar",
@@ -46,6 +48,7 @@ const sttCopy: Record<InterviewLocale, SttCopy> = {
     unsupported: "Seu navegador não oferece suporte à gravação de áudio.",
     cancel: "Cancelar",
     timeout: "A transcrição demorou demais. Tente novamente.",
+    noSpeechDetected: "Nenhuma fala detectada na gravação. Tente novamente.",
   },
 };
 

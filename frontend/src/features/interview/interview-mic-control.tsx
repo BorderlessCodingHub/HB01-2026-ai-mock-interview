@@ -112,7 +112,9 @@ export function InterviewMicControl({
             ? copy.rateLimited
             : error.status === 504
               ? copy.timeout
-              : copy.genericError,
+              : error.status === 400
+                ? copy.noSpeechDetected
+                : copy.genericError,
         );
       } else {
         toast.error(copy.genericError);
