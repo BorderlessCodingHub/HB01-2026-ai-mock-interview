@@ -4,8 +4,10 @@ import type {
   SpeechToTextInput,
   SpeechToTextResult,
 } from "@/modules/transcribe/protocols/speech-to-text";
+import { logger } from "@/shared/logger";
 import {
   BadGatewayError,
+  BadRequestError,
   GatewayTimeoutError,
 } from "@/shared/errors/http-errors";
 
@@ -80,6 +82,19 @@ export class AssemblyAiSpeechToTextAdapter implements ISpeechToText {
       }
 
       if (status === "error") {
+        const providerError =
+          getString(transcript, "error") ?? "unknown error";
+        logger.warn("Speech-to-text provider returned an error status", {
+          transcriptId,
+          providerError,
+        });
+
+        if (providerError.toLowerCase().includes("no spoken audio")) {
+          throw new BadRequestError(
+            "No speech detected in the recording. Please try again.",
+          );
+        }
+
         throw new BadGatewayError("Speech-to-text provider failed");
       }
 

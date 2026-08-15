@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { BadGatewayError, GatewayTimeoutError } from "@/shared/errors/http-errors";
+import {
+  BadGatewayError,
+  BadRequestError,
+  GatewayTimeoutError,
+} from "@/shared/errors/http-errors";
 
 import {
   AssemblyAiSpeechToTextAdapter,
@@ -92,6 +96,28 @@ describe("AssemblyAiSpeechToTextAdapter", () => {
 
     await expect(adapter.transcribe(input)).rejects.toBeInstanceOf(
       BadGatewayError,
+    );
+  });
+
+  it("maps a no-spoken-audio provider error to BadRequestError", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ upload_url: "https://upload.test/audio" }))
+      .mockResolvedValueOnce(jsonResponse({ id: "transcript-id" }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          status: "error",
+          error:
+            "language_detection cannot be performed on files with no spoken audio.",
+        }),
+      );
+    const adapter = new AssemblyAiSpeechToTextAdapter(
+      fetchMock as unknown as typeof fetch,
+      vi.fn().mockResolvedValue(undefined),
+    );
+
+    await expect(adapter.transcribe(input)).rejects.toBeInstanceOf(
+      BadRequestError,
     );
   });
 
