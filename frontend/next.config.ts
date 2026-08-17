@@ -2,8 +2,10 @@ import "@/config/env";
 import type { NextConfig } from "next";
 import { initOpenNextCloudflareForDev } from "@opennextjs/cloudflare";
 
+const basePath = process.env.NEXT_BASE_PATH;
+
 const nextConfig: NextConfig = {
-  basePath: "/ai-mock-interview",
+  ...(basePath ? { basePath } : {}),
   typedRoutes: true,
   reactCompiler: true,
 };
