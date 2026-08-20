@@ -1,17 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { AppCard } from "@/components/app/app-card";
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
 import { WeakAnswerEvaluationBadge } from "@/features/study/weak-answer-evaluation-badge";
@@ -23,12 +12,15 @@ type WeakAnswerCardProps = {
 };
 
 export function WeakAnswerCard({ item, onDelete }: WeakAnswerCardProps) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const confirmDialog = useConfirmDialog();
 
-  const handleConfirmDelete = () => {
-    onDelete?.();
-    setDeleteOpen(false);
-  };
+  async function handleDelete() {
+    const confirmed = await confirmDialog({
+      title: "Delete this answer?",
+      description: `Delete this weak answer from "${item.topic}"? This cannot be undone.`,
+    });
+    if (confirmed) onDelete?.();
+  }
 
   return (
     <AppCard as="li" className="space-y-4 p-5">
@@ -66,33 +58,12 @@ export function WeakAnswerCard({ item, onDelete }: WeakAnswerCardProps) {
       <div className="flex flex-wrap gap-2">
         <button
           type="button"
-          onClick={() => setDeleteOpen(true)}
+          onClick={handleDelete}
           className="min-h-11 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
         >
           Delete
         </button>
       </div>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete this answer?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Delete this weak answer from &ldquo;{item.topic}&rdquo;? This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirmDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppCard>
   );
 }
