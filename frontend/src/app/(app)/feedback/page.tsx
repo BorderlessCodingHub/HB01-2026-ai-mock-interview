@@ -44,7 +44,9 @@ function SessionFeedbackDetail({
   const messagesQuery = useSessionMessages(sessionId);
   const reviewQuery = useReviewItems();
 
-  const messages = messagesQuery.data?.messages ?? [];
+  const messages = messagesQuery.data
+    ? [...messagesQuery.data.pages].reverse().flatMap((page) => page.messages)
+    : [];
   const closingFeedback = getClosingFeedback(messages);
 
   const sessionItems =

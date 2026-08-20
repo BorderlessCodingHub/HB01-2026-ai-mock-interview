@@ -32,9 +32,18 @@ export const interviewApi = {
     );
   },
 
-  getMessages(sessionId: string, token: string) {
+  getMessages(
+    sessionId: string,
+    token: string,
+    params?: { limit?: number; before?: string },
+  ) {
+    const query = new URLSearchParams();
+    if (params?.limit) query.set("limit", String(params.limit));
+    if (params?.before) query.set("before", params.before);
+    const queryString = query.toString();
+
     return apiRequest<ListMessagesResponse>(
-      `/api/interview/sessions/${sessionId}/messages`,
+      `/api/interview/sessions/${sessionId}/messages${queryString ? `?${queryString}` : ""}`,
       { token },
     );
   },

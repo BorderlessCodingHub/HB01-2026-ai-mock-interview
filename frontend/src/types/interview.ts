@@ -53,6 +53,7 @@ export type CreateSessionResponse = {
 
 export type ListMessagesResponse = {
   messages: SessionMessage[];
+  hasMore: boolean;
 };
 
 export type StreamMeta = {
