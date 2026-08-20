@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
+import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
@@ -156,6 +157,7 @@ function SessionFeedbackDetail({
 
 function FeedbackContent() {
   const deleteSession = useDeleteSession();
+  const confirmDialog = useConfirmDialog();
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
     null,
@@ -178,16 +180,15 @@ function FeedbackContent() {
     ? (deleteSession.variables ?? null)
     : null;
 
-  function handleDeleteSession(id: string, e: MouseEvent) {
+  async function handleDeleteSession(id: string, e: MouseEvent) {
     e.stopPropagation(); // Stop click from selecting
     if (deleteSession.isPending) return;
-    if (
-      !confirm(
-        "Are you sure you want to delete this interview feedback and all its review topics?",
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmDialog({
+      title: "Delete this feedback?",
+      description:
+        "This interview feedback and all its review topics will be permanently deleted.",
+    });
+    if (!confirmed) return;
 
     const previousSelectedId = selectedSessionId;
     if (resolvedSessionId === id) {
