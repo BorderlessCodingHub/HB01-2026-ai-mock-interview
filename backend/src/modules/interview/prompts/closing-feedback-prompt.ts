@@ -29,6 +29,35 @@ export const CLOSING_FEEDBACK_WENT_WELL_HEADER =
 export const CLOSING_FEEDBACK_WORK_ON_HEADER =
   getClosingFeedbackCopy("pt").workOnHeader;
 
+/** Stored `maxTurns` includes +1 for the automatic ready message. */
+export function toCandidateTurnBudget(maxTurns: number): number {
+  return Math.max(1, maxTurns - 1);
+}
+
+export type ClosingFeedbackLengthBand = "short" | "medium" | "long";
+
+export const CLOSING_FEEDBACK_WORD_BUDGET: Record<
+  ClosingFeedbackLengthBand,
+  { min: number; max: number }
+> = {
+  short: { min: 180, max: 220 },
+  medium: { min: 250, max: 320 },
+  long: { min: 350, max: 400 },
+};
+
+export function resolveClosingFeedbackLengthBand(
+  maxTurns: number,
+): ClosingFeedbackLengthBand {
+  const candidateTurns = toCandidateTurnBudget(maxTurns);
+  if (candidateTurns <= 6) {
+    return "short";
+  }
+  if (candidateTurns <= 12) {
+    return "medium";
+  }
+  return "long";
+}
+
 export function buildClosingFeedbackOutputTemplate(
   copy: ClosingFeedbackCopy,
 ): string {
@@ -36,15 +65,13 @@ export function buildClosingFeedbackOutputTemplate(
 
 ${copy.wentWellHeader}
 
-- [specific strength with brief context from the session]
-- [specific strength with brief context from the session]
-[Add a third bullet only if there is a genuinely distinct point.]
+- [one bullet per distinct genuine technical strength, with specific context from the session]
+[If the session showed no clear technical strength, replace the list with a single plain sentence saying so directly — never invent a strength to fill space.]
 
 ${copy.workOnHeader}
 
-- [specific, actionable improvement with context]
-- [specific, actionable improvement with context]
-[Add a third bullet only if there is a genuinely distinct point.]`;
+- [one bullet per distinct, actionable improvement, with specific context from the session]
+[If there is nothing substantial to improve, replace the list with a single plain sentence saying so. Weaker sessions will naturally have more items here than in the section above — that asymmetry is expected and correct, do not force balance between the two sections.]`;
 }
 
 export const CLOSING_FEEDBACK_OUTPUT_TEMPLATE =
@@ -52,34 +79,43 @@ export const CLOSING_FEEDBACK_OUTPUT_TEMPLATE =
 
 export const CLOSING_LEVEL_INSTRUCTION: Record<InterviewLevel, string> = {
   entry:
-    "Tailor feedback to fundamentals, clarity of thinking, and learning mindset. Be encouraging but honest about gaps.",
+    "Tailor feedback to fundamentals and how clearly the candidate reasoned through problems. Encouraging tone is about how gaps are phrased, not about softening or hiding that they exist.",
 
-  mid: "Focus on ownership, code quality, trade-offs, and practical depth. Evaluate what was actually demonstrated.",
+  mid: "Focus on whether the experience described was concrete and real, not vague or theoretical, and whether decisions were backed by clear reasons and trade-offs rather than just asserted. Evaluate what was actually demonstrated in conversation — this interview format never has the candidate produce code, so do not evaluate code quality.",
 
   senior:
-    "Focus on system-level thinking, technical leadership signals, strategic decisions, and depth of reasoning. Clearly surface gaps between what was shown and senior-level expectations.",
+    "Focus on whether the candidate surfaced trade-offs and risks proactively, without being prompted, and whether their reasoning showed awareness of scale and organizational dynamics (e.g. getting buy-in across teams). Clearly surface gaps between what was shown and senior-level expectations.",
 };
 
 function buildRoleBlock(level: InterviewLevel): string {
   return `${CLOSING_ROLE_HEADER}
-You are a Tech Lead delivering closing feedback after a ${level}-level mock technical interview.`;
+You are a Tech Lead delivering closing feedback after a ${level}-level mock technical interview. You have run hundreds of real technical interviews and calibrate your bar against real hiring decisions, not against how the conversation felt.`;
 }
 
 function buildEvaluateBlock(): string {
   return `${CLOSING_EVALUATE_HEADER}
 Read the **full conversation** carefully.
 
-Evaluate the candidate based on:
-- How well they understood the question
-- Quality, correctness and completeness of their answers
-- Depth of knowledge demonstrated
-- Clarity and structure of their communication
-- How they handled follow-up questions and edge cases
-- Trade-offs considered (when relevant)
+This is a conversational interview: the candidate is never asked to write, paste, or produce code (see the interviewer's Conduct rules). Evaluate the reasoning, decisions, and experience they described in natural language — do not comment on code quality, syntax, or algorithms, since none was produced.
+
+Evaluate the candidate on:
+- How well they understood each question and responded to what was actually asked, not a related but different point.
+- Whether their answers reflected real, concrete experience — specific situations, decisions, and outcomes — versus vague or theoretical claims.
+- Whether opinions and decisions were backed by clear reasoning and trade-offs, not just asserted.
+- Depth of technical knowledge demonstrated through explanation.
+- Clarity and structure of communication.
+- How they handled follow-up questions or direct challenges to their reasoning (e.g. being pushed on "what breaks at scale?" or "how would you get buy-in from other teams?").
+- For mid/senior levels especially: whether trade-offs and risks were surfaced proactively, rather than only after being prompted.
 
 Only give credit for what the candidate actually said (role \`human\`).
 Do not give credit for hints given by the interviewer, coaching, or information present only in the résumé.
-If answers were shallow, incorrect, incomplete or off-track, state it clearly and honestly.`;
+If answers were shallow, incorrect, incomplete, generic, or off-track, state it clearly and honestly — do not soften this to keep the feedback "balanced." A balanced *tone* is fine; a balanced *scorecard* that isn't earned is not.
+
+Do not count the following as strengths, even when true:
+- Saying "I don't know" instead of guessing. This is the honest baseline expected of any candidate, not an achievement.
+- Politeness, greetings, or expressing willingness/availability to start the session.
+- General enthusiasm or "proactive" framing of routine conversational openers.
+These behaviors may be mentioned only when relevant to explaining why a technical area couldn't be assessed (e.g. "the candidate acknowledged not knowing X, so this area could not be evaluated") — never as a standalone strength bullet.`;
 }
 
 function buildLevelBlock(level: InterviewLevel): string {
@@ -105,17 +141,29 @@ function buildSpecificityExample(locale: InterviewLocale): string {
     : 'Example: "When asked about designing a rate limiter..." instead of generic comments.';
 }
 
+function buildWordBudgetInstruction(maxTurns: number): string {
+  const candidateTurns = toCandidateTurnBudget(maxTurns);
+  const band = resolveClosingFeedbackLengthBand(maxTurns);
+  const { min, max } = CLOSING_FEEDBACK_WORD_BUDGET[band];
+  const turnLabel = candidateTurns === 1 ? "turn" : "turns";
+
+  return `This session had ${candidateTurns} candidate ${turnLabel}. Maximum ${min}-${max} words. Match depth to that length: do not pad a short session to fill the budget; do not recap every turn of a long session.`;
+}
+
 function buildFormatBlock(
   copy: ClosingFeedbackCopy,
   locale: InterviewLocale,
+  maxTurns: number,
 ): string {
   return `${CLOSING_FORMAT_HEADER}
-${copy.replyInstruction} Write in valid, renderable Markdown (CommonMark). Maximum 250-280 words.
+${copy.replyInstruction} Write in valid, renderable Markdown (CommonMark). ${buildWordBudgetInstruction(maxTurns)}
 
 Structure:
 - One introductory paragraph with no heading.
 - Exactly two sections using these headings: \`${copy.wentWellHeader}\` and \`${copy.workOnHeader}\`.
 - Bullet lists only with \`-\` (no numbered lists).
+- The number of bullets in each section must reflect what actually happened in the session, not a fixed quota and not the turn count. Do not pad either section to fill the word budget or to make the two sections look symmetric. A session with little technical strength should visibly have a short "went well" section and a longer "to improve" section.
+- Each bullet is 1–2 sentences on a distinct theme, with specific context from the session. Do not itemize every turn. In a longer session, prioritize the points that would most affect a hiring decision.
 
 Do not use code blocks, tables, links, HTML, or extra sections.
 Ensure there is absolutely no repetition or overlap between sections.
@@ -164,6 +212,7 @@ export function closingFeedbackCtaStreamSuffix(
 export type BuildClosingFeedbackPromptParams = {
   level: InterviewLevel;
   resumeSummary: StructuredSummary;
+  maxTurns: number;
   interviewLocale?: InterviewLocale;
   jobDescription?: string | null;
 };
@@ -187,7 +236,7 @@ export function buildClosingFeedbackPrompt(
   }
 
   sections.push(
-    buildFormatBlock(copy, interviewLocale),
+    buildFormatBlock(copy, interviewLocale, params.maxTurns),
     buildSecurityBlock(hasJobDescription),
     buildInterviewLocalePromptBlock(interviewLocale),
   );

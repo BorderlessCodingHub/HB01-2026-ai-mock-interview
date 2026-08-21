@@ -50,6 +50,7 @@ describe("security and alignment quality checks", () => {
     const closingPrompt = buildClosingFeedbackPrompt({
       level: "mid",
       resumeSummary: sampleResumeSummary,
+      maxTurns: 8,
     });
 
     expect(interviewerPrompt).toContain(SECURITY_SECTION_HEADER);

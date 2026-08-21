@@ -194,6 +194,7 @@ describe("createInterviewerNode", () => {
     const expectedSystemPrompt = buildClosingFeedbackPrompt({
       level: state.level,
       resumeSummary: state.resumeSummary,
+      maxTurns: state.maxTurns,
       interviewLocale: state.interviewLocale,
     });
     const systemContent = getRenderedSystemContent(
