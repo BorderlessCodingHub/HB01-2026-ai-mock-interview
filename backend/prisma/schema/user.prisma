@@ -16,9 +16,26 @@ model User {
   interviewFeedbacks InterviewFeedback[]
   weakAnswers        WeakAnswer[]
   topicCoverages     TopicCoverage[]
-  tokenUsage        UserTokenUsage[]
+  tokenUsage         UserTokenUsage[]
+  sessionQuotaEvents SessionQuotaEvent[]
 
   @@map("users")
+}
+
+enum SessionQuotaKind {
+  practice
+  study
+}
+
+model SessionQuotaEvent {
+  id        String           @id @default(uuid())
+  userId    Int              @map("user_id")
+  kind      SessionQuotaKind
+  createdAt DateTime         @default(now()) @map("created_at")
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, kind, createdAt])
+  @@map("session_quota_events")
 }
 
 model UserTokenUsage {

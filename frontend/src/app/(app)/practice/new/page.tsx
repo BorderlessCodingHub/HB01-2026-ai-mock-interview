@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useAuth } from "@/features/auth/session-provider";
@@ -12,9 +13,12 @@ import {
   getStoredInterviewLevel,
   setStoredInterviewLevel,
 } from "@/features/interview/lib/interview-setup-storage";
+import { SessionQuotaHint } from "@/features/session-quota/session-quota-hint";
 import { interviewApi } from "@/lib/api/interview";
 import { useResume } from "@/lib/query/hooks/use-resume";
+import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
 import { ApiError } from "@/lib/api/client";
+import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
 import type { CreateSessionInput, InterviewLevel } from "@/types/interview";
 import {
@@ -48,6 +52,7 @@ function NewSessionContent() {
   const resumeId = searchParams.get("resumeId") ?? getStoredResumeId() ?? "";
   const { fetchWithAuth } = useAuth();
   const { locale } = useInterviewLocale();
+  const queryClient = useQueryClient();
   const [level, setLevel] = useState<InterviewLevel>(
     () => getStoredInterviewLevel() ?? "mid",
   );
@@ -56,6 +61,14 @@ function NewSessionContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const resumeQuery = useResume(resumeId || null);
+  const {
+    data: quota,
+    isError: isQuotaError,
+    isLoading: isQuotaLoading,
+    isSuccess: isQuotaSuccess,
+    dataUpdatedAt: quotaUpdatedAt,
+  } = useSessionQuota();
+  const quotaExhausted = isQuotaSuccess && quota?.practice.remaining === 0;
 
   function handleLevelChange(nextLevel: InterviewLevel) {
     setLevel(nextLevel);
@@ -97,11 +110,15 @@ function NewSessionContent() {
       const { id } = await fetchWithAuth((token) =>
         interviewApi.createSession(body, token),
       );
+      void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
       router.push(`/interview/${id}`);
     } catch (err) {
       toast.error(
         err instanceof ApiError ? err.message : "Failed to create session",
       );
+      if (err instanceof ApiError && err.status === 429) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -221,6 +238,12 @@ function NewSessionContent() {
         </p>
       </div>
 
+      <SessionQuotaHint
+        bucket={quota?.practice}
+        isError={isQuotaError}
+        isLoading={isQuotaLoading}
+        dataUpdatedAt={quotaUpdatedAt}
+      />
       <button
         type="button"
         onClick={handleStart}
@@ -228,7 +251,8 @@ function NewSessionContent() {
           isSubmitting ||
           resumeQuery.isLoading ||
           Boolean(resumeQuery.error) ||
-          resumeQuery.data?.status !== "ready"
+          resumeQuery.data?.status !== "ready" ||
+          quotaExhausted
         }
         className="w-full rounded-full bg-jade-deep py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
       >

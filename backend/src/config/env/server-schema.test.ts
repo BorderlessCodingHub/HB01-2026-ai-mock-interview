@@ -38,9 +38,39 @@ describe("serverEnvSchema", () => {
     expect(result.data.TRANSCRIBE_MAX_BYTES).toBe(5_242_880);
     expect(result.data.TOKEN_LIMIT_ENABLED).toBe(true);
     expect(result.data.TOKEN_LIMIT_MONTHLY_MAX).toBe(500_000);
+    expect(result.data.SESSION_QUOTA_PRACTICE_MAX).toBe(3);
+    expect(result.data.SESSION_QUOTA_STUDY_MAX).toBe(3);
+    expect(result.data.SESSION_QUOTA_WINDOW_MS).toBe(14400000);
     expect(result.data.R2_ENDPOINT).toBe(
       "https://test-account-id.r2.cloudflarestorage.com",
     );
+  });
+
+  it("uses default session quota vars when omitted", () => {
+    const result = serverEnvSchema.safeParse(validEnv);
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.data.SESSION_QUOTA_PRACTICE_MAX).toBe(3);
+    expect(result.data.SESSION_QUOTA_STUDY_MAX).toBe(3);
+    expect(result.data.SESSION_QUOTA_WINDOW_MS).toBe(14400000);
+  });
+
+  it("coerces session quota vars when overridden", () => {
+    const result = serverEnvSchema.safeParse({
+      ...validEnv,
+      SESSION_QUOTA_PRACTICE_MAX: "500",
+      SESSION_QUOTA_STUDY_MAX: "500",
+      SESSION_QUOTA_WINDOW_MS: "60000",
+    });
+
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+
+    expect(result.data.SESSION_QUOTA_PRACTICE_MAX).toBe(500);
+    expect(result.data.SESSION_QUOTA_STUDY_MAX).toBe(500);
+    expect(result.data.SESSION_QUOTA_WINDOW_MS).toBe(60000);
   });
 
   it("uses default REVIEW_SESSION_QUESTION_COUNT when omitted", () => {

@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
+import prisma from "@/infrastructure/database";
 import { disconnectDatabase, resetDatabase } from "@/test/integration/helpers";
 import { UserRepository } from "@/modules/auth/repository/user-repository";
 import { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
@@ -56,6 +57,22 @@ describe("SessionRepository (integration)", () => {
       expect(session.maxTurns).toBe(MAX_TURNS_BY_LEVEL[level]);
     },
   );
+
+  it("create inside a rolled-back transaction does not persist a session", async () => {
+    const { user, resumeId } = await seedUserAndResume();
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await repository.create(
+          { userId: user.id, resumeId, level: "mid", interviewLocale: "en" },
+          tx,
+        );
+        throw new Error("force rollback");
+      }),
+    ).rejects.toThrow("force rollback");
+
+    const sessions = await repository.listByUserId(user.id);
+    expect(sessions).toHaveLength(0);
+  });
 
   it("create persists interviewLocale from params", async () => {
     const { user, resumeId } = await seedUserAndResume();

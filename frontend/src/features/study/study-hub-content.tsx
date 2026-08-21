@@ -10,6 +10,7 @@ import { AlertTriangle, BookOpen, Loader2 } from "lucide-react";
 import { useAuth } from "@/features/auth/session-provider";
 import { InterviewLocaleSelector } from "@/features/interview-locale/interview-locale-selector";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
+import { SessionQuotaHint } from "@/features/session-quota/session-quota-hint";
 import { StudyItemCard } from "@/features/study/study-item-card";
 import { StudyResumeBanner } from "@/features/study/study-resume-banner";
 import { StudySelectionBar } from "@/features/study/study-selection-bar";
@@ -26,8 +27,10 @@ import { reviewSessionsApi } from "@/lib/api/review-sessions";
 import { useDeleteReviewItem } from "@/lib/query/hooks/use-delete-review-item";
 import { useDeleteWeakAnswer } from "@/lib/query/hooks/use-delete-weak-answer";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
+import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
 import { useUpdateReviewItemStatus } from "@/lib/query/hooks/use-update-review-item-status";
 import { useWeakAnswers } from "@/lib/query/hooks/use-weak-answers";
+import { queryKeys } from "@/lib/query/keys";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
@@ -73,6 +76,9 @@ export function StudyHubContent() {
     () => weakAnswersQuery.data?.weakAnswers ?? [],
     [weakAnswersQuery.data?.weakAnswers],
   );
+  const quotaQuery = useSessionQuota();
+  const quotaExhausted =
+    quotaQuery.isSuccess && quotaQuery.data?.study.remaining === 0;
 
   const visibleItemIds = useMemo(
     () => new Set(items.map((item) => item.id)),
@@ -141,6 +147,7 @@ export function StudyHubContent() {
         interviewLocale: locale,
       });
       setLastReviewSessionId(response.id);
+      void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
       router.push(`/review-session/${response.id}`);
     } catch (err) {
       toast.error(
@@ -151,6 +158,9 @@ export function StudyHubContent() {
       if (err instanceof ApiError && err.status === 404) {
         setSelectedIds(new Set());
         void queryClient.invalidateQueries({ queryKey: ["review-items"] });
+      }
+      if (err instanceof ApiError && err.status === 429) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
       }
     } finally {
       setIsStarting(false);
@@ -275,6 +285,15 @@ export function StudyHubContent() {
             selectedCount={effectiveSelectedIds.size}
             onStart={() => void handleStartSession()}
             isStarting={isStarting}
+            quotaExhausted={quotaExhausted}
+            quotaHint={
+              <SessionQuotaHint
+                bucket={quotaQuery.data?.study}
+                isError={quotaQuery.isError}
+                isLoading={quotaQuery.isLoading}
+                dataUpdatedAt={quotaQuery.dataUpdatedAt}
+              />
+            }
           />
         )}
 

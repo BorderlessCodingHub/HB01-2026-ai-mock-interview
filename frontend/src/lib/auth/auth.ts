@@ -81,6 +81,16 @@ function mapBorderlessErrorStatus(status: number, message: string): never {
   });
 }
 
+function internalApiBaseUrl(): string {
+  const url = new URL(serverEnv.SERVER_INTERNAL_URL);
+  // Windows resolves `localhost` to IPv6 (::1), which can hit Docker's
+  // published port instead of the local `bun run dev` on IPv4.
+  if (url.hostname === "localhost") {
+    url.hostname = "127.0.0.1";
+  }
+  return url.origin;
+}
+
 async function registerOpaqueSession(params: {
   accessToken: string;
   externalId: string;
@@ -88,10 +98,11 @@ async function registerOpaqueSession(params: {
   name: string;
   expiresIn: number;
 }): Promise<void> {
+  const sessionUrl = `${internalApiBaseUrl()}/internal/borderless-sessions`;
   let response: Response;
   try {
     response = await fetch(
-      `${serverEnv.SERVER_INTERNAL_URL}/internal/borderless-sessions`,
+      sessionUrl,
       {
         method: "POST",
         headers: {
@@ -117,7 +128,7 @@ async function registerOpaqueSession(params: {
     console.error("[auth] borderless session register failed", {
       status: response.status,
       detail: detail.slice(0, 300),
-      url: `${serverEnv.SERVER_INTERNAL_URL}/internal/borderless-sessions`,
+      url: sessionUrl,
     });
     throw new APIError("INTERNAL_SERVER_ERROR", {
       message: `Failed to establish API session (${response.status}). Try again.`,

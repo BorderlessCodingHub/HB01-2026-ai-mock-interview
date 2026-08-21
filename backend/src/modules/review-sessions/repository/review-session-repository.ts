@@ -12,6 +12,7 @@ import type {
   ReviewSessionItem as PrismaReviewSessionItem,
   ReviewSessionStatus,
   Prisma,
+  PrismaClient,
 } from "../../../../prisma/generated/client";
 
 export type CreateReviewSessionItemInput = {
@@ -86,8 +87,9 @@ export class ReviewSessionRepository {
     userId: number,
     items: CreateReviewSessionItemInput[],
     interviewLocale: InterviewLocale,
+    db: Prisma.TransactionClient | PrismaClient = prisma,
   ): Promise<ReviewSessionRecord> {
-    const row = await prisma.reviewSession.create({
+    const row = await db.reviewSession.create({
       data: {
         userId,
         interviewLocale,

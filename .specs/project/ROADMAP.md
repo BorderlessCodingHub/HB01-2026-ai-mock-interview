@@ -11,6 +11,7 @@
 | P2 | Interview Speech-to-Text (AssemblyAI batch) | Implemented (E2E/UAT/commit pending) | [spec.md](../features/interview-speech-to-text/spec.md) · [context.md](../features/interview-speech-to-text/context.md) · [design.md](../features/interview-speech-to-text/design.md) · [tasks.md](../features/interview-speech-to-text/tasks.md) |
 | P2 | Study Session History (completed review sessions on `/study`) | Implemented (commit deferred) | [spec.md](../../frontend/.specs/features/study-session-history/spec.md) · [context.md](../../frontend/.specs/features/study-session-history/context.md) · [design.md](../../frontend/.specs/features/study-session-history/design.md) · [tasks.md](../../frontend/.specs/features/study-session-history/tasks.md) |
 | P2 | Interview Soft Coverage (practice anti-echo via topic+angle memory) | Implemented (commits deferred) | [spec.md](../../backend/.specs/features/interview-soft-coverage/spec.md) · [context.md](../../backend/.specs/features/interview-soft-coverage/context.md) · [design.md](../../backend/.specs/features/interview-soft-coverage/design.md) · [tasks.md](../../backend/.specs/features/interview-soft-coverage/tasks.md) |
+| P1 | Session Create Quota (3 practice + 3 study / rolling 4h) | Validated (UAT + commits deferred) | [spec.md](../features/session-create-quota/spec.md) · [design.md](../features/session-create-quota/design.md) · [tasks.md](../features/session-create-quota/tasks.md) |
 
 ## Milestones
 

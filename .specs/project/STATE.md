@@ -1,11 +1,19 @@
 # State
 
-**Last Updated:** 2026-08-04  
-**Current Work:** Study review-session auto-start — executed on `refact/frontend/study`
+**Last Updated:** 2026-08-19  
+**Current Work:** Session Create Quota — feature-level validation complete (Ready); commits deferred; Interactive UAT pending
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-019: Session create quota via sliding window log (2026-08-19)
+
+**Decision:** Cap **new session starts** at 3 Practice (`InterviewSession`) and 3 Study (`ReviewSession`) per rolling 4h, independent buckets, all authenticated users. Consume on create; resume does not count; delete does not refund; empty sessions count. Algorithm is sliding window log (slots free one-by-one 4h after each create). Persistent create log, not live session rows. Dedicated `GET /api/session-quota`. Minimal English start UX on `/practice`, `/practice/new`, `/study`. Env defaults 3/3/4h. Keep `aiRateLimiter` and monthly token cap unchanged. No backfill at deploy. **No purge/cron** — expired log rows stay; queries ignore them (current usage does not justify worker complexity).
+**Reason:** Request limiter caps turns/STT, not conversations started; product needs a visible, honest “3 every 4 hours” without midnight double-quota.
+**Trade-off:** After bursting 3, first slot waits ~4h (stricter than token bucket, which would allow up to 6 in 4h). Quota UI is English-only. First 4h after ship ignores older sessions.
+**Impact:** New full-stack feature `session-create-quota`; new error/GET contract; FE start controls.
+**Spec:** `.specs/features/session-create-quota/spec.md`
 
 ### AD-018: Auto-start review session stream on empty Study chat (2026-08-04)
 
@@ -165,6 +173,10 @@ _None_
 - [ ] Bull Board / admin UI for queue ops — Captured during: async-review-items-generation
 - [ ] Persist STT audio/transcripts; use language_code to suggest interviewLocale; streaming STT; auto-send after transcribe — Captured during: interview-speech-to-text
 - [ ] Hard exclude / regenerate / embeddings / UI modes / Study CTA for practice coverage — Captured during: interview-soft-coverage (soft MVP first; replaces prior hard `topic_coverage` exclude idea from review-items-learned-status)
+- [ ] PT copy for session-quota UX (`interviewLocale`) — Captured during: session-create-quota (grill Q12 = English MVP)
+- [ ] Token bucket recovery (~1 slot / 80 min after binge) — Captured during: session-create-quota (rejected: would allow up to 6 in 4h)
+- [ ] Backfill quota log from existing session `createdAt` at deploy — Captured during: session-create-quota
+- [ ] Daily (or other) purge job for `session_quota_events` older than the window — Captured during: session-create-quota (removed from MVP; table growth acceptable at current usage)
 
 ---
 
@@ -202,6 +214,13 @@ _None_
 - [x] Fix collateral E2E: rate-limit-redis + token-usage send `interviewLocale`
 - [x] Align spec.md acceptance text 400 → 422 (design already documents)
 - [x] Delete leftover `.tmp-wip-*` prompt scratch folders
+- [x] Grill-me + Specify session-create-quota → `spec.md` (2026-08-19)
+- [x] Design phase for session-create-quota (`design.md`) — draft used as Tasks input
+- [x] Tasks breakdown for session-create-quota (`tasks.md`) — approved via Execute
+- [x] Execute session-create-quota T1–T18 (2026-08-19) — implemented; commits deferred (L-005: orchestrator serializes; user git rule: no commit unless asked)
+- [x] Feature-level automated validation for session-create-quota (2026-08-19) — backend lint/types/unit/integration/e2e green; FE feature files lint clean + Next build green
+- [ ] Commit session-create-quota (deferred — user did not request commits)
+- [ ] Interactive UAT for session-create-quota (Start disabled + countdown on `/practice`, `/practice/new`, `/study`)
 
 ---
 
@@ -217,8 +236,9 @@ _None_
 
 ## Preferences
 
-- Grill-me used for disambiguation before Specify on interview-locale, interview-speech-to-text, and interview-soft-coverage
+- Grill-me used for disambiguation before Specify on interview-locale, interview-speech-to-text, interview-soft-coverage, and session-create-quota
 - Spec-driven Specify used for async-review-items-generation (architecture pre-aligned in chat)
 - Prefer single end-of-feature commit over per-task commits when requested
 - External providers must stay behind ports/adapters (R2, mailer, LLM generators, STT)
 - Lightweight verify/validate tasks are fine on faster/cheaper models
+- Frontend `bun run lint` currently fails on pre-existing `react-hooks/refs` in `interview-chat.tsx` / `review-session-chat.tsx`; `bun run check-types` fails on untracked `*.test.ts` that import `vitest` (no FE test runner). Session-quota validation used targeted ESLint on feature files + `next build` instead.

@@ -4,6 +4,8 @@ import type { InterviewLocale } from "@/shared";
 import type {
   InterviewLevel,
   InterviewSession,
+  Prisma,
+  PrismaClient,
 } from "../../../../prisma/generated/client";
 
 export { MAX_TURNS_BY_LEVEL };
@@ -19,9 +21,12 @@ export type CreateSessionParams = {
 };
 
 export class SessionRepository {
-  async create(params: CreateSessionParams): Promise<InterviewSession> {
+  async create(
+    params: CreateSessionParams,
+    db: Prisma.TransactionClient | PrismaClient = prisma,
+  ): Promise<InterviewSession> {
     const { userId, resumeId, level, interviewLocale, jobDescription } = params;
-    return prisma.interviewSession.create({
+    return db.interviewSession.create({
       data: {
         userId,
         resumeId,

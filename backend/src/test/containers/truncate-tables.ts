@@ -18,7 +18,7 @@ export async function truncateTables(databaseUrl?: string): Promise<void> {
 
   try {
     await client.query(
-      'TRUNCATE TABLE "review_items", "interview_messages", "interview_sessions", "resumes", "users" RESTART IDENTITY CASCADE;',
+      'TRUNCATE TABLE "review_items", "interview_messages", "interview_sessions", "resumes", "session_quota_events", "users" RESTART IDENTITY CASCADE;',
     );
   } finally {
     await client.end();
