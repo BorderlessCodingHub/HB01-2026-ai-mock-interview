@@ -6,6 +6,8 @@ const e2eEnvDefaults: Record<string, string> = {
   RATE_LIMIT_MAX: "500",
   RATE_LIMIT_AI_WINDOW_MS: "900000",
   RATE_LIMIT_AI_MAX: "500",
+  SESSION_QUOTA_PRACTICE_MAX: "500",
+  SESSION_QUOTA_STUDY_MAX: "500",
   OPENAI_API_KEY: "test-openai-key",
   ASSEMBLYAI_API_KEY: "test-assemblyai-api-key",
   OPENAI_MODEL_INTERVIEW: "gpt-5",
@@ -29,3 +31,6 @@ process.env.RATE_LIMIT_MAX = e2eEnvDefaults.RATE_LIMIT_MAX;
 process.env.RATE_LIMIT_WINDOW_MS = e2eEnvDefaults.RATE_LIMIT_WINDOW_MS;
 process.env.RATE_LIMIT_AI_WINDOW_MS = e2eEnvDefaults.RATE_LIMIT_AI_WINDOW_MS;
 process.env.RATE_LIMIT_AI_MAX = e2eEnvDefaults.RATE_LIMIT_AI_MAX;
+process.env.SESSION_QUOTA_PRACTICE_MAX =
+  e2eEnvDefaults.SESSION_QUOTA_PRACTICE_MAX;
+process.env.SESSION_QUOTA_STUDY_MAX = e2eEnvDefaults.SESSION_QUOTA_STUDY_MAX;

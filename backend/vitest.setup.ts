@@ -24,3 +24,6 @@ for (const [key, value] of Object.entries(testEnvDefaults)) {
     process.env[key] = value;
   }
 }
+
+process.env.SESSION_QUOTA_PRACTICE_MAX = "500";
+process.env.SESSION_QUOTA_STUDY_MAX = "500";

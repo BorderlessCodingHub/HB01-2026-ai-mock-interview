@@ -12,5 +12,6 @@ export const queryKeys = {
     ["review-sessions", "list", filter] as const,
   resume: (id: string) => ["resumes", id] as const,
   resumes: ["resumes"] as const,
+  sessionQuota: ["session-quota"] as const,
   weakAnswers: ["weak-answers"] as const,
 };

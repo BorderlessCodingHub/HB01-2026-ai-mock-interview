@@ -95,3 +95,11 @@ export const AnswerEvaluation = {
 } as const
 
 export type AnswerEvaluation = (typeof AnswerEvaluation)[keyof typeof AnswerEvaluation]
+
+
+export const SessionQuotaKind = {
+  practice: 'practice',
+  study: 'study'
+} as const
+
+export type SessionQuotaKind = (typeof SessionQuotaKind)[keyof typeof SessionQuotaKind]

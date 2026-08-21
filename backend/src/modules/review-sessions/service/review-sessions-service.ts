@@ -14,6 +14,7 @@ import type {
   ApplyReviewSessionInput,
   CreateReviewSessionInput,
 } from "@/modules/review-sessions/validations/review-session-schemas";
+import type { SessionQuotaService } from "@/modules/session-quota/service/session-quota-service";
 import {
   BadRequestError,
   ConflictError,
@@ -177,6 +178,7 @@ export class ReviewSessionsService {
     private readonly reviewRepository: ReviewRepository,
     private readonly reviewSessionRepository: ReviewSessionRepository,
     private readonly reviewMergeService: ReviewMergeService,
+    private readonly sessionQuotaService: SessionQuotaService,
   ) {}
 
   async create(
@@ -193,10 +195,16 @@ export class ReviewSessionsService {
       throw new NotFoundError("Review item not found");
     }
 
-    const session = await this.reviewSessionRepository.create(
+    const session = await this.sessionQuotaService.runWithSlot(
       userId,
-      buildCreateInputs(reviewItemIds, matches),
-      interviewLocale,
+      "study",
+      (tx) =>
+        this.reviewSessionRepository.create(
+          userId,
+          buildCreateInputs(reviewItemIds, matches),
+          interviewLocale,
+          tx,
+        ),
     );
 
     return toSummary(session);

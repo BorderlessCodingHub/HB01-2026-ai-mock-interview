@@ -20,8 +20,11 @@ import { InterviewLocaleSelector } from "@/features/interview-locale/interview-l
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
+import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
 import { interviewApi } from "@/lib/api/interview";
+import { ApiError } from "@/lib/api/client";
 import { InterviewChat } from "@/features/interview/interview-chat";
+import { SessionQuotaHint } from "@/features/session-quota/session-quota-hint";
 import { toDisplayTurns } from "@/features/interview/lib/display-turns";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
@@ -72,6 +75,15 @@ function PracticeContent() {
     () => sessionsData?.sessions ?? [],
     [sessionsData?.sessions],
   );
+
+  const {
+    data: quota,
+    isError: isQuotaError,
+    isLoading: isQuotaLoading,
+    isSuccess: isQuotaSuccess,
+    dataUpdatedAt: quotaUpdatedAt,
+  } = useSessionQuota();
+  const quotaExhausted = isQuotaSuccess && quota?.practice.remaining === 0;
 
   const querySessionId = searchParams.get("sessionId");
 
@@ -141,12 +153,18 @@ function PracticeContent() {
 
       // Invalidate query to refresh list
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
 
       // Select the new session
       setActiveSessionId(id);
       router.push(`/practice?sessionId=${id}`);
     } catch (err) {
-      toast.error("Failed to create interview session");
+      toast.error(
+        err instanceof ApiError ? err.message : "Failed to create interview session",
+      );
+      if (err instanceof ApiError && err.status === 429) {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
+      }
       console.error(err);
     } finally {
       setIsCreatingSession(false);
@@ -291,12 +309,19 @@ function PracticeContent() {
           </div>
 
           {/* Start New Session CTA */}
+          <SessionQuotaHint
+            bucket={quota?.practice}
+            isError={isQuotaError}
+            isLoading={isQuotaLoading}
+            dataUpdatedAt={quotaUpdatedAt}
+          />
           <button
             type="button"
             disabled={
               isCreatingSession ||
               Boolean(resumesError) ||
-              readyResumes.length === 0
+              readyResumes.length === 0 ||
+              quotaExhausted
             }
             onClick={handleStartNewInterview}
             className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-jade-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"

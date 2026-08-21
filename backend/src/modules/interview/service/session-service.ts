@@ -6,6 +6,7 @@ import type {
   InterviewLevel,
 } from "@/modules/interview/validations/interview-schemas";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
+import type { SessionQuotaService } from "@/modules/session-quota/service/session-quota-service";
 import { BadRequestError, NotFoundError } from "@/shared";
 import type { InterviewSession } from "../../../../prisma/generated/client";
 
@@ -34,6 +35,7 @@ export class SessionService {
     private readonly sessionRepository: SessionRepository,
     private readonly messageRepository: MessageRepository,
     private readonly resumeRepository: ResumeRepository,
+    private readonly sessionQuotaService: SessionQuotaService,
   ) {}
 
   async createSession(
@@ -59,16 +61,24 @@ export class SessionService {
       throw new BadRequestError(message);
     }
 
-    const session = await this.sessionRepository.create({
+    const session = await this.sessionQuotaService.runWithSlot(
       userId,
-      resumeId: input.resumeId,
-      level: input.level,
-      interviewLocale: input.interviewLocale,
-      jobDescription: input.jobDescription
-        ? sanitizeJobDescription(input.jobDescription)
-        : null,
-      maxTurns: input.turns !== undefined ? input.turns + 1 : undefined,
-    });
+      "practice",
+      (tx) =>
+        this.sessionRepository.create(
+          {
+            userId,
+            resumeId: input.resumeId,
+            level: input.level,
+            interviewLocale: input.interviewLocale,
+            jobDescription: input.jobDescription
+              ? sanitizeJobDescription(input.jobDescription)
+              : null,
+            maxTurns: input.turns !== undefined ? input.turns + 1 : undefined,
+          },
+          tx,
+        ),
+    );
 
     return { id: session.id };
   }

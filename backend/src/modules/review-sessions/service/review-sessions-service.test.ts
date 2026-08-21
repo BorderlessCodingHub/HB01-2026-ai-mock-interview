@@ -8,11 +8,18 @@ import type {
   ReviewSessionItemRecord,
   ReviewSessionRecord,
 } from "@/modules/review-sessions/types/review-session-record";
-import { BadRequestError, ConflictError, NotFoundError } from "@/shared";
+import type { SessionQuotaService } from "@/modules/session-quota/service/session-quota-service";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  SessionQuotaExceededError,
+} from "@/shared";
 
 import { ReviewSessionsService } from "./review-sessions-service";
 
 const baseDate = new Date("2026-01-01T00:00:00.000Z");
+const fakeTx = { __fakeTx: true };
 
 function createReviewItem(
   overrides: Partial<
@@ -79,6 +86,10 @@ describe("ReviewSessionsService", () => {
   let reviewRepository: ReviewRepository;
   let reviewSessionRepository: ReviewSessionRepository;
   let reviewMergeService: ReviewMergeService;
+  let sessionQuotaService: {
+    runWithSlot: ReturnType<typeof vi.fn>;
+    getSnapshot: ReturnType<typeof vi.fn>;
+  };
   let service: ReviewSessionsService;
 
   beforeEach(() => {
@@ -95,10 +106,15 @@ describe("ReviewSessionsService", () => {
     reviewMergeService = {
       applyReviewSessionConfirmation: vi.fn(),
     } as unknown as ReviewMergeService;
+    sessionQuotaService = {
+      runWithSlot: vi.fn(async (_u, _k, work) => work(fakeTx)),
+      getSnapshot: vi.fn(),
+    };
     service = new ReviewSessionsService(
       reviewRepository,
       reviewSessionRepository,
       reviewMergeService,
+      sessionQuotaService as unknown as SessionQuotaService,
     );
   });
 
@@ -173,6 +189,7 @@ describe("ReviewSessionsService", () => {
           },
         ],
         "pt",
+        fakeTx,
       );
       expect(result).toEqual({
         id: "review-session-id",
@@ -207,6 +224,62 @@ describe("ReviewSessionsService", () => {
           interviewLocale: "en",
         }),
       ).rejects.toBeInstanceOf(NotFoundError);
+
+      expect(reviewSessionRepository.create).not.toHaveBeenCalled();
+      expect(sessionQuotaService.runWithSlot).not.toHaveBeenCalled();
+    });
+
+    it("creates a session inside runWithSlot with the study quota transaction", async () => {
+      vi.mocked(reviewRepository.findActiveByIdsAndUserId).mockResolvedValue([
+        createReviewItem({ id: "review-item-1" }),
+      ]);
+      vi.mocked(reviewSessionRepository.create).mockResolvedValue(
+        createReviewSessionRecord(),
+      );
+
+      await service.create(1, {
+        reviewItemIds: ["review-item-1"],
+        interviewLocale: "en",
+      });
+
+      expect(sessionQuotaService.runWithSlot).toHaveBeenCalledWith(
+        1,
+        "study",
+        expect.any(Function),
+      );
+      expect(reviewSessionRepository.create).toHaveBeenCalledWith(
+        1,
+        [
+          {
+            reviewItemId: "review-item-1",
+            topic: "system design",
+            angle: "sharding strategies",
+            description: "Need to study sharding",
+            currentPriority: "high",
+          },
+        ],
+        "en",
+        fakeTx,
+      );
+    });
+
+    it("does not create a session when the study quota is exhausted", async () => {
+      vi.mocked(reviewRepository.findActiveByIdsAndUserId).mockResolvedValue([
+        createReviewItem({ id: "review-item-1" }),
+      ]);
+      sessionQuotaService.runWithSlot.mockRejectedValueOnce(
+        new SessionQuotaExceededError({
+          retryAfterSeconds: 60,
+          quota: "study",
+        }),
+      );
+
+      await expect(
+        service.create(1, {
+          reviewItemIds: ["review-item-1"],
+          interviewLocale: "en",
+        }),
+      ).rejects.toBeInstanceOf(SessionQuotaExceededError);
 
       expect(reviewSessionRepository.create).not.toHaveBeenCalled();
     });
@@ -586,5 +659,60 @@ describe("ReviewSessionsService", () => {
         ]),
       ).rejects.toBeInstanceOf(NotFoundError);
     });
+  });
+
+  it("does not call runWithSlot for getById, list, or apply", async () => {
+    const pendingItem = createSessionItem({
+      suggestedStatus: "active",
+      suggestedPriority: "medium",
+    });
+    vi.mocked(reviewSessionRepository.findByIdAndUserId)
+      .mockResolvedValueOnce(
+        createReviewSessionRecord({
+          status: "pending_review",
+          items: [pendingItem],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createReviewSessionRecord({
+          status: "pending_review",
+          items: [pendingItem],
+        }),
+      )
+      .mockResolvedValueOnce(
+        createReviewSessionRecord({
+          status: "completed",
+          items: [
+            {
+              ...pendingItem,
+              confirmedStatus: "learned",
+              confirmedPriority: null,
+              confirmedAt: baseDate,
+            },
+          ],
+        }),
+      );
+    vi.mocked(reviewSessionRepository.findManyByUserId).mockResolvedValue([]);
+    vi.mocked(
+      reviewMergeService.applyReviewSessionConfirmation,
+    ).mockResolvedValue(createReviewItem());
+    vi.mocked(
+      reviewSessionRepository.markCompletedIfAllConfirmed,
+    ).mockResolvedValue(true);
+
+    await service.getById(1, "review-session-id");
+    await service.list(1, {
+      statuses: ["in_progress"],
+      page: 1,
+      limit: 10,
+    });
+    await service.apply(1, "review-session-id", [
+      {
+        reviewSessionItemId: "session-item-1",
+        status: "learned",
+      },
+    ]);
+
+    expect(sessionQuotaService.runWithSlot).not.toHaveBeenCalled();
   });
 });

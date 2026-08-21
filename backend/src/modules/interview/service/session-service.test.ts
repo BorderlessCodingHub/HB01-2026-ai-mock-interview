@@ -1,6 +1,7 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { BadRequestError, NotFoundError } from "@/shared";
+import type { SessionQuotaService } from "@/modules/session-quota/service/session-quota-service";
+import { BadRequestError, NotFoundError, SessionQuotaExceededError } from "@/shared";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { ResumeRecord } from "@/modules/resumes/types/resume-record";
 import type { MessageRepository } from "../repository/message-repository";
@@ -10,6 +11,15 @@ import {
   type CreateSessionParams,
 } from "../repository/session-repository";
 import { SessionService } from "./session-service";
+
+const fakeTx = { __fakeTx: true };
+
+function createStubQuotaService() {
+  return {
+    runWithSlot: vi.fn(async (_userId, _kind, work) => work(fakeTx)),
+    getSnapshot: vi.fn(),
+  };
+}
 
 const validStructuredSummary = {
   personal_info: {
@@ -52,6 +62,7 @@ function createStubSessionRepository() {
       ReturnType<SessionRepository["findByIdAndUserId"]>
     >,
     createCalls: [] as CreateSessionParams[],
+    createTx: undefined as unknown,
   };
 
   const repository = {
@@ -70,8 +81,12 @@ function createStubSessionRepository() {
     get createCalls() {
       return state.createCalls;
     },
-    create: async (params: CreateSessionParams) => {
+    get createTx() {
+      return state.createTx;
+    },
+    create: async (params: CreateSessionParams, tx?: unknown) => {
       state.createCalls.push(params);
+      state.createTx = tx;
       return {
         id: sessionId,
         userId: params.userId,
@@ -117,6 +132,7 @@ function createStubSessionRepository() {
       reviewGenerationError: null,
       createdAt: new Date(),
     }),
+    deleteByIdAndUserId: async () => state.sessionById,
   };
 
   return repository as unknown as SessionRepository & typeof repository;
@@ -142,16 +158,19 @@ describe("SessionService", () => {
   let resumeRepository: ReturnType<typeof createStubResumeRepository>;
   let sessionRepository: ReturnType<typeof createStubSessionRepository>;
   let messageRepository: ReturnType<typeof createStubMessageRepository>;
+  let quotaService: ReturnType<typeof createStubQuotaService>;
   let service: SessionService;
 
   beforeEach(() => {
     resumeRepository = createStubResumeRepository();
     sessionRepository = createStubSessionRepository();
     messageRepository = createStubMessageRepository();
+    quotaService = createStubQuotaService();
     service = new SessionService(
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
   });
 
@@ -185,6 +204,7 @@ describe("SessionService", () => {
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
 
     await expect(
@@ -214,6 +234,7 @@ describe("SessionService", () => {
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
 
     await expect(
@@ -243,6 +264,7 @@ describe("SessionService", () => {
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
 
     const result = await service.createSession(userId, {
@@ -278,6 +300,7 @@ describe("SessionService", () => {
         sessionRepository,
         messageRepository,
         resumeRepository,
+        quotaService as unknown as SessionQuotaService,
       );
 
       const result = await service.createSession(userId, {
@@ -316,6 +339,7 @@ describe("SessionService", () => {
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
 
     await service.createSession(userId, {
@@ -353,6 +377,7 @@ describe("SessionService", () => {
       sessionRepository,
       messageRepository,
       resumeRepository,
+      quotaService as unknown as SessionQuotaService,
     );
 
     await service.createSession(userId, {
@@ -505,5 +530,153 @@ describe("SessionService", () => {
     await expect(service.getMessages(userId, sessionId)).rejects.toBeInstanceOf(
       NotFoundError,
     );
+  });
+
+  it("does not consume quota when the resume is missing", async () => {
+    resumeRepository.resume = null;
+
+    await expect(
+      service.createSession(userId, {
+        resumeId,
+        level: "entry",
+        interviewLocale: "en",
+      }),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    expect(quotaService.runWithSlot).not.toHaveBeenCalled();
+  });
+
+  it("does not consume quota when the resume is still processing", async () => {
+    resumeRepository = createStubResumeRepository({
+      id: resumeId,
+      userId,
+      name: "resume.pdf",
+      pdfUrl: "resumes/1/file.pdf",
+      storageKey: "resumes/1/file.pdf",
+      structuredSummary: validStructuredSummary,
+      rawText: "text",
+      status: "processing",
+      errorMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    service = new SessionService(
+      sessionRepository,
+      messageRepository,
+      resumeRepository,
+      quotaService as unknown as SessionQuotaService,
+    );
+
+    await expect(
+      service.createSession(userId, {
+        resumeId,
+        level: "entry",
+        interviewLocale: "en",
+      }),
+    ).rejects.toThrow(new BadRequestError("Resume is still being processed"));
+
+    expect(quotaService.runWithSlot).not.toHaveBeenCalled();
+  });
+
+  it("creates a session inside runWithSlot with the quota transaction", async () => {
+    resumeRepository = createStubResumeRepository({
+      id: resumeId,
+      userId,
+      name: "resume.pdf",
+      pdfUrl: "resumes/1/file.pdf",
+      storageKey: "resumes/1/file.pdf",
+      structuredSummary: validStructuredSummary,
+      rawText: "text",
+      status: "ready",
+      errorMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    service = new SessionService(
+      sessionRepository,
+      messageRepository,
+      resumeRepository,
+      quotaService as unknown as SessionQuotaService,
+    );
+
+    const result = await service.createSession(userId, {
+      resumeId,
+      level: "entry",
+      interviewLocale: "en",
+    });
+
+    expect(result).toEqual({ id: sessionId });
+    expect(quotaService.runWithSlot).toHaveBeenCalledWith(
+      userId,
+      "practice",
+      expect.any(Function),
+    );
+    expect(sessionRepository.createCalls[0]).toEqual({
+      userId,
+      resumeId,
+      level: "entry",
+      interviewLocale: "en",
+      jobDescription: null,
+    });
+    expect(sessionRepository.createTx).toBe(fakeTx);
+  });
+
+  it("does not create a session when the practice quota is exhausted", async () => {
+    resumeRepository = createStubResumeRepository({
+      id: resumeId,
+      userId,
+      name: "resume.pdf",
+      pdfUrl: "resumes/1/file.pdf",
+      storageKey: "resumes/1/file.pdf",
+      structuredSummary: validStructuredSummary,
+      rawText: "text",
+      status: "ready",
+      errorMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    service = new SessionService(
+      sessionRepository,
+      messageRepository,
+      resumeRepository,
+      quotaService as unknown as SessionQuotaService,
+    );
+    quotaService.runWithSlot.mockRejectedValueOnce(
+      new SessionQuotaExceededError({
+        retryAfterSeconds: 60,
+        quota: "practice",
+      }),
+    );
+
+    await expect(
+      service.createSession(userId, {
+        resumeId,
+        level: "entry",
+        interviewLocale: "en",
+      }),
+    ).rejects.toBeInstanceOf(SessionQuotaExceededError);
+
+    expect(sessionRepository.createCalls).toHaveLength(0);
+  });
+
+  it("does not call runWithSlot when deleting a session", async () => {
+    sessionRepository.sessionById = {
+      id: sessionId,
+      userId,
+      resumeId,
+      level: "entry",
+      jobDescription: null,
+      interviewLocale: "en",
+      turnCount: 1,
+      maxTurns: 5,
+      isFinished: false,
+      reviewGenerationStatus: "idle" as const,
+      reviewGenerationError: null,
+      createdAt: new Date("2026-01-02T00:00:00.000Z"),
+    };
+
+    await service.deleteSession(userId, sessionId);
+
+    expect(quotaService.runWithSlot).not.toHaveBeenCalled();
   });
 });

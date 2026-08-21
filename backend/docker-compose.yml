@@ -32,6 +32,7 @@ services:
     restart: unless-stopped
 
   api:
+    profiles: ["full"]
     build: .
     container_name: hackathon2026-api
     env_file:
@@ -47,9 +48,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    restart: "no"
 
   worker:
+    profiles: ["full"]
     build: .
     container_name: hackathon2026-worker
     command: bun run worker
@@ -64,7 +66,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    restart: unless-stopped
+    restart: "no"
 
 volumes:
   hackathon2026_postgres_data:
