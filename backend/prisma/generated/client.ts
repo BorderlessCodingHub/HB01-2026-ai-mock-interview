@@ -92,6 +92,11 @@ export type InterviewFeedback = Prisma.InterviewFeedbackModel
  */
 export type User = Prisma.UserModel
 /**
+ * Model SessionQuotaEvent
+ * 
+ */
+export type SessionQuotaEvent = Prisma.SessionQuotaEventModel
+/**
  * Model UserTokenUsage
  * 
  */

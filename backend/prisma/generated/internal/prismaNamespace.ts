@@ -394,6 +394,7 @@ export const ModelName = {
   TopicCoverage: 'TopicCoverage',
   InterviewFeedback: 'InterviewFeedback',
   User: 'User',
+  SessionQuotaEvent: 'SessionQuotaEvent',
   UserTokenUsage: 'UserTokenUsage'
 } as const
 
@@ -410,7 +411,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "resume" | "interviewSession" | "interviewMessage" | "reviewItem" | "reviewSession" | "reviewSessionItem" | "weakAnswer" | "topicCoverage" | "interviewFeedback" | "user" | "userTokenUsage"
+    modelProps: "resume" | "interviewSession" | "interviewMessage" | "reviewItem" | "reviewSession" | "reviewSessionItem" | "weakAnswer" | "topicCoverage" | "interviewFeedback" | "user" | "sessionQuotaEvent" | "userTokenUsage"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -1154,6 +1155,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    SessionQuotaEvent: {
+      payload: Prisma.$SessionQuotaEventPayload<ExtArgs>
+      fields: Prisma.SessionQuotaEventFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.SessionQuotaEventFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.SessionQuotaEventFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        findFirst: {
+          args: Prisma.SessionQuotaEventFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.SessionQuotaEventFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        findMany: {
+          args: Prisma.SessionQuotaEventFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>[]
+        }
+        create: {
+          args: Prisma.SessionQuotaEventCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        createMany: {
+          args: Prisma.SessionQuotaEventCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.SessionQuotaEventCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>[]
+        }
+        delete: {
+          args: Prisma.SessionQuotaEventDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        update: {
+          args: Prisma.SessionQuotaEventUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        deleteMany: {
+          args: Prisma.SessionQuotaEventDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.SessionQuotaEventUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.SessionQuotaEventUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>[]
+        }
+        upsert: {
+          args: Prisma.SessionQuotaEventUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$SessionQuotaEventPayload>
+        }
+        aggregate: {
+          args: Prisma.SessionQuotaEventAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateSessionQuotaEvent>
+        }
+        groupBy: {
+          args: Prisma.SessionQuotaEventGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SessionQuotaEventGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.SessionQuotaEventCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.SessionQuotaEventCountAggregateOutputType> | number
+        }
+      }
+    }
     UserTokenUsage: {
       payload: Prisma.$UserTokenUsagePayload<ExtArgs>
       fields: Prisma.UserTokenUsageFieldRefs
@@ -1419,6 +1494,16 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SessionQuotaEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type SessionQuotaEventScalarFieldEnum = (typeof SessionQuotaEventScalarFieldEnum)[keyof typeof SessionQuotaEventScalarFieldEnum]
 
 
 export const UserTokenUsageScalarFieldEnum = {
@@ -1690,6 +1775,20 @@ export type ListEnumFeedbackRatingFieldRefInput<$PrismaModel> = FieldRefInputTyp
 
 
 /**
+ * Reference to a field of type 'SessionQuotaKind'
+ */
+export type EnumSessionQuotaKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SessionQuotaKind'>
+    
+
+
+/**
+ * Reference to a field of type 'SessionQuotaKind[]'
+ */
+export type ListEnumSessionQuotaKindFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'SessionQuotaKind[]'>
+    
+
+
+/**
  * Reference to a field of type 'Float'
  */
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
@@ -1822,6 +1921,7 @@ export type GlobalOmitConfig = {
   topicCoverage?: Prisma.TopicCoverageOmit
   interviewFeedback?: Prisma.InterviewFeedbackOmit
   user?: Prisma.UserOmit
+  sessionQuotaEvent?: Prisma.SessionQuotaEventOmit
   userTokenUsage?: Prisma.UserTokenUsageOmit
 }
 

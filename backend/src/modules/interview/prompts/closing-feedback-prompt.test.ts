@@ -4,9 +4,12 @@ import {
   appendClosingFeedbackCta,
   buildClosingFeedbackPrompt,
   CLOSING_FEEDBACK_CTA,
+  CLOSING_FEEDBACK_WORD_BUDGET,
   CLOSING_FORMAT_HEADER,
   CLOSING_SECURITY_HEADER,
   closingFeedbackCtaStreamSuffix,
+  resolveClosingFeedbackLengthBand,
+  toCandidateTurnBudget,
 } from "@/modules/interview/prompts/closing-feedback-prompt";
 import {
   buildInterviewLocalePromptBlock,
@@ -26,6 +29,7 @@ describe("buildClosingFeedbackPrompt interviewLocale", () => {
   const baseParams = {
     level: "mid" as const,
     resumeSummary: sampleResumeSummary,
+    maxTurns: 8,
   };
 
   it("ends with the locale language block for en and uses English closing copy", () => {
@@ -72,6 +76,91 @@ describe("buildClosingFeedbackPrompt interviewLocale", () => {
     expect(prompt).not.toMatch(/Reply in Portuguese\./);
     expect(prompt).toContain("## What went well");
     expect(prompt).toContain("## What to work on");
+  });
+});
+
+describe("closing feedback length band", () => {
+  it("maps stored maxTurns to candidate turns (ready message is not counted)", () => {
+    expect(toCandidateTurnBudget(1)).toBe(1);
+    expect(toCandidateTurnBudget(4)).toBe(3);
+    expect(toCandidateTurnBudget(8)).toBe(7);
+    expect(toCandidateTurnBudget(21)).toBe(20);
+  });
+
+  it.each([
+    [4, "short"],
+    [7, "short"],
+    [8, "medium"],
+    [13, "medium"],
+    [14, "long"],
+    [21, "long"],
+  ] as const)(
+    "resolves stored maxTurns %s to the %s band",
+    (maxTurns, band) => {
+      expect(resolveClosingFeedbackLengthBand(maxTurns)).toBe(band);
+    },
+  );
+
+  it("uses a short word budget for few candidate turns", () => {
+    const prompt = buildClosingFeedbackPrompt({
+      level: "mid",
+      resumeSummary: sampleResumeSummary,
+      maxTurns: 4,
+      interviewLocale: "en",
+    });
+    const { min, max } = CLOSING_FEEDBACK_WORD_BUDGET.short;
+
+    expect(prompt).toContain("This session had 3 candidate turns.");
+    expect(prompt).toContain(`Maximum ${min}-${max} words.`);
+    expect(prompt).not.toContain("Maximum 250-280 words.");
+  });
+
+  it("uses a medium word budget around current default lengths", () => {
+    const prompt = buildClosingFeedbackPrompt({
+      level: "mid",
+      resumeSummary: sampleResumeSummary,
+      maxTurns: 8,
+      interviewLocale: "en",
+    });
+    const { min, max } = CLOSING_FEEDBACK_WORD_BUDGET.medium;
+
+    expect(prompt).toContain("This session had 7 candidate turns.");
+    expect(prompt).toContain(`Maximum ${min}-${max} words.`);
+  });
+
+  it("uses a long word budget for sessions up to 20 candidate turns", () => {
+    const prompt = buildClosingFeedbackPrompt({
+      level: "mid",
+      resumeSummary: sampleResumeSummary,
+      maxTurns: 21,
+      interviewLocale: "en",
+    });
+    const { min, max } = CLOSING_FEEDBACK_WORD_BUDGET.long;
+
+    expect(prompt).toContain("This session had 20 candidate turns.");
+    expect(prompt).toContain(`Maximum ${min}-${max} words.`);
+  });
+
+  it("does not prescribe a bullet quota in the output template", () => {
+    const prompt = buildClosingFeedbackPrompt({
+      level: "mid",
+      resumeSummary: sampleResumeSummary,
+      maxTurns: 8,
+      interviewLocale: "en",
+    });
+
+    expect(prompt).not.toMatch(/second and\/or third/i);
+    expect(prompt).not.toMatch(/third or fourth bullet/i);
+    expect(prompt).not.toMatch(
+      /- \[specific, actionable improvement with context\]\r?\n- \[specific, actionable improvement with context\]/,
+    );
+    expect(prompt).toContain("not a fixed quota and not the turn count");
+    expect(prompt).toContain(
+      "one bullet per distinct genuine technical strength",
+    );
+    expect(prompt).toContain(
+      "one bullet per distinct, actionable improvement",
+    );
   });
 });
 

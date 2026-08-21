@@ -61,6 +61,7 @@ export const ModelName = {
   TopicCoverage: 'TopicCoverage',
   InterviewFeedback: 'InterviewFeedback',
   User: 'User',
+  SessionQuotaEvent: 'SessionQuotaEvent',
   UserTokenUsage: 'UserTokenUsage'
 } as const
 
@@ -232,6 +233,16 @@ export const UserScalarFieldEnum = {
 } as const
 
 export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+
+
+export const SessionQuotaEventScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  kind: 'kind',
+  createdAt: 'createdAt'
+} as const
+
+export type SessionQuotaEventScalarFieldEnum = (typeof SessionQuotaEventScalarFieldEnum)[keyof typeof SessionQuotaEventScalarFieldEnum]
 
 
 export const UserTokenUsageScalarFieldEnum = {

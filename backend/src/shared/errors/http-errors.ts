@@ -57,3 +57,26 @@ export class TokenLimitExceededError extends HttpError {
     super(message, 429);
   }
 }
+
+type SessionQuotaKind = "practice" | "study";
+
+const SESSION_QUOTA_MESSAGES: Record<SessionQuotaKind, string> = {
+  practice:
+    "Practice session limit reached. You can start another after the waiting period.",
+  study:
+    "Study session limit reached. You can start another after the waiting period.",
+};
+
+export class SessionQuotaExceededError extends HttpError {
+  readonly retryAfterSeconds: number;
+  readonly quota: SessionQuotaKind;
+
+  constructor(params: {
+    retryAfterSeconds: number;
+    quota: SessionQuotaKind;
+  }) {
+    super(SESSION_QUOTA_MESSAGES[params.quota], 429);
+    this.retryAfterSeconds = params.retryAfterSeconds;
+    this.quota = params.quota;
+  }
+}

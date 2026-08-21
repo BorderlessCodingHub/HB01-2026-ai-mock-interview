@@ -38,6 +38,7 @@ export function createInterviewerNode(deps: InterviewerNodeDeps = {}) {
       ? buildClosingFeedbackChatPromptTemplate({
           level: state.level,
           resumeSummary: state.resumeSummary,
+          maxTurns: state.maxTurns,
           interviewLocale: state.interviewLocale,
           jobDescription: state.jobDescription,
         })

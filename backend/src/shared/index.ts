@@ -22,6 +22,7 @@ export {
   GatewayTimeoutError,
   ServiceUnavailableError,
   TokenLimitExceededError,
+  SessionQuotaExceededError,
 } from "./errors/http-errors";
 export { asyncHandler } from "./utils/async-handler";
 export { logStreamError } from "./utils/log-stream-error";

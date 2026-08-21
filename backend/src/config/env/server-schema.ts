@@ -27,6 +27,11 @@ export const serverEnv = {
     .transform((value) => value === "true"),
   TOKEN_LIMIT_MONTHLY_MAX: z.coerce.number().default(500_000),
 
+  // Session create quota (sliding window; practice = InterviewSession, study = ReviewSession)
+  SESSION_QUOTA_PRACTICE_MAX: z.coerce.number().default(3),
+  SESSION_QUOTA_STUDY_MAX: z.coerce.number().default(3),
+  SESSION_QUOTA_WINDOW_MS: z.coerce.number().default(14400000),
+
   // OpenAI (mock interview)
   OPENAI_API_KEY: z.string().min(1),
   OPENAI_MODEL_INTERVIEW: z.string().default("gpt-5"),

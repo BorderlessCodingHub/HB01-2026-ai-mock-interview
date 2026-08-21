@@ -630,4 +630,32 @@ describe("ReviewSessionRepository (integration)", () => {
       "algorithms",
     ]);
   });
+
+  it("create inside a rolled-back transaction does not persist a review session", async () => {
+    const { user, first } = await seedReviewItems();
+    await expect(
+      prisma.$transaction(async (tx) => {
+        await repository.create(
+          user.id,
+          [
+            {
+              reviewItemId: first.id,
+              topic: first.topic,
+              angle: first.angle,
+              description: first.description,
+              currentPriority: first.priority,
+            },
+          ],
+          "en",
+          tx,
+        );
+        throw new Error("force rollback");
+      }),
+    ).rejects.toThrow("force rollback");
+
+    const remaining = await prisma.reviewSession.findMany({
+      where: { userId: user.id },
+    });
+    expect(remaining).toHaveLength(0);
+  });
 });

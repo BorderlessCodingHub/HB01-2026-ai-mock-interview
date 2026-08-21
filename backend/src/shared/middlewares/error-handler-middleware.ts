@@ -12,6 +12,14 @@ function isHttpErrorLike(err: unknown): err is HttpError {
   );
 }
 
+function getRetryAfterSeconds(err: {
+  retryAfterSeconds?: unknown;
+}): number | undefined {
+  return typeof err.retryAfterSeconds === "number"
+    ? err.retryAfterSeconds
+    : undefined;
+}
+
 function toHttpError(err: unknown): HttpError | null {
   // Route modules are loaded via a runtime dynamic import() (see config/routes.ts),
   // which the bundler cannot inline. That gives them a separate module instance of
@@ -49,6 +57,16 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
     logger.error(logMessage, { ...requestMeta, statusCode, stack });
   } else if (statusCode >= 400) {
     logger.warn(message, { ...requestMeta, statusCode });
+  }
+
+  const retryAfterSeconds = isHttpError
+    ? getRetryAfterSeconds(httpError as { retryAfterSeconds?: unknown })
+    : undefined;
+
+  if (retryAfterSeconds !== undefined) {
+    res.setHeader("Retry-After", String(retryAfterSeconds));
+    res.status(statusCode).json({ message, retryAfterSeconds });
+    return;
   }
 
   res.status(statusCode).json({ message });

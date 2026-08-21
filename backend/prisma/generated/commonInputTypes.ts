@@ -498,6 +498,23 @@ export type EnumInterviewLocaleNullableWithAggregatesFilter<$PrismaModel = never
   _max?: Prisma.NestedEnumInterviewLocaleNullableFilter<$PrismaModel>
 }
 
+export type EnumSessionQuotaKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionQuotaKind | Prisma.EnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel> | $Enums.SessionQuotaKind
+}
+
+export type EnumSessionQuotaKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionQuotaKind | Prisma.EnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionQuotaKindWithAggregatesFilter<$PrismaModel> | $Enums.SessionQuotaKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel>
+}
+
 export type NestedStringFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel>
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>
@@ -939,6 +956,23 @@ export type NestedEnumInterviewLocaleNullableWithAggregatesFilter<$PrismaModel =
   _count?: Prisma.NestedIntNullableFilter<$PrismaModel>
   _min?: Prisma.NestedEnumInterviewLocaleNullableFilter<$PrismaModel>
   _max?: Prisma.NestedEnumInterviewLocaleNullableFilter<$PrismaModel>
+}
+
+export type NestedEnumSessionQuotaKindFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionQuotaKind | Prisma.EnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel> | $Enums.SessionQuotaKind
+}
+
+export type NestedEnumSessionQuotaKindWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.SessionQuotaKind | Prisma.EnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  in?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  notIn?: $Enums.SessionQuotaKind[] | Prisma.ListEnumSessionQuotaKindFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumSessionQuotaKindWithAggregatesFilter<$PrismaModel> | $Enums.SessionQuotaKind
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumSessionQuotaKindFilter<$PrismaModel>
 }
 
 
