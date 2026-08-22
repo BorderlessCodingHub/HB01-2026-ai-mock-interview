@@ -37,11 +37,11 @@ export function useDeleteSession() {
         queryClient.setQueryData(queryKeys.sessions, context.previous);
       }
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete feedback",
+        err instanceof ApiError ? err.message : "Failed to delete session",
       );
     },
     onSuccess: () => {
-      toast.success("Feedback deleted successfully");
+      toast.success("Session deleted");
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.sessions });
