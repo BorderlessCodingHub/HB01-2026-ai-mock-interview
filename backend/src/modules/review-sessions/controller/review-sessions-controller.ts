@@ -72,4 +72,10 @@ export class ReviewSessionsController {
     );
     res.status(200).json(result);
   };
+
+  remove = async (req: Request, res: Response): Promise<void> => {
+    const sessionId = String(req.params.id);
+    await this.reviewSessionsService.delete(req.userId!, sessionId);
+    res.status(204).send();
+  };
 }
