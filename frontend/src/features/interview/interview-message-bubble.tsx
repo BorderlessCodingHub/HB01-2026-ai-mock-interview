@@ -1,5 +1,6 @@
 import { Bot, Check, Loader2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import remarkBreaks from "remark-breaks";
 
 import { cn } from "@/lib/utils";
 
@@ -9,6 +10,14 @@ type InterviewMessageBubbleProps = {
   isStreaming?: boolean;
   isTyping?: boolean;
 };
+
+const markdownClassName = {
+  shared:
+    "max-w-none space-y-2 text-sm leading-relaxed [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-4 [&_strong]:font-semibold [&_code]:rounded [&_code]:px-1 [&_code]:py-0.5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:p-2",
+  human:
+    "text-white [&_a]:text-white [&_a]:underline [&_code]:bg-white/20 [&_pre]:bg-black/20",
+  ai: "text-ink-black [&_code]:bg-mist-gray [&_pre]:bg-mist-gray",
+} as const;
 
 export function InterviewMessageBubble({
   role,
@@ -44,13 +53,18 @@ export function InterviewMessageBubble({
           </div>
         ) : (
           <div className="flex flex-col gap-1.5">
-            {isHuman ? (
-              <span className="whitespace-pre-wrap">{content}</span>
-            ) : (
-              <div className="prose prose-sm max-w-none space-y-2 text-sm leading-relaxed text-ink-black [&_li]:my-0.5 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:leading-relaxed [&_ul]:list-disc [&_ul]:pl-4">
-                <ReactMarkdown>{content}</ReactMarkdown>
-              </div>
-            )}
+            <div
+              className={cn(
+                markdownClassName.shared,
+                isHuman ? markdownClassName.human : markdownClassName.ai,
+              )}
+            >
+              <ReactMarkdown
+                remarkPlugins={isHuman ? [remarkBreaks] : undefined}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
             {isStreaming && (
               <span className="mt-1 inline-flex items-center gap-1 text-xs text-text-base">
                 <Loader2 className="h-3 w-3 animate-spin" />
