@@ -12,8 +12,19 @@ import {
   Dumbbell,
   ChevronRight,
   MessageSquare,
+  Trash2,
 } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useAuth } from "@/features/auth/session-provider";
 import { InterviewLocaleSelector } from "@/features/interview-locale/interview-locale-selector";
@@ -21,6 +32,7 @@ import { useInterviewLocale } from "@/features/interview-locale/use-interview-lo
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
 import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
+import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { interviewApi } from "@/lib/api/interview";
 import { ApiError } from "@/lib/api/client";
 import { InterviewChat } from "@/features/interview/interview-chat";
@@ -29,18 +41,30 @@ import { toDisplayTurns } from "@/features/interview/lib/display-turns";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
 import type { CreateSessionInput, InterviewLevel } from "@/types/interview";
-import { MAX_JOB_DESCRIPTION_LENGTH } from "@/types/interview";
+import {
+  MAX_INTERVIEW_TURNS,
+  MAX_JOB_DESCRIPTION_LENGTH,
+  MIN_INTERVIEW_TURNS,
+} from "@/types/interview";
 import {
   getStoredResumeId,
   setStoredResumeId,
 } from "@/features/auth/session-storage";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 
-const LEVELS: { value: InterviewLevel; label: string; turns: string }[] = [
-  { value: "entry", label: "Entry Level", turns: "5 turns" },
-  { value: "mid", label: "Mid Level", turns: "7 turns" },
-  { value: "senior", label: "Senior Level", turns: "8 turns" },
+const LEVELS: { value: InterviewLevel; label: string }[] = [
+  { value: "entry", label: "Entry Level" },
+  { value: "mid", label: "Mid Level" },
+  { value: "senior", label: "Senior Level" },
 ];
+
+function turnOptions(): number[] {
+  const options: number[] = [];
+  for (let n = MIN_INTERVIEW_TURNS; n <= MAX_INTERVIEW_TURNS; n++) {
+    options.push(n);
+  }
+  return options;
+}
 
 function PracticeContent() {
   const { getAccessToken } = useAuth();
@@ -53,10 +77,15 @@ function PracticeContent() {
     getStoredResumeId(),
   );
   const [level, setLevel] = useState<InterviewLevel>("mid");
+  const [turns, setTurns] = useState<number>(MAX_INTERVIEW_TURNS);
   const [jobDescription, setJobDescription] = useState("");
   const [showJobDescription, setShowJobDescription] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [isCreatingSession, setIsCreatingSession] = useState(false);
+  const [sessionPendingDelete, setSessionPendingDelete] = useState<
+    string | null
+  >(null);
+  const deleteSession = useDeleteSession();
 
   const {
     data: resumesData,
@@ -142,6 +171,7 @@ function PracticeContent() {
         resumeId: resolvedResumeId,
         level,
         interviewLocale: locale,
+        turns,
       };
       if (trimmedJobDescription) {
         body.jobDescription = trimmedJobDescription;
@@ -174,6 +204,21 @@ function PracticeContent() {
   function handleSelectSession(id: string) {
     setActiveSessionId(id);
     router.push(`/practice?sessionId=${id}`);
+  }
+
+  function handleConfirmDelete() {
+    if (!sessionPendingDelete) return;
+    const id = sessionPendingDelete;
+    setSessionPendingDelete(null);
+
+    deleteSession.mutate(id, {
+      onSuccess: () => {
+        if (resolvedSessionId === id) {
+          setActiveSessionId(null);
+          router.push("/practice");
+        }
+      },
+    });
   }
 
   return (
@@ -263,13 +308,32 @@ function PracticeContent() {
                   )}
                 >
                   <span className="text-xs">{opt.label.split(" ")[0]}</span>
-                  <span className="text-[10px] text-text-base">
-                    {opt.turns}
-                  </span>
                 </button>
               ))}
             </div>
           </fieldset>
+
+          {/* Choose turns */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="practice-turns"
+              className="text-xs font-semibold text-text-base"
+            >
+              Number of turns
+            </label>
+            <select
+              id="practice-turns"
+              value={turns}
+              onChange={(e) => setTurns(Number(e.target.value))}
+              className="w-full cursor-pointer rounded-2xl border border-border-hairline bg-paper-white px-3 py-2 text-sm font-medium text-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+            >
+              {turnOptions().map((option) => (
+                <option key={option} value={option}>
+                  {option} turns
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Optional job description */}
           <div className="space-y-1.5">
@@ -374,46 +438,81 @@ function PracticeContent() {
                 const display = toDisplayTurns(sess.turnCount, sess.maxTurns);
 
                 return (
-                  <button
+                  <div
                     key={sess.id}
-                    type="button"
-                    onClick={() => handleSelectSession(sess.id)}
                     className={cn(
-                      "flex w-full cursor-pointer flex-col gap-1 p-3.5 text-left transition-colors hover:bg-mist-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jade",
+                      "group flex items-stretch transition-colors hover:bg-mist-gray",
                       isActive && "bg-jade-pale",
                     )}
                   >
-                    <div className="flex justify-between items-start gap-2 min-w-0">
-                      <span className="flex-1 truncate text-xs font-semibold text-ink-black">
-                        {resumeName}
-                      </span>
-                      <span
-                        className={cn(
-                          "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                          sess.isFinished
-                            ? "bg-(--status-neutral-surface) text-(--status-neutral-foreground)"
-                            : "bg-jade-pale text-jade-deep",
-                        )}
-                      >
-                        {sess.isFinished ? "Finished" : "Active"}
-                      </span>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSelectSession(sess.id)}
+                      className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jade"
+                    >
+                      <div className="flex justify-between items-start gap-2 min-w-0">
+                        <span className="flex-1 truncate text-xs font-semibold text-ink-black">
+                          {resumeName}
+                        </span>
+                        <span
+                          className={cn(
+                            "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                            sess.isFinished
+                              ? "bg-(--status-neutral-surface) text-(--status-neutral-foreground)"
+                              : "bg-jade-pale text-jade-deep",
+                          )}
+                        >
+                          {sess.isFinished ? "Finished" : "Active"}
+                        </span>
+                      </div>
 
-                    <div className="flex items-center justify-between text-[10px] text-text-base">
-                      <span className="capitalize font-medium">
-                        {`${sess.level} level · ${display.turnCount}/${display.maxTurns} turns`}
-                      </span>
-                      <span>
-                        {new Date(sess.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </button>
+                      <div className="flex items-center justify-between text-[10px] text-text-base">
+                        <span className="capitalize font-medium">
+                          {`${sess.level} level · ${display.turnCount}/${display.maxTurns} turns`}
+                        </span>
+                        <span>
+                          {new Date(sess.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      aria-label="Delete conversation"
+                      onClick={() => setSessionPendingDelete(sess.id)}
+                      className="flex w-10 shrink-0 cursor-pointer items-center justify-center text-text-base transition-colors hover:text-red-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jade"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 );
               })
             )}
           </div>
         </div>
       </aside>
+
+      <AlertDialog
+        open={sessionPendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setSessionPendingDelete(null);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete the interview session and its
+              messages. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Expanded Chat Pane */}
       <section className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-paper-white">
