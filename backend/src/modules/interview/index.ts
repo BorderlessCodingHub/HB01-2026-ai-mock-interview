@@ -6,10 +6,7 @@ export type {
 } from "./protocols/review-items-generator";
 export { MessageRepository } from "./repository/message-repository";
 export { ReviewRepository } from "./repository/review-repository";
-export {
-  MAX_TURNS_BY_LEVEL,
-  SessionRepository,
-} from "./repository/session-repository";
+export { SessionRepository } from "./repository/session-repository";
 export { InterviewStreamService } from "./service/stream-service";
 export { ReviewMergeService } from "./service/review-merge-service";
 export {

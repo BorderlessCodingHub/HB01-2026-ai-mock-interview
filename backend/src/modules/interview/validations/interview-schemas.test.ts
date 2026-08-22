@@ -12,11 +12,12 @@ import {
 const validResumeId = "550e8400-e29b-41d4-a716-446655440000";
 
 describe("createSessionSchema", () => {
-  it("accepts a valid resumeId, level, and interviewLocale", () => {
+  it("accepts a valid resumeId, level, interviewLocale, and turns", () => {
     const result = createSessionSchema.safeParse({
       resumeId: validResumeId,
       level: "mid",
       interviewLocale: "en",
+      turns: 8,
     });
 
     expect(result.success).toBe(true);
@@ -25,6 +26,7 @@ describe("createSessionSchema", () => {
         resumeId: validResumeId,
         level: "mid",
         interviewLocale: "en",
+        turns: 8,
       });
     }
   });
@@ -34,6 +36,7 @@ describe("createSessionSchema", () => {
       resumeId: validResumeId,
       level,
       interviewLocale: "en",
+      turns: 8,
     });
 
     expect(result.success).toBe(true);
@@ -46,6 +49,7 @@ describe("createSessionSchema", () => {
         resumeId: validResumeId,
         level: "mid",
         interviewLocale,
+        turns: 8,
       });
 
       expect(result.success).toBe(true);
@@ -60,6 +64,7 @@ describe("createSessionSchema", () => {
       resumeId: "not-a-uuid",
       level: "entry",
       interviewLocale: "en",
+      turns: 8,
     });
 
     expect(result.success).toBe(false);
@@ -70,6 +75,7 @@ describe("createSessionSchema", () => {
       resumeId: validResumeId,
       level: "staff",
       interviewLocale: "en",
+      turns: 8,
     });
 
     expect(result.success).toBe(false);
@@ -80,18 +86,28 @@ describe("createSessionSchema", () => {
       createSessionSchema.safeParse({
         resumeId: validResumeId,
         interviewLocale: "en",
+        turns: 8,
       }).success,
     ).toBe(false);
     expect(
       createSessionSchema.safeParse({
         level: "entry",
         interviewLocale: "en",
+        turns: 8,
       }).success,
     ).toBe(false);
     expect(
       createSessionSchema.safeParse({
         resumeId: validResumeId,
         level: "entry",
+        turns: 8,
+      }).success,
+    ).toBe(false);
+    expect(
+      createSessionSchema.safeParse({
+        resumeId: validResumeId,
+        level: "entry",
+        interviewLocale: "en",
       }).success,
     ).toBe(false);
   });
@@ -101,6 +117,7 @@ describe("createSessionSchema", () => {
       resumeId: validResumeId,
       level: "mid",
       interviewLocale: "pt-BR",
+      turns: 8,
     });
 
     expect(result.success).toBe(false);
@@ -111,6 +128,7 @@ describe("createSessionSchema", () => {
       resumeId: validResumeId,
       level: "mid",
       interviewLocale: "pt",
+      turns: 8,
       jobDescription: "Senior Backend Engineer",
     });
 
@@ -125,40 +143,36 @@ describe("createSessionSchema", () => {
       resumeId: validResumeId,
       level: "mid",
       interviewLocale: "en",
+      turns: 8,
       jobDescription: "x".repeat(5_001),
     });
 
     expect(result.success).toBe(false);
   });
 
-  it.each([
-    ["entry", 5],
-    ["mid", 7],
-    ["senior", 8],
-  ] as const)("accepts turns at the max allowed for level %s", (level, turns) => {
+  it.each(["entry", "mid", "senior"] as const)(
+    "accepts turns at the flat maximum (20) regardless of level %s",
+    (level) => {
+      const result = createSessionSchema.safeParse({
+        resumeId: validResumeId,
+        level,
+        interviewLocale: "en",
+        turns: 20,
+      });
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.turns).toBe(20);
+      }
+    },
+  );
+
+  it("rejects turns above the flat maximum", () => {
     const result = createSessionSchema.safeParse({
       resumeId: validResumeId,
-      level,
+      level: "senior",
       interviewLocale: "en",
-      turns,
-    });
-
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.turns).toBe(turns);
-    }
-  });
-
-  it.each([
-    ["entry", 6],
-    ["mid", 8],
-    ["senior", 9],
-  ] as const)("rejects turns above the max allowed for level %s", (level, turns) => {
-    const result = createSessionSchema.safeParse({
-      resumeId: validResumeId,
-      level,
-      interviewLocale: "en",
-      turns,
+      turns: 21,
     });
 
     expect(result.success).toBe(false);
@@ -175,17 +189,14 @@ describe("createSessionSchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("omits turns when not provided", () => {
+  it("rejects a missing turns value", () => {
     const result = createSessionSchema.safeParse({
       resumeId: validResumeId,
       level: "mid",
       interviewLocale: "en",
     });
 
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.turns).toBeUndefined();
-    }
+    expect(result.success).toBe(false);
   });
 });
 

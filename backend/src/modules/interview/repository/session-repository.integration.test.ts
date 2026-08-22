@@ -3,7 +3,7 @@ import prisma from "@/infrastructure/database";
 import { disconnectDatabase, resetDatabase } from "@/test/integration/helpers";
 import { UserRepository } from "@/modules/auth/repository/user-repository";
 import { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
-import { MAX_TURNS_BY_LEVEL, SessionRepository } from "./session-repository";
+import { SessionRepository } from "./session-repository";
 
 describe("SessionRepository (integration)", () => {
   const userRepository = new UserRepository();
@@ -30,13 +30,9 @@ describe("SessionRepository (integration)", () => {
   afterEach(() => resetDatabase());
   afterAll(() => disconnectDatabase());
 
-  it.each([
-    ["entry", 6],
-    ["mid", 8],
-    ["senior", 9],
-  ] as const)(
-    "create sets maxTurns to %i for level %s",
-    async (level, maxTurns) => {
+  it.each(["entry", "mid", "senior"] as const)(
+    "create sets maxTurns from the explicit turn count for level %s",
+    async (level) => {
       const { user, resumeId } = await seedUserAndResume();
 
       const session = await repository.create({
@@ -44,19 +40,32 @@ describe("SessionRepository (integration)", () => {
         resumeId,
         level,
         interviewLocale: "en",
+        maxTurns: 13,
       });
 
       expect(session).toMatchObject({
         userId: user.id,
         resumeId,
         level,
-        maxTurns,
+        maxTurns: 13,
         turnCount: 0,
         isFinished: false,
       });
-      expect(session.maxTurns).toBe(MAX_TURNS_BY_LEVEL[level]);
     },
   );
+
+  it("create falls back to a default maxTurns when none is given", async () => {
+    const { user, resumeId } = await seedUserAndResume();
+
+    const session = await repository.create({
+      userId: user.id,
+      resumeId,
+      level: "mid",
+      interviewLocale: "en",
+    });
+
+    expect(session.maxTurns).toBe(9);
+  });
 
   it("create inside a rolled-back transaction does not persist a session", async () => {
     const { user, resumeId } = await seedUserAndResume();

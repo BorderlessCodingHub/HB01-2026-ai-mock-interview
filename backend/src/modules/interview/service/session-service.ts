@@ -74,7 +74,7 @@ export class SessionService {
             jobDescription: input.jobDescription
               ? sanitizeJobDescription(input.jobDescription)
               : null,
-            maxTurns: input.turns !== undefined ? input.turns + 1 : undefined,
+            maxTurns: input.turns + 1,
           },
           tx,
         ),

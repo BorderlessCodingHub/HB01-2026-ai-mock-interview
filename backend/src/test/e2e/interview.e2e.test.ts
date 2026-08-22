@@ -337,7 +337,7 @@ describe("Interview API E2E", () => {
         resumeId: resume.id,
         level: "mid",
         turnCount: 0,
-        maxTurns: 8,
+        maxTurns: 6,
         isFinished: false,
         hasJobDescription: false,
         reviewGenerationStatus: "idle",

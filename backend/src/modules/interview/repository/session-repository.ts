@@ -1,5 +1,4 @@
 import prisma from "@/infrastructure/database";
-import { MAX_TURNS_BY_LEVEL } from "@/modules/interview/validations/interview-schemas";
 import type { InterviewLocale } from "@/shared";
 import type {
   InterviewLevel,
@@ -8,7 +7,8 @@ import type {
   PrismaClient,
 } from "../../../../prisma/generated/client";
 
-export { MAX_TURNS_BY_LEVEL };
+/** Fallback for callers that create a session without an explicit turn count (e.g. tests). */
+const DEFAULT_MAX_TURNS = 9;
 
 export type CreateSessionParams = {
   userId: number;
@@ -16,7 +16,7 @@ export type CreateSessionParams = {
   level: InterviewLevel;
   interviewLocale: InterviewLocale;
   jobDescription?: string | null;
-  /** Raw DB value (includes +1 for the automatic ready message). Defaults to MAX_TURNS_BY_LEVEL[level]. */
+  /** Raw DB value (includes +1 for the automatic ready message). Defaults to DEFAULT_MAX_TURNS. */
   maxTurns?: number;
 };
 
@@ -33,7 +33,7 @@ export class SessionRepository {
         level,
         jobDescription: jobDescription ?? null,
         interviewLocale,
-        maxTurns: params.maxTurns ?? MAX_TURNS_BY_LEVEL[level],
+        maxTurns: params.maxTurns ?? DEFAULT_MAX_TURNS,
       },
     });
   }

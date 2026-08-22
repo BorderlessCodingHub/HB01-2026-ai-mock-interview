@@ -4,40 +4,25 @@ import { interviewLocaleSchema } from "@/shared";
 
 export const interviewLevelSchema = z.enum(["entry", "mid", "senior"]);
 
-/** Includes +1 for the automatic ready message that starts the interview flow. */
-export const MAX_TURNS_BY_LEVEL: Record<
-  z.infer<typeof interviewLevelSchema>,
-  number
-> = {
-  entry: 6,
-  mid: 8,
-  senior: 9,
-};
-
-/** Lowest number of turns a user may request, regardless of level. */
+/** Turn count is user-chosen, independent of level; these are its bounds. */
 export const MIN_INTERVIEW_TURNS = 3;
+export const MAX_INTERVIEW_TURNS = 20;
 
-export const createSessionSchema = z
-  .object({
-    resumeId: z.uuid({ message: "Invalid resume ID" }),
-    level: interviewLevelSchema,
-    interviewLocale: interviewLocaleSchema,
-    jobDescription: z
-      .string()
-      .trim()
-      .max(5_000, "Job description is too long")
-      .optional(),
-    turns: z.coerce.number().int().min(MIN_INTERVIEW_TURNS).optional(),
-  })
-  .refine(
-    (data) =>
-      data.turns === undefined ||
-      data.turns <= MAX_TURNS_BY_LEVEL[data.level] - 1,
-    {
-      message: "Turns exceed the maximum allowed for this level",
-      path: ["turns"],
-    },
-  );
+export const createSessionSchema = z.object({
+  resumeId: z.uuid({ message: "Invalid resume ID" }),
+  level: interviewLevelSchema,
+  interviewLocale: interviewLocaleSchema,
+  jobDescription: z
+    .string()
+    .trim()
+    .max(5_000, "Job description is too long")
+    .optional(),
+  turns: z.coerce
+    .number()
+    .int()
+    .min(MIN_INTERVIEW_TURNS)
+    .max(MAX_INTERVIEW_TURNS),
+});
 
 export const streamMessageSchema = z.object({
   content: z
