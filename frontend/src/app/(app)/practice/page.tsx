@@ -32,7 +32,7 @@ import { useAuth } from "@/features/auth/session-provider";
 import { InterviewLocaleSelector } from "@/features/interview-locale/interview-locale-selector";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
-import { useSessions } from "@/lib/query/hooks/use-sessions";
+import { useSessionsInfinite } from "@/lib/query/hooks/use-sessions-infinite";
 import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
 import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { interviewApi } from "@/lib/api/interview";
@@ -109,14 +109,13 @@ function PracticeContent() {
   const readyResumes = resumes.filter((r) => r.status === "ready");
 
   const {
-    data: sessionsData,
+    sessions,
     isLoading: isLoadingSessions,
     error: sessionsError,
-  } = useSessions();
-  const sessions = useMemo(
-    () => sessionsData?.sessions ?? [],
-    [sessionsData?.sessions],
-  );
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useSessionsInfinite();
 
   const {
     data: quota,
@@ -217,6 +216,17 @@ function PracticeContent() {
   function handleSelectSession(id: string) {
     setActiveSessionId(id);
     router.push(`/practice?sessionId=${id}`);
+  }
+
+  async function handleLoadMore() {
+    const result = await fetchNextPage();
+    if (result.isError) {
+      toast.error(
+        result.error instanceof Error
+          ? result.error.message
+          : "Failed to load more sessions",
+      );
+    }
   }
 
   function handleConfirmDelete() {
@@ -518,6 +528,26 @@ function PracticeContent() {
               })
             )}
           </div>
+
+          {hasNextPage && !isLoadingSessions && !sessionsError && sessions.length > 0 ? (
+            <div className="p-3">
+              <button
+                type="button"
+                disabled={isFetchingNextPage}
+                onClick={() => void handleLoadMore()}
+                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full border border-border-hairline bg-paper-white px-4 py-2 text-xs font-semibold text-ink-black transition-colors hover:bg-mist-gray disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Loading…
+                  </>
+                ) : (
+                  "Load more"
+                )}
+              </button>
+            </div>
+          ) : null}
         </div>
       </aside>
 

@@ -19,10 +19,23 @@ export const interviewApi = {
     });
   },
 
-  listSessions(token: string) {
-    return apiRequest<ListSessionsResponse>("/api/interview/sessions", {
-      token,
-    });
+  listSessions(
+    token: string,
+    params?: { page?: number; limit?: number },
+  ) {
+    const searchParams = new URLSearchParams();
+    if (params?.page !== undefined) {
+      searchParams.set("page", String(params.page));
+    }
+    if (params?.limit !== undefined) {
+      searchParams.set("limit", String(params.limit));
+    }
+    const query = searchParams.toString();
+
+    return apiRequest<ListSessionsResponse>(
+      `/api/interview/sessions${query ? `?${query}` : ""}`,
+      { token },
+    );
   },
 
   getSession(sessionId: string, token: string) {

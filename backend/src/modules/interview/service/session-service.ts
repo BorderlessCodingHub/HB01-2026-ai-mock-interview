@@ -30,6 +30,13 @@ export type SessionMessage = {
   createdAt: Date;
 };
 
+export type ListSessionsResult = {
+  sessions: SessionSummary[];
+  page: number;
+  limit: number;
+  hasMore: boolean;
+};
+
 export type ListMessagesResult = {
   messages: SessionMessage[];
   hasMore: boolean;
@@ -88,9 +95,21 @@ export class SessionService {
     return { id: session.id };
   }
 
-  async listSessions(userId: number): Promise<SessionSummary[]> {
-    const sessions = await this.sessionRepository.listByUserId(userId);
-    return sessions.map((session) => this.toSummary(session));
+  async listSessions(
+    userId: number,
+    params: { page: number; limit: number },
+  ): Promise<ListSessionsResult> {
+    const { page, limit } = params;
+    const skip = (page - 1) * limit;
+    const rows = await this.sessionRepository.listByUserId(userId, {
+      skip,
+      take: limit + 1,
+    });
+
+    const hasMore = rows.length > limit;
+    const sessions = rows.slice(0, limit).map((session) => this.toSummary(session));
+
+    return { sessions, page, limit, hasMore };
   }
 
   async getSession(userId: number, sessionId: string): Promise<SessionSummary> {

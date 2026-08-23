@@ -4,6 +4,7 @@ import type { ReviewGenerationService } from "@/modules/interview/service/review
 import type { InterviewStreamService } from "@/modules/interview/service/stream-service";
 import {
   listMessagesQuerySchema,
+  listSessionsQuerySchema,
   type CreateSessionInput,
   type StreamMessageInput,
   type SubmitFeedbackInput,
@@ -28,8 +29,22 @@ export class InterviewController {
   };
 
   listSessions = async (req: Request, res: Response): Promise<void> => {
-    const sessions = await this.sessionService.listSessions(req.userId!);
-    res.status(200).json({ sessions });
+    const queryResult = listSessionsQuerySchema.safeParse(req.query);
+
+    if (!queryResult.success) {
+      res.status(422).json({
+        message: "Validation failed",
+        errors: z.treeifyError(queryResult.error),
+      });
+      return;
+    }
+
+    const { page, limit } = queryResult.data;
+    const result = await this.sessionService.listSessions(req.userId!, {
+      page,
+      limit,
+    });
+    res.status(200).json(result);
   };
 
   getSession = async (req: Request, res: Response): Promise<void> => {

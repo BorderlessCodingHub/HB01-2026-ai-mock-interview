@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createSessionSchema,
+  listSessionsQuerySchema,
   reviewItemsGeneratorOutputSchema,
   streamMessageSchema,
   submitFeedbackSchema,
@@ -616,6 +617,41 @@ describe("submitFeedbackSchema", () => {
       rating: "up",
       comment: "a".repeat(1001),
     });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("listSessionsQuerySchema", () => {
+  it("defaults page and limit when omitted", () => {
+    const result = listSessionsQuerySchema.safeParse({});
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ page: 1, limit: 50 });
+    }
+  });
+
+  it("coerces page and limit from query string values", () => {
+    const result = listSessionsQuerySchema.safeParse({
+      page: "2",
+      limit: "25",
+    });
+
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ page: 2, limit: 25 });
+    }
+  });
+
+  it("rejects a page below 1", () => {
+    const result = listSessionsQuerySchema.safeParse({ page: "0" });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects a limit above 50", () => {
+    const result = listSessionsQuerySchema.safeParse({ limit: "51" });
 
     expect(result.success).toBe(false);
   });

@@ -24,6 +24,14 @@ export const createSessionSchema = z.object({
     .max(MAX_INTERVIEW_TURNS),
 });
 
+export const listSessionsQuerySchema = z.object({
+  page: z.coerce.number().int().min(1).default(1),
+  // Default is high (not 10, unlike review-sessions) because existing callers
+  // that don't paginate (dashboard, feedback, interview chat) rely on getting
+  // back effectively "all" of a user's sessions from an unparameterized call.
+  limit: z.coerce.number().int().min(1).max(50).default(50),
+});
+
 export const listMessagesQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(50).default(20),
   before: z.uuid().optional(),
@@ -89,6 +97,7 @@ export const submitFeedbackSchema = z.object({
 
 export type InterviewLevel = z.infer<typeof interviewLevelSchema>;
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
+export type ListSessionsQuery = z.infer<typeof listSessionsQuerySchema>;
 export type StreamMessageInput = z.infer<typeof streamMessageSchema>;
 export type ListMessagesQuery = z.infer<typeof listMessagesQuerySchema>;
 export type ReviewPriority = z.infer<typeof reviewPrioritySchema>;

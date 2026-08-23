@@ -113,6 +113,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
         (old) => {
           if (!old) return old;
           return {
+            ...old,
             sessions: old.sessions.map((s) =>
               s.id === sessionId
                 ? {
@@ -217,6 +218,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
         (old) => {
           if (!old) return old;
           return {
+            ...old,
             sessions: old.sessions.map((s) =>
               s.id === sessionId ? { ...s, ...updated } : s,
             ),
@@ -291,7 +293,9 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
     }
   }
 
-  sendMessageRef.current = sendMessage;
+  useEffect(() => {
+    sendMessageRef.current = sendMessage;
+  });
 
   useEffect(() => {
     if (!messagesQuery.isSuccess) return;
