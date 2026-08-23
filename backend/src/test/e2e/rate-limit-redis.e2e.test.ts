@@ -57,7 +57,7 @@ async function createSessionAndGetId(
   const response = await request(app)
     .post("/api/interview/sessions")
     .set(authHeader(token))
-    .send({ resumeId, level: "entry", interviewLocale: "en" })
+    .send({ resumeId, level: "entry", interviewLocale: "en", turns: 5 })
     .expect(201);
 
   return response.body.id as string;
