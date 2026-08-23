@@ -77,7 +77,7 @@ function PracticeContent() {
   const [level, setLevel] = useState<InterviewLevel>(
     () => getStoredInterviewLevel() ?? "mid",
   );
-  const [turns, setTurns] = useState<number>(MAX_INTERVIEW_TURNS);
+  const [turns, setTurns] = useState<number>(10);
 
   function handleLevelChange(nextLevel: InterviewLevel) {
     setLevel(nextLevel);
