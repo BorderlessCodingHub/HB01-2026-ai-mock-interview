@@ -5,17 +5,13 @@ import { inferAdditionalFields } from "better-auth/client/plugins";
 import type { auth } from "./auth";
 
 /**
- * Public Next.js basePath, inlined from next.config `env` at build time.
- * Labs serves the app under `/ai-mock-interview`; without it the client posts
- * to `/api/auth` on the domain root and the Worker never receives the request.
- * Local dev has no basePath, so this stays `/api/auth`.
- *
- * Borderless is still called server-side from `auth.ts` — this path is only
- * the Next.js better-auth handler.
+ * Next.js inlines `basePath` here at build time. Labs serves the app under
+ * `/ai-mock-interview`; without it the client posts to `/api/auth` on the
+ * domain root and production returns 404.
  */
-const appBasePath = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+const nextBasePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
 
 export const authClient = createAuthClient({
-  basePath: `${appBasePath}/api/auth`,
+  basePath: `${nextBasePath}/api/auth`,
   plugins: [credentialsClient(), inferAdditionalFields<typeof auth>()],
 });
