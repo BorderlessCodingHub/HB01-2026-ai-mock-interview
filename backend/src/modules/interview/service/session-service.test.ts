@@ -150,6 +150,19 @@ function createStubMessageRepository() {
       state.messages = value;
     },
     listBySessionId: async () => state.messages,
+    listPageBySessionId: async (
+      _sessionId: string,
+      options: { limit: number; beforeMessageId?: string },
+    ) => {
+      const sorted = [...state.messages].sort(
+        (a, b) => b.createdAt.getTime() - a.createdAt.getTime(),
+      );
+      const cursorIndex = options.beforeMessageId
+        ? sorted.findIndex((m) => m.id === options.beforeMessageId)
+        : -1;
+      const start = cursorIndex === -1 ? 0 : cursorIndex + 1;
+      return sorted.slice(start, start + options.limit);
+    },
   } as unknown as MessageRepository & { messages: typeof state.messages };
 }
 
@@ -546,30 +559,96 @@ describe("SessionService", () => {
       },
     ];
 
-    const result = await service.getMessages(userId, sessionId);
+    const result = await service.getMessages(userId, sessionId, { limit: 20 });
 
-    expect(result).toEqual([
+    expect(result).toEqual({
+      messages: [
+        {
+          id: "message-1",
+          role: "human",
+          content: "Hello",
+          createdAt,
+        },
+        {
+          id: "message-2",
+          role: "ai",
+          content: "Hi there",
+          createdAt: new Date("2026-01-03T00:00:01.000Z"),
+        },
+      ],
+      hasMore: false,
+    });
+  });
+
+  it("reports hasMore when there are more messages than the page limit", async () => {
+    sessionRepository.sessionById = {
+      id: sessionId,
+      userId,
+      resumeId,
+      level: "entry",
+      jobDescription: null,
+      interviewLocale: "en",
+      turnCount: 1,
+      maxTurns: 5,
+      isFinished: false,
+      reviewGenerationStatus: "idle" as const,
+      reviewGenerationError: null,
+      createdAt: new Date("2026-01-03T00:00:00.000Z"),
+    };
+    messageRepository.messages = [
       {
         id: "message-1",
+        sessionId,
+        userId,
         role: "human",
-        content: "Hello",
-        createdAt,
+        content: "First",
+        createdAt: new Date("2026-01-03T00:00:00.000Z"),
       },
       {
         id: "message-2",
+        sessionId,
+        userId,
         role: "ai",
-        content: "Hi there",
+        content: "Second",
         createdAt: new Date("2026-01-03T00:00:01.000Z"),
       },
-    ]);
+      {
+        id: "message-3",
+        sessionId,
+        userId,
+        role: "human",
+        content: "Third",
+        createdAt: new Date("2026-01-03T00:00:02.000Z"),
+      },
+    ];
+
+    const result = await service.getMessages(userId, sessionId, { limit: 2 });
+
+    expect(result).toEqual({
+      messages: [
+        {
+          id: "message-2",
+          role: "ai",
+          content: "Second",
+          createdAt: new Date("2026-01-03T00:00:01.000Z"),
+        },
+        {
+          id: "message-3",
+          role: "human",
+          content: "Third",
+          createdAt: new Date("2026-01-03T00:00:02.000Z"),
+        },
+      ],
+      hasMore: true,
+    });
   });
 
   it("throws NotFoundError when loading messages for another user's session", async () => {
     sessionRepository.sessionById = null;
 
-    await expect(service.getMessages(userId, sessionId)).rejects.toBeInstanceOf(
-      NotFoundError,
-    );
+    await expect(
+      service.getMessages(userId, sessionId, { limit: 20 }),
+    ).rejects.toBeInstanceOf(NotFoundError);
   });
 
   it("does not consume quota when the resume is missing", async () => {

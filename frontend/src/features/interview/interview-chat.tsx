@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
@@ -74,7 +74,9 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
     session?.reviewGenerationError ??
     null;
 
-  const serverMessages = messagesQuery.data?.messages ?? [];
+  const serverMessages = messagesQuery.data
+    ? [...messagesQuery.data.pages].reverse().flatMap((page) => page.messages)
+    : [];
   const showWelcome =
     serverMessages.length === 0 && !isStreaming && !pendingHuman;
 
@@ -156,36 +158,46 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
 
   const mergeStreamedMessages = useCallback(
     (humanContent: string, aiContent: string, pendingId: string) => {
-      queryClient.setQueryData<ListMessagesResponse>(
-        queryKeys.sessionMessages(sessionId),
-        (old) => {
-          const existing = old?.messages ?? [];
-          const withoutCurrentPending = existing.filter(
-            (m) => m.id !== pendingId,
-          );
+      queryClient.setQueryData<
+        InfiniteData<ListMessagesResponse, string | undefined>
+      >(queryKeys.sessionMessages(sessionId), (old) => {
+        const [latestPage, ...olderPages] = old?.pages ?? [];
+        const pageParams = old?.pageParams ?? [undefined];
 
-          const next: SessionMessage[] = [
-            ...withoutCurrentPending,
-            {
-              id: pendingId,
-              role: "human",
-              content: humanContent,
-              createdAt: new Date().toISOString(),
-            },
-          ];
+        const existing = latestPage?.messages ?? [];
+        const withoutCurrentPending = existing.filter(
+          (m) => m.id !== pendingId,
+        );
 
-          if (aiContent) {
-            next.push({
-              id: `optimistic-ai-${Date.now()}`,
-              role: "ai",
-              content: aiContent,
-              createdAt: new Date().toISOString(),
-            });
-          }
+        const next: SessionMessage[] = [
+          ...withoutCurrentPending,
+          {
+            id: pendingId,
+            role: "human",
+            content: humanContent,
+            createdAt: new Date().toISOString(),
+          },
+        ];
 
-          return { messages: next };
-        },
-      );
+        if (aiContent) {
+          next.push({
+            id: `optimistic-ai-${Date.now()}`,
+            role: "ai",
+            content: aiContent,
+            createdAt: new Date().toISOString(),
+          });
+        }
+
+        const updatedLatestPage: ListMessagesResponse = {
+          messages: next,
+          hasMore: latestPage?.hasMore ?? false,
+        };
+
+        return {
+          pages: [updatedLatestPage, ...olderPages],
+          pageParams,
+        };
+      });
     },
     [queryClient, sessionId],
   );
@@ -415,6 +427,9 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
             onStart={handleStart}
             welcomeText={getInterviewWelcomeText(locale)}
             startLabel={getInterviewReadyMessage(locale)}
+            hasMoreOlder={messagesQuery.hasNextPage}
+            isLoadingOlder={messagesQuery.isFetchingNextPage}
+            onLoadOlder={() => void messagesQuery.fetchNextPage()}
           />
 
           {isCompleted && (

@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
+import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useAuth } from "@/features/auth/session-provider";
 import { uploadResume } from "@/lib/api/resumes";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
@@ -35,6 +36,7 @@ type UploadState = "idle" | "uploading";
 export default function ResumesPage() {
   const { getAccessToken } = useAuth();
   const queryClient = useQueryClient();
+  const confirmDialog = useConfirmDialog();
   const deleteResumeMutation = useDeleteResume();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
@@ -95,15 +97,14 @@ export default function ResumesPage() {
     }
   }
 
-  function handleDelete(id: string) {
+  async function handleDelete(id: string) {
     if (deleteResumeMutation.isPending) return;
-    if (
-      !confirm(
-        "Are you sure you want to delete this resume? All related interview sessions will be lost.",
-      )
-    ) {
-      return;
-    }
+    const confirmed = await confirmDialog({
+      title: "Delete this resume?",
+      description:
+        "All related interview sessions will be lost. This cannot be undone.",
+    });
+    if (!confirmed) return;
 
     const wasActive = activeResumeId === id;
     if (wasActive) {

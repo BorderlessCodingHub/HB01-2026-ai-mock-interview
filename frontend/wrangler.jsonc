@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "main": ".open-next/worker.js",
+  "name": "ai-mock-interview",
+  "compatibility_date": "2025-01-15",
+  "compatibility_flags": [
+    "nodejs_compat",
+    "global_fetch_strictly_public"
+  ],
+  "routes": [
+    {
+      "pattern": "labs.borderlesscoding.com/ai-mock-interview*",
+      "zone_name": "borderlesscoding.com"
+    }
+  ],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "ai-mock-interview"
+    }
+  ],
+  "images": {
+    "binding": "IMAGES"
+  }
+}

@@ -3,6 +3,7 @@ import type { FeedbackService } from "@/modules/interview/service/feedback-servi
 import type { ReviewGenerationService } from "@/modules/interview/service/review-generation-service";
 import type { InterviewStreamService } from "@/modules/interview/service/stream-service";
 import {
+  listMessagesQuerySchema,
   listSessionsQuerySchema,
   type CreateSessionInput,
   type StreamMessageInput,
@@ -67,12 +68,27 @@ export class InterviewController {
   };
 
   getMessages = async (req: Request, res: Response): Promise<void> => {
+    const queryResult = listMessagesQuerySchema.safeParse(req.query);
+
+    if (!queryResult.success) {
+      res.status(422).json({
+        message: "Validation failed",
+        errors: z.treeifyError(queryResult.error),
+      });
+      return;
+    }
+
     const sessionId = String(req.params.sessionId);
-    const messages = await this.sessionService.getMessages(
+    const { limit, before } = queryResult.data;
+    const result = await this.sessionService.getMessages(
       req.userId!,
       sessionId,
+      {
+        limit,
+        before,
+      },
     );
-    res.status(200).json({ messages });
+    res.status(200).json(result);
   };
 
   deleteSession = async (req: Request, res: Response): Promise<void> => {

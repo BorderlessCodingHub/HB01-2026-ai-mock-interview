@@ -27,6 +27,32 @@ export class MessageRepository {
     });
   }
 
+  /** Returns up to `limit` messages immediately before `beforeMessageId`, newest first. */
+  async listPageBySessionId(
+    sessionId: string,
+    options: { limit: number; beforeMessageId?: string },
+  ): Promise<InterviewMessage[]> {
+    const { limit, beforeMessageId } = options;
+    let cursorCreatedAt: Date | undefined;
+
+    if (beforeMessageId) {
+      const cursorMessage = await prisma.interviewMessage.findFirst({
+        where: { id: beforeMessageId, sessionId },
+        select: { createdAt: true },
+      });
+      cursorCreatedAt = cursorMessage?.createdAt;
+    }
+
+    return prisma.interviewMessage.findMany({
+      where: {
+        sessionId,
+        ...(cursorCreatedAt ? { createdAt: { lt: cursorCreatedAt } } : {}),
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
+  }
+
   private async create(
     role: MessageRoleType,
     params: CreateMessageParams,

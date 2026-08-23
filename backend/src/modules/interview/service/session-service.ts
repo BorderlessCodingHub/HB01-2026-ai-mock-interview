@@ -37,6 +37,11 @@ export type ListSessionsResult = {
   hasMore: boolean;
 };
 
+export type ListMessagesResult = {
+  messages: SessionMessage[];
+  hasMore: boolean;
+};
+
 export class SessionService {
   constructor(
     private readonly sessionRepository: SessionRepository,
@@ -119,7 +124,8 @@ export class SessionService {
   async getMessages(
     userId: number,
     sessionId: string,
-  ): Promise<SessionMessage[]> {
+    options: { limit: number; before?: string },
+  ): Promise<ListMessagesResult> {
     const session = await this.sessionRepository.findByIdAndUserId(
       sessionId,
       userId,
@@ -129,13 +135,22 @@ export class SessionService {
       throw new NotFoundError();
     }
 
-    const messages = await this.messageRepository.listBySessionId(sessionId);
-    return messages.map((message) => ({
+    const rows = await this.messageRepository.listPageBySessionId(sessionId, {
+      limit: options.limit + 1,
+      beforeMessageId: options.before,
+    });
+
+    const hasMore = rows.length > options.limit;
+    const page = hasMore ? rows.slice(0, options.limit) : rows;
+
+    const messages = page.reverse().map((message) => ({
       id: message.id,
       role: message.role,
       content: message.content,
       createdAt: message.createdAt,
     }));
+
+    return { messages, hasMore };
   }
 
   async deleteSession(userId: number, sessionId: string): Promise<void> {
