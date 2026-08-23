@@ -4,6 +4,7 @@ import { Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { AppEmptyState } from "@/components/app/app-empty-state";
+import { useDeleteReviewSession } from "@/lib/query/hooks/use-delete-review-session";
 import { useReviewSessionsInfinite } from "@/lib/query/hooks/use-review-sessions-list";
 
 import { StudyHistoryRow } from "./study-history-row";
@@ -26,6 +27,7 @@ export function StudyHistorySidebar({
     fetchNextPage,
     isFetchingNextPage,
   } = useReviewSessionsInfinite({ status: "completed", limit: 10 });
+  const deleteReviewSession = useDeleteReviewSession();
 
   async function handleLoadMore() {
     const result = await fetchNextPage();
@@ -79,6 +81,7 @@ export function StudyHistorySidebar({
                 summary={session}
                 isActive={activeSessionId === session.id}
                 onSelect={() => onSelectSession(session.id)}
+                onDelete={() => deleteReviewSession.mutate(session.id)}
               />
             ))
           )}

@@ -22,25 +22,23 @@ import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
 import type { CreateSessionInput, InterviewLevel } from "@/types/interview";
 import {
+  MAX_INTERVIEW_TURNS,
   MAX_JOB_DESCRIPTION_LENGTH,
-  MAX_TURNS_BY_LEVEL,
   MIN_INTERVIEW_TURNS,
 } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
-const LEVELS: { value: InterviewLevel; label: string; description: string }[] =
-  [
-    { value: "entry", label: "Entry", description: "5 turns" },
-    { value: "mid", label: "Mid", description: "7 turns" },
-    { value: "senior", label: "Senior", description: "8 turns" },
-  ];
+const LEVELS: { value: InterviewLevel; label: string }[] = [
+  { value: "entry", label: "Entry" },
+  { value: "mid", label: "Mid" },
+  { value: "senior", label: "Senior" },
+];
 
-function turnOptions(level: InterviewLevel): number[] {
-  const max = MAX_TURNS_BY_LEVEL[level];
+function turnOptions(): number[] {
   const options: number[] = [];
-  for (let n = MIN_INTERVIEW_TURNS; n <= max; n++) {
+  for (let n = MIN_INTERVIEW_TURNS; n <= MAX_INTERVIEW_TURNS; n++) {
     options.push(n);
   }
   return options;
@@ -56,7 +54,7 @@ function NewSessionContent() {
   const [level, setLevel] = useState<InterviewLevel>(
     () => getStoredInterviewLevel() ?? "mid",
   );
-  const [turns, setTurns] = useState<number>(() => MAX_TURNS_BY_LEVEL[level]);
+  const [turns, setTurns] = useState<number>(MAX_INTERVIEW_TURNS);
   const [jobDescription, setJobDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -73,7 +71,6 @@ function NewSessionContent() {
   function handleLevelChange(nextLevel: InterviewLevel) {
     setLevel(nextLevel);
     setStoredInterviewLevel(nextLevel);
-    setTurns(MAX_TURNS_BY_LEVEL[nextLevel]);
   }
 
   async function handleStart() {
@@ -187,7 +184,6 @@ function NewSessionContent() {
               )}
             >
               <span className="font-medium text-ink-black">{opt.label}</span>
-              <span className="text-xs text-text-base">{opt.description}</span>
             </button>
           ))}
         </AppCard>
@@ -198,7 +194,7 @@ function NewSessionContent() {
           Number of turns
         </legend>
         <AppCard variant="mist" className="flex flex-wrap gap-2 p-5">
-          {turnOptions(level).map((option) => (
+          {turnOptions().map((option) => (
             <button
               key={option}
               type="button"

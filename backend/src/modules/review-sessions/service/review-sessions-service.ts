@@ -311,4 +311,15 @@ export class ReviewSessionsService {
 
     return toReport(updatedSession!);
   }
+
+  async delete(userId: number, sessionId: string): Promise<void> {
+    const deleted = await this.reviewSessionRepository.deleteByIdAndUserId(
+      sessionId,
+      userId,
+    );
+
+    if (!deleted) {
+      throw new NotFoundError("Review session not found");
+    }
+  }
 }

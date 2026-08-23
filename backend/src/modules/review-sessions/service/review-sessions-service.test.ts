@@ -102,6 +102,7 @@ describe("ReviewSessionsService", () => {
       findManyByUserId: vi.fn(),
       confirmItem: vi.fn(),
       markCompletedIfAllConfirmed: vi.fn(),
+      deleteByIdAndUserId: vi.fn(),
     } as unknown as ReviewSessionRepository;
     reviewMergeService = {
       applyReviewSessionConfirmation: vi.fn(),
@@ -657,6 +658,31 @@ describe("ReviewSessionsService", () => {
             priority: "high",
           },
         ]),
+      ).rejects.toBeInstanceOf(NotFoundError);
+    });
+  });
+
+  describe("delete", () => {
+    it("deletes an owned session", async () => {
+      vi.mocked(reviewSessionRepository.deleteByIdAndUserId).mockResolvedValue(
+        true,
+      );
+
+      await service.delete(1, "review-session-id");
+
+      expect(reviewSessionRepository.deleteByIdAndUserId).toHaveBeenCalledWith(
+        "review-session-id",
+        1,
+      );
+    });
+
+    it("throws NotFoundError when the session is missing or not owned", async () => {
+      vi.mocked(reviewSessionRepository.deleteByIdAndUserId).mockResolvedValue(
+        false,
+      );
+
+      await expect(
+        service.delete(1, "missing-session-id"),
       ).rejects.toBeInstanceOf(NotFoundError);
     });
   });

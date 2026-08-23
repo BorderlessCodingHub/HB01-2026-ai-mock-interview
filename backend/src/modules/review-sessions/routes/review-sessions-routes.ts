@@ -31,4 +31,5 @@ export default function reviewSessionsRoutes(router: Router): void {
     validate(applyReviewSessionSchema),
     asyncHandler(controller.apply),
   );
+  router.delete("/:id", asyncHandler(controller.remove));
 }

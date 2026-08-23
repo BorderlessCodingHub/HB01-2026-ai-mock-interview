@@ -251,4 +251,20 @@ export class ReviewSessionRepository {
 
     return true;
   }
+
+  async deleteByIdAndUserId(
+    sessionId: string,
+    userId: number,
+  ): Promise<boolean> {
+    const row = await prisma.reviewSession.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true },
+    });
+    if (!row) return false;
+
+    await prisma.reviewSession.delete({
+      where: { id: sessionId },
+    });
+    return true;
+  }
 }

@@ -52,6 +52,13 @@ export const reviewSessionsApi = {
     );
   },
 
+  delete(token: string, sessionId: string) {
+    return apiRequest<void>(`/api/review-sessions/${sessionId}`, {
+      method: "DELETE",
+      token,
+    });
+  },
+
   applyKeepalive(
     token: string,
     sessionId: string,

@@ -37,11 +37,13 @@ export function buildCreateSessionPayload(params: {
   level?: "entry" | "mid" | "senior";
   interviewLocale?: InterviewLocale;
   jobDescription?: string;
+  turns?: number;
 }) {
   return {
     resumeId: params.resumeId,
     level: params.level ?? "entry",
     interviewLocale: params.interviewLocale ?? defaultInterviewLocale,
+    turns: params.turns ?? 5,
     ...(params.jobDescription !== undefined
       ? { jobDescription: params.jobDescription }
       : {}),
