@@ -89,7 +89,7 @@ describe("Token usage limits E2E", () => {
     const sessionResponse = await request(app)
       .post("/api/interview/sessions")
       .set(authHeader(token))
-      .send({ resumeId: resume.id, level: "entry", interviewLocale: "en" })
+      .send({ resumeId: resume.id, level: "entry", interviewLocale: "en", turns: 5 })
       .expect(201);
 
     const sessionId = sessionResponse.body.id as string;

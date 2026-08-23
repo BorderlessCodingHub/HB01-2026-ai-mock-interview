@@ -448,12 +448,14 @@ describe("Interview API E2E", () => {
             userId,
             role: MessageRole.human,
             content: "Tell me about yourself",
+            createdAt: new Date("2026-01-01T00:00:00.000Z"),
           },
           {
             sessionId,
             userId,
             role: MessageRole.ai,
             content: "Great question.",
+            createdAt: new Date("2026-01-01T00:00:01.000Z"),
           },
         ],
       });
