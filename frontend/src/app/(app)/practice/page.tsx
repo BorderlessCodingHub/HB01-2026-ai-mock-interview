@@ -11,6 +11,8 @@ import {
   AlertCircle,
   Dumbbell,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   MessageSquare,
   Trash2,
 } from "lucide-react";
@@ -50,6 +52,10 @@ import {
   getStoredResumeId,
   setStoredResumeId,
 } from "@/features/auth/session-storage";
+import {
+  getStoredInterviewLevel,
+  setStoredInterviewLevel,
+} from "@/features/interview/lib/interview-setup-storage";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 
 const LEVELS: { value: InterviewLevel; label: string }[] = [
@@ -57,14 +63,6 @@ const LEVELS: { value: InterviewLevel; label: string }[] = [
   { value: "mid", label: "Mid Level" },
   { value: "senior", label: "Senior Level" },
 ];
-
-function turnOptions(): number[] {
-  const options: number[] = [];
-  for (let n = MIN_INTERVIEW_TURNS; n <= MAX_INTERVIEW_TURNS; n++) {
-    options.push(n);
-  }
-  return options;
-}
 
 function PracticeContent() {
   const { getAccessToken } = useAuth();
@@ -76,8 +74,23 @@ function PracticeContent() {
   const [activeResumeId, setActiveResumeId] = useState<string | null>(() =>
     getStoredResumeId(),
   );
-  const [level, setLevel] = useState<InterviewLevel>("mid");
+  const [level, setLevel] = useState<InterviewLevel>(
+    () => getStoredInterviewLevel() ?? "mid",
+  );
   const [turns, setTurns] = useState<number>(MAX_INTERVIEW_TURNS);
+
+  function handleLevelChange(nextLevel: InterviewLevel) {
+    setLevel(nextLevel);
+    setStoredInterviewLevel(nextLevel);
+  }
+
+  function handleIncreaseTurns() {
+    setTurns((t) => Math.min(MAX_INTERVIEW_TURNS, t + 1));
+  }
+
+  function handleDecreaseTurns() {
+    setTurns((t) => Math.max(MIN_INTERVIEW_TURNS, t - 1));
+  }
   const [jobDescription, setJobDescription] = useState("");
   const [showJobDescription, setShowJobDescription] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -298,7 +311,7 @@ function PracticeContent() {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => setLevel(opt.value)}
+                  onClick={() => handleLevelChange(opt.value)}
                   aria-pressed={level === opt.value}
                   className={cn(
                     "flex cursor-pointer flex-col items-center justify-center rounded-2xl border px-1 py-2 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
@@ -315,24 +328,41 @@ function PracticeContent() {
 
           {/* Choose turns */}
           <div className="space-y-1.5">
-            <label
-              htmlFor="practice-turns"
+            <span
+              id="practice-turns-label"
               className="text-xs font-semibold text-text-base"
             >
               Number of turns
-            </label>
-            <select
-              id="practice-turns"
-              value={turns}
-              onChange={(e) => setTurns(Number(e.target.value))}
-              className="w-full cursor-pointer rounded-2xl border border-border-hairline bg-paper-white px-3 py-2 text-sm font-medium text-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+            </span>
+            <div
+              role="group"
+              aria-labelledby="practice-turns-label"
+              className="flex items-center justify-between rounded-2xl border border-border-hairline bg-paper-white px-3 py-1.5"
             >
-              {turnOptions().map((option) => (
-                <option key={option} value={option}>
-                  {option} turns
-                </option>
-              ))}
-            </select>
+              <span className="text-sm font-medium text-ink-black">
+                {turns} turns
+              </span>
+              <div className="flex flex-col">
+                <button
+                  type="button"
+                  aria-label="Increase number of turns"
+                  disabled={turns >= MAX_INTERVIEW_TURNS}
+                  onClick={handleIncreaseTurns}
+                  className="cursor-pointer text-text-base transition-colors hover:text-jade-deep disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade"
+                >
+                  <ChevronUp className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Decrease number of turns"
+                  disabled={turns <= MIN_INTERVIEW_TURNS}
+                  onClick={handleDecreaseTurns}
+                  className="cursor-pointer text-text-base transition-colors hover:text-jade-deep disabled:pointer-events-none disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade"
+                >
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Optional job description */}
