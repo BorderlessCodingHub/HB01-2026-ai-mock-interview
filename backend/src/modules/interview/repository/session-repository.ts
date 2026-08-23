@@ -38,10 +38,14 @@ export class SessionRepository {
     });
   }
 
-  async listByUserId(userId: number): Promise<InterviewSession[]> {
+  async listByUserId(
+    userId: number,
+    params?: { skip: number; take: number },
+  ): Promise<InterviewSession[]> {
     return prisma.interviewSession.findMany({
       where: { userId },
       orderBy: { createdAt: "desc" },
+      ...(params ? { skip: params.skip, take: params.take } : {}),
     });
   }
 

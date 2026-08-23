@@ -417,22 +417,57 @@ describe("SessionService", () => {
       },
     ];
 
-    const result = await service.listSessions(userId);
+    const result = await service.listSessions(userId, { page: 1, limit: 10 });
 
-    expect(result).toEqual([
-      {
-        id: sessionId,
-        resumeId,
-        level: "mid",
-        turnCount: 2,
-        maxTurns: 7,
-        isFinished: false,
-        hasJobDescription: true,
-        createdAt,
-        reviewGenerationStatus: "idle",
-        reviewGenerationError: null,
-      },
-    ]);
+    expect(result).toEqual({
+      sessions: [
+        {
+          id: sessionId,
+          resumeId,
+          level: "mid",
+          turnCount: 2,
+          maxTurns: 7,
+          isFinished: false,
+          hasJobDescription: true,
+          createdAt,
+          reviewGenerationStatus: "idle",
+          reviewGenerationError: null,
+        },
+      ],
+      page: 1,
+      limit: 10,
+      hasMore: false,
+    });
+  });
+
+  it("sets hasMore true and trims to limit when repo returns limit + 1 rows", async () => {
+    const createdAt = new Date("2026-01-02T00:00:00.000Z");
+    const buildSession = (id: string) => ({
+      id,
+      userId,
+      resumeId,
+      level: "mid" as const,
+      jobDescription: null,
+      interviewLocale: "en" as const,
+      turnCount: 0,
+      maxTurns: 6,
+      isFinished: false,
+      reviewGenerationStatus: "idle" as const,
+      reviewGenerationError: null,
+      createdAt,
+    });
+    sessionRepository.sessions = [
+      buildSession("session-1"),
+      buildSession("session-2"),
+    ];
+
+    const result = await service.listSessions(userId, { page: 1, limit: 1 });
+
+    expect(result.sessions).toHaveLength(1);
+    expect(result.sessions[0]?.id).toBe("session-1");
+    expect(result.hasMore).toBe(true);
+    expect(result.page).toBe(1);
+    expect(result.limit).toBe(1);
   });
 
   it("returns a session summary for an owned session", async () => {
