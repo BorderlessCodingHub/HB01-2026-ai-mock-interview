@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth/auth";
 import { toNextJsHandler } from "better-auth/next-js";
-import type { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 
 /**
  * Next.js / OpenNext strip `basePath` before the App Router handler runs, but
