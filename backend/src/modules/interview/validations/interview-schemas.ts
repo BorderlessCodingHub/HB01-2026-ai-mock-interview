@@ -24,6 +24,11 @@ export const createSessionSchema = z.object({
     .max(MAX_INTERVIEW_TURNS),
 });
 
+export const listMessagesQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+  before: z.uuid().optional(),
+});
+
 export const streamMessageSchema = z.object({
   content: z
     .string()
@@ -85,6 +90,7 @@ export const submitFeedbackSchema = z.object({
 export type InterviewLevel = z.infer<typeof interviewLevelSchema>;
 export type CreateSessionInput = z.infer<typeof createSessionSchema>;
 export type StreamMessageInput = z.infer<typeof streamMessageSchema>;
+export type ListMessagesQuery = z.infer<typeof listMessagesQuerySchema>;
 export type ReviewPriority = z.infer<typeof reviewPrioritySchema>;
 export type ReviewItemsGeneratorOutput = z.infer<
   typeof reviewItemsGeneratorOutputSchema

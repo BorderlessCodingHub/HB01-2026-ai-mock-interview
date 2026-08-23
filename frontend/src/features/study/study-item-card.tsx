@@ -1,17 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
 import { formatTopicAngleLabel } from "@/features/study/lib/format-topic-angle";
 import { cn } from "@/lib/utils";
@@ -37,14 +26,17 @@ export function StudyItemCard({
   onReactivate,
   onDelete,
 }: StudyItemCardProps) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
+  const confirmDialog = useConfirmDialog();
   const isActive = item.status === "active";
   const topicAngleLabel = formatTopicAngleLabel(item.topic, item.angle);
 
-  const handleConfirmDelete = () => {
-    onDelete?.();
-    setDeleteOpen(false);
-  };
+  async function handleDelete() {
+    const confirmed = await confirmDialog({
+      title: "Delete review item?",
+      description: `Delete "${topicAngleLabel}" from your study backlog? This cannot be undone.`,
+    });
+    if (confirmed) onDelete?.();
+  }
 
   return (
     <AppCard
@@ -97,7 +89,7 @@ export function StudyItemCard({
             </button>
             <button
               type="button"
-              onClick={() => setDeleteOpen(true)}
+              onClick={handleDelete}
               className="min-h-11 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
             >
               Delete
@@ -114,7 +106,7 @@ export function StudyItemCard({
             </button>
             <button
               type="button"
-              onClick={() => setDeleteOpen(true)}
+              onClick={handleDelete}
               className="min-h-11 cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium text-red-700 transition-colors hover:bg-red-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-600 focus-visible:ring-offset-2"
             >
               Delete
@@ -122,27 +114,6 @@ export function StudyItemCard({
           </>
         )}
       </div>
-
-      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete review item?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Delete &ldquo;{topicAngleLabel}&rdquo; from your study backlog? This
-              cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              onClick={handleConfirmDelete}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </AppCard>
   );
 }
