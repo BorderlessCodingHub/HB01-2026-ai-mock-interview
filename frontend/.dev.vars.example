@@ -1,1 +1,11 @@
+# Local preview via wrangler: copy to .dev.vars (gitignored).
 NEXTJS_ENV=development
+
+# Production reference (set in Cloudflare Dashboard — Runtime variables, or Workers Builds)
+# BETTER_AUTH_URL=https://labs.borderlesscoding.com/ai-mock-interview
+# BETTER_AUTH_SECRET=<secret, min 32 chars>
+# BORDERLESS_API_BASE=https://api.borderlesscoding.com
+# NEXT_PUBLIC_BORDERLESS_SIGNUP_URL=https://platform.borderlesscoding.com/sign-up
+# NEXT_PUBLIC_SERVER_URL=<Express API public URL>
+# SERVER_INTERNAL_URL=<same as NEXT_PUBLIC_SERVER_URL for opaque session sync>
+# INTERNAL_AUTH_SYNC_SECRET=<secret, must match backend>

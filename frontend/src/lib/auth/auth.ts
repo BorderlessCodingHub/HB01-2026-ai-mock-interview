@@ -140,6 +140,10 @@ export const auth = betterAuth({
   database: undefined,
   secret: serverEnv.BETTER_AUTH_SECRET,
   baseURL: serverEnv.BETTER_AUTH_URL,
+  trustedOrigins: [
+    "https://labs.borderlesscoding.com",
+    "http://localhost:3001",
+  ],
   emailAndPassword: {
     enabled: false,
   },
