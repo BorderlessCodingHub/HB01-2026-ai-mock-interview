@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev --port 3001",
     "build": "next build && node scripts/verify-cloudflare-basepath.mjs",
-    "build:cloudflare": "rm -rf .next .open-next && NEXT_BASE_PATH=/ai-mock-interview opennextjs-cloudflare build",
+    "build:cloudflare": "rm -rf .next .open-next && NEXT_BASE_PATH=/ai-mock-interview opennextjs-cloudflare build && NEXT_BASE_PATH=/ai-mock-interview node scripts/verify-cloudflare-basepath.mjs",
     "start": "next start",
     "deploy": "bun run build:cloudflare && opennextjs-cloudflare deploy -- --keep-vars",
     "upload": "bun run build:cloudflare && opennextjs-cloudflare upload",
