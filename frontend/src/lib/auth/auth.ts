@@ -105,6 +105,12 @@ function betterAuthHandlerBaseURL(): string {
   return `${authAppOrigin()}/api/auth`;
 }
 
+/** JWT = three base64url segments. Express decodes these without Redis. */
+function looksLikeJwt(token: string): boolean {
+  const parts = token.split(".");
+  return parts.length === 3 && parts.every((part) => part.length > 0);
+}
+
 async function registerOpaqueSession(params: {
   accessToken: string;
   externalId: string;
@@ -121,6 +127,7 @@ async function registerOpaqueSession(params: {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "User-Agent": "hone-ai-mock-interview/auth-sync",
           "X-Internal-Auth-Secret": serverEnv.INTERNAL_AUTH_SYNC_SECRET,
         },
         body: JSON.stringify(params),
@@ -144,8 +151,14 @@ async function registerOpaqueSession(params: {
       detail: detail.slice(0, 300),
       url: sessionUrl,
     });
+    const hint =
+      response.status === 401
+        ? "INTERNAL_AUTH_SYNC_SECRET does not match the backend."
+        : response.status === 403
+          ? "Check SERVER_INTERNAL_URL (Railway public URL) and that nothing blocks /internal/* (e.g. Cloudflare Access)."
+          : "Verify SERVER_INTERNAL_URL and backend health.";
     throw new APIError("INTERNAL_SERVER_ERROR", {
-      message: `Failed to establish API session (${response.status}). Try again.`,
+      message: `Failed to establish API session (${response.status}). ${hint}`,
     });
   }
 }
@@ -257,13 +270,17 @@ export const auth = betterAuth({
           asNonEmptyString(borderlessUser.username) ||
           "User";
 
-        await registerOpaqueSession({
-          accessToken,
-          externalId,
-          email,
-          name,
-          expiresIn,
-        });
+        // Opaque tokens need Redis registration. JWTs are decoded by Express
+        // directly — skip the Worker→Railway hop that currently returns 403.
+        if (!looksLikeJwt(accessToken)) {
+          await registerOpaqueSession({
+            accessToken,
+            externalId,
+            email,
+            name,
+            expiresIn,
+          });
+        }
 
         return {
           email,
