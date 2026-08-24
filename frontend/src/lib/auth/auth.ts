@@ -91,6 +91,20 @@ function internalApiBaseUrl(): string {
   return url.origin;
 }
 
+/** Public app URL (cookies, trusted origins). */
+function authAppOrigin(): string {
+  return new URL(serverEnv.BETTER_AUTH_URL).origin;
+}
+
+/**
+ * better-auth route matching runs on the path Next/OpenNext pass to the handler
+ * (basePath stripped). Client still calls the public subpath via authClient.
+ * @see https://github.com/better-auth/better-auth/issues/4715
+ */
+function betterAuthHandlerBaseURL(): string {
+  return `${authAppOrigin()}/api/auth`;
+}
+
 async function registerOpaqueSession(params: {
   accessToken: string;
   externalId: string;
@@ -139,7 +153,7 @@ async function registerOpaqueSession(params: {
 export const auth = betterAuth({
   database: undefined,
   secret: serverEnv.BETTER_AUTH_SECRET,
-  baseURL: serverEnv.BETTER_AUTH_URL,
+  baseURL: betterAuthHandlerBaseURL(),
   trustedOrigins: [
     "https://labs.borderlesscoding.com",
     "http://localhost:3001",
