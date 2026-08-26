@@ -13,7 +13,7 @@ COPY . .
 ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
 RUN bunx prisma generate && bun run build
 
-# Production dependencies only (no devDependencies such as tsdown/prisma CLI).
+# Production dependencies, including the Prisma CLI needed for migrate deploy.
 FROM oven/bun:1 AS prod-deps
 WORKDIR /app
 COPY package.json bun.lock ./
@@ -26,12 +26,16 @@ ENV NODE_ENV=production
 
 COPY package.json ./
 COPY --from=build /app/dist ./dist
-COPY --from=build /app/prisma/generated ./prisma/generated
+COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build /app/src/modules ./modules
 COPY --from=build /app/src ./src
 COPY --from=build /app/tsconfig.json ./tsconfig.json
 COPY --from=prod-deps /app/node_modules ./node_modules
+COPY docker-entrypoint.sh ./
+RUN sed -i 's/\r$//' docker-entrypoint.sh && chmod +x docker-entrypoint.sh
 
-# Default: API server. Worker override (same image):
+# Default: apply pending migrations, then API. Worker override (same image):
 #   docker run --rm backend-api bun run worker
+ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD ["bun", "run", "start"]
