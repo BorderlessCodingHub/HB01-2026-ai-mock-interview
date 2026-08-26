@@ -20,6 +20,7 @@
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
     "db:start": "docker compose up -d postgres redis",
     "db:watch": "docker compose up postgres redis",
@@ -55,6 +56,7 @@
     "nodemailer": "^7.0.3",
     "pdf-parse": "^1",
     "pg": "^8.17.1",
+    "prisma": "^7.8.0",
     "rate-limit-redis": "^5.0.0",
     "swagger-ui-express": "^5.0.1",
     "zod": "^4.4.3"
@@ -80,7 +82,6 @@
     "globals": "^17.6.0",
     "husky": "^9.1.7",
     "prettier": "^3.8.3",
-    "prisma": "^7.8.0",
     "supertest": "^7.1.4",
     "testcontainers": "^12.0.1",
     "tsdown": "^0.21.9",
