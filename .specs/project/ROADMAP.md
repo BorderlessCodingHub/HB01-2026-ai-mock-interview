@@ -12,13 +12,16 @@
 | P2 | Study Session History (completed review sessions on `/study`) | Implemented (commit deferred) | [spec.md](../../frontend/.specs/features/study-session-history/spec.md) · [context.md](../../frontend/.specs/features/study-session-history/context.md) · [design.md](../../frontend/.specs/features/study-session-history/design.md) · [tasks.md](../../frontend/.specs/features/study-session-history/tasks.md) |
 | P2 | Interview Soft Coverage (practice anti-echo via topic+angle memory) | Implemented (commits deferred) | [spec.md](../../backend/.specs/features/interview-soft-coverage/spec.md) · [context.md](../../backend/.specs/features/interview-soft-coverage/context.md) · [design.md](../../backend/.specs/features/interview-soft-coverage/design.md) · [tasks.md](../../backend/.specs/features/interview-soft-coverage/tasks.md) |
 | P1 | Session Create Quota (3 practice + 3 study / rolling 4h) | Validated (UAT + commits deferred) | [spec.md](../features/session-create-quota/spec.md) · [design.md](../features/session-create-quota/design.md) · [tasks.md](../features/session-create-quota/tasks.md) |
+| P1 | Resume TeX upload (`.tex` → GFM → same LLM extraction) | Validated (UAT + commits deferred) | [spec.md](../features/resume-tex-upload/spec.md) · [design.md](../features/resume-tex-upload/design.md) · [tasks.md](../features/resume-tex-upload/tasks.md) |
+| P1 | Review session recap (results + persist; history above transcript) | Design drafted (awaiting approval → Tasks) | [spec.md](../features/review-session-recap/spec.md) · [context.md](../features/review-session-recap/context.md) · [design.md](../features/review-session-recap/design.md) |
+| P1 | Resume file preview (owner `GET .../file` + View on `/resumes`) | Implemented (automated gates; browser UAT pending) | [spec.md](../features/resume-file-preview/spec.md) · [context.md](../features/resume-file-preview/context.md) · [tasks.md](../features/resume-file-preview/tasks.md) |
 
 ## Milestones
 
 ### M1 — Backend Foundation
 - [ ] Data model (resumes, interview_sessions, interview_messages, review_items)
 - [ ] R2 + BullMQ + Redis infrastructure
-- [ ] Resume upload & async processing
+- [ ] Resume upload & async processing (PDF + TeX — see resume-tex-upload)
 
 ### M2 — Interview Core
 - [ ] LangGraph agent with PostgresSaver
@@ -33,5 +36,6 @@
 
 ### M4 — Frontend Integration
 - [ ] Resume upload UI
+- [x] Resume original-file preview (`GET /api/resumes/:id/file` + View on `/resumes`)
 - [ ] Interview chat with SSE
 - [ ] Review list display
