@@ -155,7 +155,7 @@ export default function ProfilePage() {
             icon={<AlertCircle className="h-6 w-6" />}
             headingLevel={2}
             title="No ready CV found"
-            description="We couldn't find a successfully processed resume. Upload a PDF resume first."
+            description="We couldn't find a successfully processed resume. Upload a resume first."
             action={
               <a
                 href="/resumes"

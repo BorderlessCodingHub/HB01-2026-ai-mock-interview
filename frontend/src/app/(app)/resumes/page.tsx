@@ -18,6 +18,7 @@ import { AppShell } from "@/features/dashboard/app-shell";
 import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useAuth } from "@/features/auth/session-provider";
 import { uploadResume } from "@/lib/api/resumes";
+import { isAllowedResumeFile } from "@/lib/resumes/is-allowed-resume-file";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { queryKeys } from "@/lib/query/keys";
@@ -63,6 +64,11 @@ export default function ResumesPage() {
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
+
+    if (!isAllowedResumeFile(file)) {
+      setUploadError("Only PDF and TeX files are allowed");
+      return;
+    }
 
     const token = await getAccessToken();
     if (!token) {
@@ -145,10 +151,17 @@ export default function ResumesPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="application/pdf"
+              accept=".pdf,.tex,application/pdf"
               className="hidden"
               onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
+                const selected = e.target.files?.[0] ?? null;
+                if (selected && !isAllowedResumeFile(selected)) {
+                  setFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  setUploadError("Only PDF and TeX files are allowed");
+                  return;
+                }
+                setFile(selected);
                 setUploadError(null);
               }}
             />
@@ -168,17 +181,17 @@ export default function ResumesPage() {
                     {file.name}
                   </span>
                   <span className="text-xs text-text-base">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB · PDF selected
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </span>
                 </>
               ) : (
                 <>
                   <Upload className="h-10 w-10 text-text-base" />
                   <span className="text-sm font-medium text-ink-black">
-                    Click to select a PDF resume
+                    Click to select a resume
                   </span>
                   <span className="text-xs text-text-base">
-                    Only PDF files are supported
+                    PDF and LaTeX (.tex) files are supported
                   </span>
                 </>
               )}
@@ -204,7 +217,7 @@ export default function ResumesPage() {
               )}
               {uploadState === "uploading"
                 ? "Uploading & Enqueuing…"
-                : "Upload PDF Resume"}
+                : "Upload resume"}
             </button>
           </form>
         </AppCard>
@@ -238,7 +251,7 @@ export default function ResumesPage() {
               icon={<FileText className="h-6 w-6" />}
               headingLevel={3}
               title="No resumes yet"
-              description="Upload your first PDF resume above to start practicing."
+              description="Upload your first resume above to start practicing."
             />
           )}
 
