@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-08-19  
-**Current Work:** Session Create Quota — feature-level validation complete (Ready); commits deferred; Interactive UAT pending
+**Last Updated:** 2026-08-29  
+**Current Work:** Quick task 003 — practice tester v1 feedback (resumes basePath, send label, compact feedback)
 
 ---
 
@@ -108,6 +108,13 @@ _None_
 
 ## Lessons Learned
 
+### L-007: Raw `<a href="/...">` ignores Next.js `basePath` (2026-08-29)
+
+**Context:** Labs serves the app under `/ai-mock-interview`. "Go to Resumes" on `/practice` used a native `<a href="/resumes">`.
+**Problem:** Next.js `Link` prefixes `basePath`; native anchors do not, so production navigated to `labs.borderlesscoding.com/resumes` (404).
+**Solution:** Use `next/link` for in-app routes. Audit remaining raw `/resumes` anchors (profile empty state).
+**Prevents:** In-app CTAs 404ing when `NEXT_BASE_PATH` is set.
+
 ### L-006: ISC-21 soft-hint load every turn (2026-08-02)
 
 **Context:** Spec ISC-21 said inject soft coverage once per session into graph/checkpoint.  
@@ -156,12 +163,13 @@ _None_
 
 | # | Description | Date | Commit | Status |
 | --- | ---------- | ---- | ------ | ------ |
-| — | — | — | — | — |
+| 003 | Practice tester v1: resumes `Link` + send label + compact feedback | 2026-08-29 | — | ✅ Done (UAT login-blocked) |
 
 ---
 
 ## Deferred Ideas
 
+- [ ] Profile empty-state "Go to Resumes" still uses raw `<a href="/resumes">` (same `basePath` bug as practice) — Captured during: 003-practice-tester-feedback
 - [ ] Normal-interview topic diversity via angles on review_items (fulfilled by review-item-angles) — Captured during: review-items-learned-status / review-item-angles
 - [ ] App-wide UI i18n (`appLocale` or similar) — Captured during: interview-locale
 - [ ] DB table for editable language prompt instructions — Captured during: interview-locale
