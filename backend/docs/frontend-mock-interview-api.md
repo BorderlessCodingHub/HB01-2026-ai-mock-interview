@@ -207,6 +207,33 @@ O `GET` **não** inclui `sourceFormat`, chaves de storage, `pdfUrl`, `rawText` n
 
 > Quando `failed`, o backend persiste `errorMessage` no banco, mas **não expõe** esse campo no `GET` atual — trate `failed` na UI com mensagem genérica e opção de reenviar o currículo.
 
+### `GET /api/resumes/:id/file` — Arquivo original
+
+Sucesso (**200**) é o arquivo enviado em **bytes brutos** — não JSON. Auth: Bearer, igual às outras rotas de `/api/resumes`. Esta rota **não** passa pelo limitador de IA.
+
+Acesso só do **dono** (mesmo critério do `GET /api/resumes/:id`). Disponível em `processing`, `ready` e `failed` enquanto a linha pertencer ao usuário.
+
+**Headers (200):**
+
+| Formato | `Content-Type` | `Content-Disposition` |
+|---------|----------------|------------------------|
+| PDF | `application/pdf` | `inline` (inclui o `name` do currículo) |
+| TeX | `text/x-tex` | `attachment` (inclui o `name` do currículo) |
+
+Também: `Content-Length` = tamanho em bytes; `Cache-Control: private, no-store`.
+
+Os JSON de listagem e detalhe **continuam sem** `storageKey`, `sourceFormat` ou `fileUrl`. O cliente monta a URL com o UUID no path e usa o `name` da listagem.
+
+No frontend: `fetch` com Bearer. **Não** use `<a href>` direto para a origem do Express (sem token).
+
+**Erros:**
+
+| Status | Quando | `message` |
+|--------|--------|-----------|
+| `401` | Não autenticado | `Authentication required` |
+| `404` | Id desconhecido **ou** de outro usuário (mesmo texto do GET detalhe; storage **não** é lido) | `Resume not found` |
+| `502` | Falha de storage após o lookup do dono (sem `storageKey` nem erros do provedor no corpo) | `Failed to fetch resume file` |
+
 ---
 
 ## Entrevista (`/interview`)
@@ -1040,7 +1067,7 @@ Além dos tópicos agregados de `review-items`, o backend também analisa **cada
 | `404` | Recurso não encontrado ou não pertence ao usuário |
 | `409` | Sessão já finalizada (stream de entrevista ou review session em `pending_review`/`completed`); review session já `completed` no bulk apply |
 | `422` | Validação Zod (body/query inválidos em review-items e review-sessions) |
-| `502` | Falha de storage no upload |
+| `502` | Falha de storage no upload ou ao buscar o arquivo original |
 | `503` | Fila de processamento indisponível |
 | `500` | Erro interno (`{ "message": "Internal Server Error" }`) |
 
@@ -1120,6 +1147,7 @@ selecting_items → creating → in_progress (Q&A SSE)
 |--------|------|-----------|
 | `POST` | `/api/resumes` | Upload de currículo (PDF ou TeX) |
 | `GET` | `/api/resumes/:id` | Status + `structuredSummary` se `ready` |
+| `GET` | `/api/resumes/:id/file` | Arquivo original (bytes; PDF inline / TeX attachment) |
 | `POST` | `/api/interview/sessions` | Criar sessão |
 | `GET` | `/api/interview/sessions` | Listar sessões |
 | `GET` | `/api/interview/sessions/:sessionId/messages` | Histórico |
