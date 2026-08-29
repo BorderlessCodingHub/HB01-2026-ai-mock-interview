@@ -80,6 +80,30 @@ export async function getResume(
   return data as ResumeDetail;
 }
 
+export async function getResumeFile(
+  id: string,
+  token: string,
+): Promise<Blob> {
+  const res = await fetch(
+    `${env.NEXT_PUBLIC_SERVER_URL}/api/resumes/${id}/file`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
+    },
+  );
+
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const message =
+      typeof data === "object" && data && "message" in data
+        ? String((data as { message: unknown }).message)
+        : res.statusText;
+    throw new ApiError(message, res.status, data);
+  }
+
+  return await res.blob();
+}
+
 export async function listResumes(
   token: string,
 ): Promise<{ resumes: ResumePreview[] }> {
