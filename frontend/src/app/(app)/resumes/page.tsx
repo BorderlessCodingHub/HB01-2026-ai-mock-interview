@@ -12,13 +12,13 @@ import {
   Trash2,
   Calendar,
   Star,
-  Eye,
+  Download,
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useAuth } from "@/features/auth/session-provider";
-import { openResumeFile } from "@/features/resumes/open-resume-file";
+import { downloadResumeFile } from "@/features/resumes/download-resume-file";
 import { getResumeFile, uploadResume } from "@/lib/api/resumes";
 import { isAllowedResumeFile } from "@/lib/resumes/is-allowed-resume-file";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
@@ -48,8 +48,8 @@ export default function ResumesPage() {
   const [activeResumeId, setActiveResumeId] = useState<string | null>(() =>
     getStoredResumeId(),
   );
-  const [viewingId, setViewingId] = useState<string | null>(null);
-  const viewingIdRef = useRef<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadingIdRef = useRef<string | null>(null);
 
   const { data, isLoading, error } = useResumes();
   const resumes = data?.resumes ?? [];
@@ -138,21 +138,21 @@ export default function ResumesPage() {
     toast.success("Active resume updated!");
   }
 
-  async function handleView(resume: { id: string; name: string }) {
-    if (viewingIdRef.current) return;
+  async function handleDownload(resume: { id: string; name: string }) {
+    if (downloadingIdRef.current) return;
 
-    viewingIdRef.current = resume.id;
-    setViewingId(resume.id);
+    downloadingIdRef.current = resume.id;
+    setDownloadingId(resume.id);
     try {
-      await openResumeFile({
+      await downloadResumeFile({
         id: resume.id,
         name: resume.name,
         getToken: getAccessToken,
         fetchBlob: getResumeFile,
       });
     } finally {
-      viewingIdRef.current = null;
-      setViewingId(null);
+      downloadingIdRef.current = null;
+      setDownloadingId(null);
     }
   }
 
@@ -356,16 +356,16 @@ export default function ResumesPage() {
 
                       <button
                         type="button"
-                        disabled={viewingId === resume.id}
-                        onClick={() => void handleView(resume)}
+                        disabled={downloadingId === resume.id}
+                        onClick={() => void handleDownload(resume)}
                         className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-border-hairline text-ink-black transition-colors hover:bg-mist-gray disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-                        aria-label={`View ${resume.name}`}
-                        title="View resume"
+                        aria-label={`Download ${resume.name}`}
+                        title="Download resume"
                       >
-                        {viewingId === resume.id ? (
+                        {downloadingId === resume.id ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Download className="h-4 w-4" />
                         )}
                       </button>
 
