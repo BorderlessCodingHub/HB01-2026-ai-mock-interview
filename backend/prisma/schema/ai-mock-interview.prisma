@@ -4,6 +4,11 @@ enum ResumeStatus {
   failed
 }
 
+enum ResumeSourceFormat {
+  pdf
+  tex
+}
+
 enum InterviewLevel {
   entry
   mid
@@ -57,16 +62,16 @@ enum AnswerEvaluation {
 }
 
 model Resume {
-  id                String       @id @default(uuid())
+  id                String             @id @default(uuid())
   userId            Int
   name              String
-  pdfUrl            String       @map("pdf_url")
-  storageKey        String       @map("storage_key")
-  structuredSummary Json?        @map("structured_summary")
-  rawText           String?      @map("raw_text") @db.Text
-  status            ResumeStatus @default(processing)
-  errorMessage      String?      @map("error_message") @db.Text
-  createdAt         DateTime     @default(now()) @map("created_at")
+  storageKey        String             @map("storage_key")
+  sourceFormat      ResumeSourceFormat @map("source_format")
+  structuredSummary Json?              @map("structured_summary")
+  rawText           String?            @map("raw_text") @db.Text
+  status            ResumeStatus       @default(processing)
+  errorMessage      String?            @map("error_message") @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at")
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessions InterviewSession[]

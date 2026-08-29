@@ -52,6 +52,10 @@ const minimalPdfBuffer = Buffer.from(
   "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF",
 );
 
+const minimalTexBuffer = Buffer.from(
+  "\\documentclass{article}\\begin{document}Hi\\end{document}",
+);
+
 async function authenticate(): Promise<{
   token: string;
   userId: number;
@@ -96,7 +100,7 @@ describe("Resumes API E2E", () => {
     });
 
     it("returns 201 and uploads PDF with mocked storage and queue", async () => {
-      const { token } = await authenticate();
+      const { token, userId } = await authenticate();
 
       const response = await request(app)
         .post("/api/resumes/")
@@ -113,7 +117,40 @@ describe("Resumes API E2E", () => {
         status: ResumeStatus.processing,
       });
       expect(response.body.createdAt).toEqual(expect.any(String));
-      expect(storageMock.put).toHaveBeenCalledTimes(1);
+      expect(response.body).not.toHaveProperty("sourceFormat");
+      expect(storageMock.put).toHaveBeenCalledWith(
+        `users/${userId}/resumes/${response.body.id}.pdf`,
+        expect.any(Buffer),
+        "application/pdf",
+      );
+      expect(resumeQueueMock.add).toHaveBeenCalledWith({
+        resumeId: response.body.id,
+      });
+    });
+
+    it("returns 201 and uploads TeX classified by extension, ignoring MIME", async () => {
+      const { token, userId } = await authenticate();
+
+      const response = await request(app)
+        .post("/api/resumes/")
+        .set(authHeader(token))
+        .attach("file", minimalTexBuffer, {
+          filename: "cv.tex",
+          contentType: "text/plain",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: expect.any(String),
+        name: "cv.tex",
+        status: ResumeStatus.processing,
+      });
+      expect(response.body).not.toHaveProperty("sourceFormat");
+      expect(storageMock.put).toHaveBeenCalledWith(
+        `users/${userId}/resumes/${response.body.id}.tex`,
+        expect.any(Buffer),
+        "text/x-tex",
+      );
       expect(resumeQueueMock.add).toHaveBeenCalledWith({
         resumeId: response.body.id,
       });
@@ -128,7 +165,7 @@ describe("Resumes API E2E", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: "PDF file is required",
+        message: "Resume file is required",
       });
       expect(storageMock.put).not.toHaveBeenCalled();
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
@@ -147,7 +184,7 @@ describe("Resumes API E2E", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: "Only PDF files are allowed",
+        message: "Only PDF and TeX files are allowed",
       });
       expect(storageMock.put).not.toHaveBeenCalled();
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
@@ -171,7 +208,7 @@ describe("Resumes API E2E", () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toMatch(
         new RegExp(
-          `PDF file must be at most ${env.RESUME_MAX_BYTES} bytes|File exceeds maximum allowed size`,
+          `File must be at most ${env.RESUME_MAX_BYTES} bytes|File exceeds maximum allowed size`,
         ),
       );
       expect(storageMock.put).not.toHaveBeenCalled();
@@ -191,7 +228,7 @@ describe("Resumes API E2E", () => {
         });
 
       expect(response.status).toBe(502);
-      expect(response.body).toEqual({ message: "Failed to upload PDF" });
+      expect(response.body).toEqual({ message: "Failed to upload resume" });
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
 
       const resume = await prisma.resume.findFirst({
@@ -199,7 +236,7 @@ describe("Resumes API E2E", () => {
         orderBy: { createdAt: "desc" },
       });
       expect(resume?.status).toBe(ResumeStatus.failed);
-      expect(resume?.errorMessage).toBe("Failed to upload PDF to storage");
+      expect(resume?.errorMessage).toBe("Failed to upload resume to storage");
     });
 
     it("returns 503 when resume queue is unavailable", async () => {
@@ -254,6 +291,7 @@ describe("Resumes API E2E", () => {
         status: ResumeStatus.ready,
         structuredSummary: sampleStructuredSummary,
       });
+      expect(response.body).not.toHaveProperty("sourceFormat");
     });
 
     it("returns 404 when resume does not exist", async () => {

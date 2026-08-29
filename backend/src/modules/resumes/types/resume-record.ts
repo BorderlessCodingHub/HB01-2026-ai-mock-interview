@@ -7,13 +7,16 @@ export const RESUME_STATUS = {
   failed: "failed",
 } as const satisfies Record<string, ResumeStatus>;
 
+export const RESUME_SOURCE_FORMATS = ["pdf", "tex"] as const;
+export type ResumeSourceFormat = (typeof RESUME_SOURCE_FORMATS)[number];
+
 export type ResumeRecord = {
   id: string;
   userId: number;
   name: string;
   status: ResumeStatus;
-  pdfUrl: string;
   storageKey: string;
+  sourceFormat: ResumeSourceFormat;
   structuredSummary: unknown | null;
   rawText: string | null;
   errorMessage: string | null;

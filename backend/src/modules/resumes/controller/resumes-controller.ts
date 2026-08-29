@@ -7,10 +7,10 @@ export class ResumesController {
 
   upload = async (req: Request, res: Response): Promise<void> => {
     if (!req.file) {
-      throw new BadRequestError("PDF file is required");
+      throw new BadRequestError("Resume file is required");
     }
 
-    const preview = await this.resumeService.uploadPdf(req.userId!, req.file);
+    const preview = await this.resumeService.upload(req.userId!, req.file);
     res.status(201).json(preview);
   };
 

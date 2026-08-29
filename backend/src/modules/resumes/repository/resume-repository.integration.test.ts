@@ -47,7 +47,7 @@ describe("ResumeRepository (integration)", () => {
       user.id,
       "Jane Doe CV.pdf",
       `users/${user.id}/resumes/${resumeId}.pdf`,
-      `users/${user.id}/resumes/${resumeId}.pdf`,
+      "pdf",
       resumeId,
     );
 
@@ -56,10 +56,24 @@ describe("ResumeRepository (integration)", () => {
       userId: user.id,
       name: "Jane Doe CV.pdf",
       status: "processing",
+      sourceFormat: "pdf",
       structuredSummary: null,
       rawText: null,
       errorMessage: null,
     });
+  });
+
+  it("createProcessing persists a tex sourceFormat", async () => {
+    const user = await createTestUser();
+
+    const created = await repository.createProcessing(
+      user.id,
+      "CV.tex",
+      "storage-key-tex",
+      "tex",
+    );
+
+    expect(created.sourceFormat).toBe("tex");
   });
 
   it("createProcessing accepts an optional id", async () => {
@@ -69,8 +83,8 @@ describe("ResumeRepository (integration)", () => {
     const created = await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       explicitId,
     );
 
@@ -83,8 +97,8 @@ describe("ResumeRepository (integration)", () => {
     const created = await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
 
@@ -120,8 +134,8 @@ describe("ResumeRepository (integration)", () => {
     await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
 
@@ -137,8 +151,8 @@ describe("ResumeRepository (integration)", () => {
     await repository.createProcessing(
       owner.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
 
@@ -153,8 +167,8 @@ describe("ResumeRepository (integration)", () => {
     await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
 
@@ -176,8 +190,8 @@ describe("ResumeRepository (integration)", () => {
     await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
     const rawText = "Jane Doe\nSoftware Engineer";
@@ -206,8 +220,8 @@ describe("ResumeRepository (integration)", () => {
     await repository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
     const errorMessage = "PDF extraction failed";

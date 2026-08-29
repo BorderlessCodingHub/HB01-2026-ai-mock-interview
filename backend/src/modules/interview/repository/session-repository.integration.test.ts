@@ -20,8 +20,8 @@ describe("SessionRepository (integration)", () => {
     await resumeRepository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
     return { user, resumeId };

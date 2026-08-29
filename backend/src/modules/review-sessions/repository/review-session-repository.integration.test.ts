@@ -17,7 +17,7 @@ async function seedReviewItems() {
     data: {
       userId: user.id,
       name: "Test Resume",
-      pdfUrl: "https://example.com/resume.pdf",
+      sourceFormat: "pdf",
       storageKey: "resumes/review-session-test.pdf",
       status: "ready",
     },
