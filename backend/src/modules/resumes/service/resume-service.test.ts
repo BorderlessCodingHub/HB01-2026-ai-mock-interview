@@ -373,6 +373,72 @@ describe("ResumeService", () => {
     });
   });
 
+  describe("getFile", () => {
+    it("returns the file body and T1 headers for the owner", async () => {
+      const body = Buffer.from("pdf-bytes");
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(
+        sampleResume,
+      );
+
+      const result = await service.getFile(42, "resume-uuid");
+
+      expect(resumeRepository.findByIdAndUserId).toHaveBeenCalledWith(
+        "resume-uuid",
+        42,
+      );
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+      expect(objectStorage.get).toHaveBeenCalledWith(sampleResume.storageKey);
+      expect(result.body.equals(body)).toBe(true);
+      expect(result.headers.contentType).toBe("application/pdf");
+      expect(result.headers.contentDisposition).toContain("inline");
+      expect(result.headers.contentDisposition).toContain("Jane Doe CV.pdf");
+      expect(result.headers.cacheControl).toBe("private, no-store");
+      expect(result.headers.contentLength).toBe(String(body.length));
+    });
+
+    it("throws NotFoundError when resume is missing or not owned", async () => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(null);
+
+      await expect(service.getFile(42, "missing-id")).rejects.toThrow(
+        new NotFoundError("Resume not found"),
+      );
+
+      expect(objectStorage.get).not.toHaveBeenCalled();
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it("throws BadGatewayError without leaking the storage key when get fails", async () => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(
+        sampleResume,
+      );
+      vi.mocked(objectStorage.get).mockRejectedValue(
+        new Error(`R2 missing ${sampleResume.storageKey}`),
+      );
+
+      const error = await service.getFile(42, "resume-uuid").catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect((error as Error).message).toBe("Failed to fetch resume file");
+      expect((error as Error).message).not.toContain(sampleResume.storageKey);
+    });
+
+    it.each([
+      RESUME_STATUS.processing,
+      RESUME_STATUS.failed,
+      RESUME_STATUS.ready,
+    ] as const)("returns the file when status is %s", async (status) => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+        ...sampleResume,
+        status,
+      });
+
+      const result = await service.getFile(42, "resume-uuid");
+
+      expect(result.body.equals(Buffer.from("pdf-bytes"))).toBe(true);
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+    });
+  });
+
   describe("listResumes", () => {
     it("returns a list of resume previews for the user", async () => {
       vi.mocked(resumeRepository.findAllByUserId).mockResolvedValue([

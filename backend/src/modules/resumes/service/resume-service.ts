@@ -4,6 +4,10 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import type { ChatOpenAI } from "@langchain/openai";
 
 import {
+  buildResumeFileHeaders,
+  type ResumeFileHeaders,
+} from "@/modules/resumes/resume-file-headers";
+import {
   RESUME_STATUS,
   type ResumeRecord,
   type ResumeStatus,
@@ -117,6 +121,33 @@ export class ResumeService {
     }
 
     return toResumeDetail(resume);
+  }
+
+  async getFile(
+    userId: number,
+    id: string,
+  ): Promise<{ body: Buffer; headers: ResumeFileHeaders }> {
+    const resume = await this.resumeRepository.findByIdAndUserId(id, userId);
+
+    if (!resume) {
+      throw new NotFoundError("Resume not found");
+    }
+
+    let body: Buffer;
+    try {
+      body = await this.objectStorage.get(resume.storageKey);
+    } catch {
+      throw new BadGatewayError("Failed to fetch resume file");
+    }
+
+    return {
+      body,
+      headers: buildResumeFileHeaders({
+        sourceFormat: resume.sourceFormat,
+        name: resume.name,
+        byteLength: body.length,
+      }),
+    };
   }
 
   async listResumes(userId: number): Promise<ResumePreview[]> {
