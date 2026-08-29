@@ -39,7 +39,7 @@ sequenceDiagram
   UI->>API: POST /api/auth/login
   API-->>UI: accessToken
 
-  UI->>API: POST /api/resumes (multipart PDF)
+  UI->>API: POST /api/resumes (multipart currículo PDF ou TeX)
   API-->>UI: { id, status: processing }
 
   loop até status === ready
@@ -65,7 +65,7 @@ sequenceDiagram
 **Ordem recomendada na UI:**
 
 1. Login → guardar `accessToken`.
-2. Upload do PDF → guardar `resumeId` → polling em `GET /resumes/:id` até `ready` ou `failed`.
+2. Upload do currículo (PDF ou TeX) → guardar `resumeId` → polling em `GET /resumes/:id` até `ready` ou `failed`.
 3. Escolher nível (`entry` | `mid` | `senior`) → `POST /interview/sessions`.
 4. Tela de chat: cada resposta do candidato → `POST .../stream` e consumir SSE.
 5. No último turno, exibir a mensagem de **feedback final** (não é pergunta) e direcionar para a aba de itens de revisão.
@@ -118,17 +118,17 @@ O `userId` vem **somente do JWT**; não envie `userId` no body.
 
 O currículo é processado **de forma assíncrona** após o upload. A entrevista só pode começar com status `ready`.
 
-### `POST /api/resumes` — Upload PDF
+### `POST /api/resumes` — Upload de currículo
 
 **Content-Type:** `multipart/form-data`  
-**Campo do arquivo:** `file` (único arquivo PDF)
+**Campo do arquivo:** `file` (único arquivo PDF **ou** TeX)
 
 **Validações:**
 
-- MIME: `application/pdf`
+- Classificação pela **extensão** do nome do arquivo: sufixo `.pdf` ou `.tex` (ASCII, case-insensitive). O MIME **não** é a fonte de verdade — um `.tex` enviado como `text/plain` ou com `application/pdf` spoofed continua sendo TeX.
 - Tamanho máximo: `RESUME_MAX_BYTES` (padrão **5 MB** = 5_242_880 bytes)
 
-**Resposta (201):**
+**Resposta (201):** apenas `{ id, name, status, createdAt }`. O corpo **não** inclui `sourceFormat`, chaves de storage, `pdfUrl`, `rawText` nem `errorMessage` (PDF e TeX usam o mesmo shape).
 
 ```json
 {
@@ -141,12 +141,15 @@ O currículo é processado **de forma assíncrona** após o upload. A entrevista
 
 **Erros:**
 
-| Status | Quando |
-|--------|--------|
-| `400` | Sem arquivo, não é PDF, ou excede tamanho |
-| `401` | Não autenticado |
-| `502` | Falha ao enviar para storage |
-| `503` | Fila de processamento indisponível |
+| Status | Quando | `message` |
+|--------|--------|-----------|
+| `400` | Arquivo ausente | `Resume file is required` |
+| `400` | Extensão diferente de `.pdf` / `.tex` | `Only PDF and TeX files are allowed` |
+| `400` | Tamanho acima do limite no serviço | `File must be at most ${RESUME_MAX_BYTES} bytes` (padrão 5_242_880) |
+| `400` | Multer `LIMIT_FILE_SIZE` (antes do serviço; compartilhado com transcribe) | `File exceeds maximum allowed size` |
+| `401` | Não autenticado | |
+| `502` | Falha ao enviar para storage | |
+| `503` | Fila de processamento indisponível | |
 
 ### `GET /api/resumes/:id` — Status e resumo estruturado
 
@@ -200,7 +203,9 @@ Use para **polling** após o upload (intervalo sugerido: 2–5 s até `ready` ou
 
 **Status possíveis:** `processing` | `ready` | `failed`
 
-> Quando `failed`, o backend persiste `errorMessage` no banco, mas **não expõe** esse campo no `GET` atual — trate `failed` na UI com mensagem genérica e opção de reenviar o PDF.
+O `GET` **não** inclui `sourceFormat`, chaves de storage, `pdfUrl`, `rawText` nem `errorMessage`.
+
+> Quando `failed`, o backend persiste `errorMessage` no banco, mas **não expõe** esse campo no `GET` atual — trate `failed` na UI com mensagem genérica e opção de reenviar o currículo.
 
 ---
 
@@ -1030,7 +1035,7 @@ Além dos tópicos agregados de `review-items`, o backend também analisa **cada
 
 | Status | Uso |
 |--------|-----|
-| `400` | Validação (body, PDF, currículo não pronto, stream sem resposta quando obrigatória) |
+| `400` | Validação (body, arquivo de currículo, currículo não pronto, stream sem resposta quando obrigatória) |
 | `401` | Token ausente/inválido |
 | `404` | Recurso não encontrado ou não pertence ao usuário |
 | `409` | Sessão já finalizada (stream de entrevista ou review session em `pending_review`/`completed`); review session já `completed` no bulk apply |
@@ -1113,7 +1118,7 @@ selecting_items → creating → in_progress (Q&A SSE)
 
 | Método | Path | Descrição |
 |--------|------|-----------|
-| `POST` | `/api/resumes` | Upload PDF |
+| `POST` | `/api/resumes` | Upload de currículo (PDF ou TeX) |
 | `GET` | `/api/resumes/:id` | Status + `structuredSummary` se `ready` |
 | `POST` | `/api/interview/sessions` | Criar sessão |
 | `GET` | `/api/interview/sessions` | Listar sessões |
