@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
@@ -33,6 +34,7 @@ import type {
   ReviewSessionStreamMetaProgress,
 } from "@/types/review-sessions";
 
+import { isLastReviewAnswer } from "./lib/is-last-review-answer";
 import {
   appendAiMessage,
   appendHumanMessage,
@@ -140,6 +142,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
   const [streamingContent, setStreamingContent] = useState("");
   const [progressMeta, setProgressMeta] =
     useState<ReviewSessionStreamMetaProgress | null>(null);
+  const [isEvaluating, setIsEvaluating] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
@@ -156,9 +159,15 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
   }, [session?.items]);
 
   const canSend =
-    session?.status === "in_progress" && !isStreaming && !isRedirecting;
+    session?.status === "in_progress" &&
+    !isStreaming &&
+    !isEvaluating &&
+    !isRedirecting;
   const showWelcome =
-    messages.length === 0 && !isStreaming && session?.status === "in_progress";
+    messages.length === 0 &&
+    !isStreaming &&
+    !isEvaluating &&
+    session?.status === "in_progress";
 
   const resolveTopicName = useCallback(
     (meta: ReviewSessionStreamMetaProgress) => {
@@ -203,6 +212,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
         {
           id: sessionId,
           status: "pending_review",
+          interviewLocale: meta.interviewLocale,
           items: meta.report.map((item) => ({
             id: item.reviewSessionItemId,
             reviewItemId: item.reviewItemId,
@@ -214,6 +224,8 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
             confirmedStatus: null,
             confirmedPriority: null,
             turns: [],
+            wentWell: item.wentWell,
+            workOn: item.workOn,
           })),
         },
       );
@@ -290,7 +302,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
       if (!trimmedAnswer) {
         return;
       }
-    } else if (isStreaming || isRedirecting) {
+    } else if (isStreaming || isEvaluating || isRedirecting) {
       return;
     }
 
@@ -305,7 +317,16 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
       setMessages((current) => appendHumanMessage(current, trimmedAnswer));
     }
 
-    setIsStreaming(true);
+    const willEvaluate =
+      answer !== undefined &&
+      progressMeta !== null &&
+      isLastReviewAnswer(progressMeta);
+
+    if (willEvaluate) {
+      setIsEvaluating(true);
+    } else {
+      setIsStreaming(true);
+    }
     setStreamingContent("");
     streamingContentRef.current = "";
     abortRef.current = new AbortController();
@@ -323,12 +344,19 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
           if (meta.status === "pending_review") {
             pendingReviewComplete = true;
             seedReportCache(meta);
-            setIsRedirecting(true);
             router.push(`/review-session/${sessionId}/report`);
             return;
           }
 
-          handleProgressMeta(meta);
+          if (meta.status === "evaluating") {
+            setIsEvaluating(true);
+            setIsStreaming(false);
+            return;
+          }
+
+          if (meta.status === "in_progress") {
+            handleProgressMeta(meta);
+          }
         },
       });
 
@@ -365,7 +393,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
     if (!sessionQuery.isSuccess) return;
     if (session?.status !== "in_progress") return;
     if (messages.length > 0) return;
-    if (isStreaming || isRedirecting) return;
+    if (isStreaming || isEvaluating || isRedirecting) return;
     if (autoStartedForSessionRef.current === sessionId) return;
 
     autoStartedForSessionRef.current = sessionId;
@@ -375,6 +403,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
     session?.status,
     messages.length,
     isStreaming,
+    isEvaluating,
     isRedirecting,
     sessionId,
   ]);
@@ -394,8 +423,13 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
   }
 
   const displayItems = useMemo(
-    () => buildDisplayItems(messages, isStreaming, streamingContent),
-    [isStreaming, messages, streamingContent],
+    () =>
+      buildDisplayItems(
+        messages,
+        isStreaming && !isEvaluating,
+        streamingContent,
+      ),
+    [isEvaluating, isStreaming, messages, streamingContent],
   );
 
   const hasTopicDividers = useMemo(
@@ -448,7 +482,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
     );
   }
 
-  if (session && session.status !== "in_progress") {
+  if (session && session.status !== "in_progress" && !isEvaluating) {
     return (
       <p className="text-sm text-text-base" role="status">
         Redirecting…
@@ -497,6 +531,19 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
           />
         )}
 
+        {isEvaluating ? (
+          <p
+            className="mt-3 flex items-center gap-2 text-sm text-text-base"
+            role="status"
+          >
+            <Loader2
+              className="h-5 w-5 shrink-0 animate-spin text-jade-deep"
+              aria-hidden
+            />
+            Evaluating your answers…
+          </p>
+        ) : null}
+
         <InterviewChatInput
           draft={draft}
           onDraftChange={setDraft}
@@ -509,7 +556,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
           onTranscript={(text) =>
             setDraft((prev) => (prev.trim() ? `${prev.trim()} ${text}` : text))
           }
-          sttBlocked={isStreaming}
+          sttBlocked={isStreaming || isEvaluating}
         />
       </div>
     </div>
