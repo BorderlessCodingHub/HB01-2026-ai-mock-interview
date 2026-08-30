@@ -3,7 +3,7 @@
 **Design**: skipped (same `resumes` module + existing `IObjectStorage.get`; decisions in spec/context)
 **Spec**: `.specs/features/resume-file-preview/spec.md`
 **Context**: `.specs/features/resume-file-preview/context.md`
-**Status**: Implemented (T1–T6; automated gates passed; browser UAT pending)
+**Status**: Implemented T1–T5; T6 **regressed** after `87784e9` (Download-only; PDF no longer opens in a new tab). Validate 2026-08-29: backend gates green; RFP-10/11/13 Needs Fix; browser UAT login-blocked.
 
 **Test refs**: `backend/docs/TESTING.md`, `frontend/.specs/codebase/TESTING.md`
 
@@ -216,11 +216,11 @@ Grep the doc for `/file` and `Failed to fetch resume file`.
 
 **Done when**:
 
-- [x] View is on real list rows only (not empty/error/loading placeholders)
-- [x] PDF: `window.open` (or equivalent) **before** `await getResumeFile`; then `blob:` with PDF type
+- [x] View is on real list rows only (not empty/error/loading placeholders) — **regressed:** control is now **Download** (`87784e9`)
+- [ ] PDF: `window.open` (or equivalent) **before** `await getResumeFile`; then `blob:` with PDF type — **regressed:** always `<a download>`
 - [x] `.tex` / `.TEX`: download with row `name`; do not leave a preview tab open
-- [x] Failure: toast API `message` when present; extra tab closed or not left on a broken blob; popup-blocked → short toast
-- [x] In-flight per row: control disabled or spinner; `aria-label` includes filename
+- [ ] Failure: toast API `message` when present; extra tab closed or not left on a broken blob; popup-blocked → short toast — toast remains; popup-blocked path gone with View
+- [x] In-flight per row: control disabled or spinner; `aria-label` includes filename — `aria-label` is now `Download ${name}`
 - [x] Gate check passes: `cd frontend && bun run check-types` (targeted ESLint on the page if full `bun run lint` is red on pre-existing `react-hooks/refs` — see STATE Preferences)
 - [x] FE matrix: `src/app/` pages → none
 

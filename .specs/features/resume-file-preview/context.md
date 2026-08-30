@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-08-29
 **Spec:** `.specs/features/resume-file-preview/spec.md`
-**Status:** Implemented (Execute T1–T6; browser UAT pending)
+**Status:** Validate 2026-08-29 — backend + docs verified; UI Needs Fix (post-T6 commit `87784e9` replaced View/PDF-tab with download-only). Browser UAT login-blocked.
 
 ---
 

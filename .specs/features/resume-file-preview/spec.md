@@ -127,17 +127,17 @@ On `/resumes`, after upload the candidate only sees filename, date, status, Set 
 | RFP-07 | P1: Owner fetch — 404 missing or other user; `get` not called | Tasks | Verified | T2, T3 |
 | RFP-08 | P1: Owner fetch — 502 on storage failure; generic message | Tasks | Verified | T2, T3 |
 | RFP-09 | P1: Owner fetch — no `aiRateLimiter` | Tasks | Verified | T3 |
-| RFP-10 | P1: UI — View on each saved row, accessible name | Tasks | Verified | T6 |
-| RFP-11 | P1: UI — PDF new tab via authenticated fetch + blob | Tasks | Verified | T5, T6 |
+| RFP-10 | P1: UI — View on each saved row, accessible name | Tasks | ❌ Needs Fix | T6 |
+| RFP-11 | P1: UI — PDF new tab via authenticated fetch + blob | Tasks | ❌ Needs Fix | T5, T6 |
 | RFP-12 | P1: UI — TeX download by row `name` | Tasks | Verified | T5, T6 |
-| RFP-13 | P1: UI — open window on user gesture (popup-safe) | Tasks | Verified | T6 |
+| RFP-13 | P1: UI — open window on user gesture (popup-safe) | Tasks | ❌ Needs Fix | T6 |
 | RFP-14 | P1: UI — error toast; no broken blob tab | Tasks | Verified | T5, T6 |
 | RFP-15 | P1: UI — no View on empty/error list; in-flight disable | Tasks | Verified | T6 |
 | RFP-16 | P1: Docs — `frontend-mock-interview-api.md` documents `GET /api/resumes/:id/file` | Tasks | Verified | T4 |
 
 **ID format:** `RFP-[NUMBER]`
 
-**Status values:** Pending → In Design → In Tasks → Implementing → Verified (T1–T6 executed 2026-08-29)
+**Status values:** Pending → In Design → In Tasks → Implementing → Verified (T1–T6 executed 2026-08-29; 2026-08-29 validate: RFP-10/11/13 Needs Fix after `87784e9` replaced View/PDF-tab with download-only)
 
 **Coverage:** 16 total, 16 mapped to tasks, 0 unmapped
 
