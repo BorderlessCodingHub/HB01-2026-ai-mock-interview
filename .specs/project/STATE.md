@@ -1,11 +1,19 @@
 # State
 
 **Last Updated:** 2026-08-29  
-**Current Work:** Review session recap — Design drafted (awaiting approval → Tasks). Resume file preview — T1–T6 implemented and committed (browser UAT pending). Resume TeX upload — automated validation complete (commits deferred).
+**Current Work:** Quick task 004 (SetNull owned FKs) — automated tests passed; local migration applied. Review session recap — automated validation complete (UAT pending). Resume file preview — Validate found UI regression (`87784e9` Download-only vs spec View/PDF-tab). Resume TeX upload — automated validation complete (commits deferred).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-023: SetNull on resume/session FKs owned by the user (2026-08-29)
+
+**Decision:** `InterviewSession.resumeId`, `ReviewItem.sessionId`, `WeakAnswer.sessionId`, and `TopicCoverage.sessionId` are optional with `onDelete: SetNull`. Deleting a CV removes only that resume. Deleting a practice session keeps study backlog, weak answers, and coverage (`sessionId` becomes null). Messages and interview feedback still cascade with the practice session.
+**Reason:** Those rows are user-owned; Cascade was wiping Study data when a CV or practice chat was deleted.
+**Trade-off:** In-progress practice cannot continue after the CV is gone (stream 404). Review generation marks failed if the resume is missing.
+**Impact:** Prisma migration `20260830120000_owned_fks_set_null`; API `resumeId`/`sessionId` nullable; delete copy on `/resumes` and `/feedback`.
+**Spec:** `.specs/quick/004-set-null-owned-fks/TASK.md`
 
 ### AD-022: Review session recap on the report page + history (2026-08-29)
 
@@ -15,7 +23,8 @@
 **Impact:** Prisma on `ReviewSessionItem`, evaluation schema/prompt, GET + SSE report, `ReviewSessionChat` / report cards / `StudySessionTranscript`.
 **Spec:** `.specs/features/review-session-recap/spec.md`  
 **Context:** `.specs/features/review-session-recap/context.md`  
-**Design:** `.specs/features/review-session-recap/design.md`
+**Design:** `.specs/features/review-session-recap/design.md`  
+**Tasks:** `.specs/features/review-session-recap/tasks.md`
 
 ### AD-021: Owner-only original resume file via `GET .../file` (2026-08-29)
 
@@ -190,6 +199,7 @@ _None_
 
 | # | Description | Date | Commit | Status |
 | --- | ---------- | ---- | ------ | ------ |
+| 004 | SetNull owned FKs: resume delete and practice delete keep study data | 2026-08-29 | — | ✅ Done (commit deferred; browser UAT login-blocked) |
 | 003 | Practice tester v1: resumes `Link` + send label + compact feedback | 2026-08-29 | — | ✅ Done (UAT login-blocked) |
 
 ---
@@ -267,10 +277,17 @@ _None_
 - [x] Spec approved; Design skipped; Tasks drafted (`tasks.md` T1–T6) (2026-08-29)
 - [x] Execute resume-file-preview T1–T6 (2026-08-29) — headers helper, getFile, GET /:id/file E2E, API docs, getResumeFile, View on `/resumes`
 - [x] Commit resume-file-preview T1–T6 (2026-08-29)
-- [ ] Interactive UAT for resume-file-preview (View PDF, fail network, `.tex` download)
+- [x] Feature-level automated validation for resume-file-preview (2026-08-29) — backend lint/types/unit (564)/resumes e2e (22) green; FE feature ESLint clean; project `check-types` still red on unrelated `*.test.ts`
+- [ ] Fix resume-file-preview UI: restore View + PDF `blob:` tab (`87784e9` replaced T6 with download-only; RFP-10/11/13)
+- [ ] Interactive UAT for resume-file-preview (View PDF, fail network, `.tex` download) — agent blocked at `/login` (Borderless)
 - [x] Discuss + Specify review-session-recap → `spec.md` + `context.md` (2026-08-29)
-- [x] Design phase for review-session-recap (`design.md`) — draft, awaiting approval
-- [ ] Approve review-session-recap design → Tasks
+- [x] Design phase for review-session-recap (`design.md`) — approved (2026-08-29)
+- [x] Tasks breakdown for review-session-recap (`tasks.md`) — approved via Execute
+- [x] Execute review-session-recap T1–T18 (2026-08-29) — implemented; commits deferred (L-005; user git rule: no commit unless asked)
+- [x] Feature-level automated validation for review-session-recap (2026-08-29) — backend lint/types/unit (575)/pandoc-wasm (1)/integration (83)/e2e (134) green; FE recap files ESLint clean except known `react-hooks/refs` in `review-session-chat.tsx`; `next build` TypeScript green; project `check-types` still red on unrelated `*.test.ts` vitest imports
+- [ ] Apply local Prisma migration `20260829120000_add_review_session_item_recap` before live UAT (`prisma migrate status` shows it pending on `hackathon2026`)
+- [ ] Interactive UAT for review-session-recap (evaluating wait, report recap, history results) — agent blocked at `/login` (Borderless)
+- [ ] Commit review-session-recap (deferred — user requested no commits)
 - [x] Grill-me + Specify resume-tex-upload → `spec.md` (2026-08-29)
 - [x] Design phase for resume-tex-upload (`design.md`) — approved
 - [x] Tasks breakdown for resume-tex-upload (`tasks.md`) — approved via Execute

@@ -13,8 +13,8 @@
 | P2 | Interview Soft Coverage (practice anti-echo via topic+angle memory) | Implemented (commits deferred) | [spec.md](../../backend/.specs/features/interview-soft-coverage/spec.md) · [context.md](../../backend/.specs/features/interview-soft-coverage/context.md) · [design.md](../../backend/.specs/features/interview-soft-coverage/design.md) · [tasks.md](../../backend/.specs/features/interview-soft-coverage/tasks.md) |
 | P1 | Session Create Quota (3 practice + 3 study / rolling 4h) | Validated (UAT + commits deferred) | [spec.md](../features/session-create-quota/spec.md) · [design.md](../features/session-create-quota/design.md) · [tasks.md](../features/session-create-quota/tasks.md) |
 | P1 | Resume TeX upload (`.tex` → GFM → same LLM extraction) | Validated (UAT + commits deferred) | [spec.md](../features/resume-tex-upload/spec.md) · [design.md](../features/resume-tex-upload/design.md) · [tasks.md](../features/resume-tex-upload/tasks.md) |
-| P1 | Review session recap (results + persist; history above transcript) | Design drafted (awaiting approval → Tasks) | [spec.md](../features/review-session-recap/spec.md) · [context.md](../features/review-session-recap/context.md) · [design.md](../features/review-session-recap/design.md) |
-| P1 | Resume file preview (owner `GET .../file` + View on `/resumes`) | Implemented (automated gates; browser UAT pending) | [spec.md](../features/resume-file-preview/spec.md) · [context.md](../features/resume-file-preview/context.md) · [tasks.md](../features/resume-file-preview/tasks.md) |
+| P1 | Review session recap (results + persist; history above transcript) | Validated (UAT + commits deferred) | [spec.md](../features/review-session-recap/spec.md) · [context.md](../features/review-session-recap/context.md) · [design.md](../features/review-session-recap/design.md) · [tasks.md](../features/review-session-recap/tasks.md) |
+| P1 | Resume file preview (owner `GET .../file` + View on `/resumes`) | Issues (UI: Download-only vs spec View/PDF-tab; backend verified) | [spec.md](../features/resume-file-preview/spec.md) · [context.md](../features/resume-file-preview/context.md) · [tasks.md](../features/resume-file-preview/tasks.md) |
 
 ## Milestones
 
@@ -36,6 +36,6 @@
 
 ### M4 — Frontend Integration
 - [ ] Resume upload UI
-- [x] Resume original-file preview (`GET /api/resumes/:id/file` + View on `/resumes`)
+- [ ] Resume original-file preview (`GET /api/resumes/:id/file` + View on `/resumes`) — API done; UI Needs Fix (Download-only)
 - [ ] Interview chat with SSE
 - [ ] Review list display
