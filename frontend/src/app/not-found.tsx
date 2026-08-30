@@ -18,7 +18,7 @@ export default function NotFound() {
         description="The page you're looking for doesn't exist or may have moved."
         action={
           <Link
-            href="/"
+            href="/dashboard"
             className="inline-flex h-11 cursor-pointer items-center justify-center rounded-full border border-jade-deep bg-jade-deep px-5 text-sm font-medium text-paper-white transition-colors hover:border-ink-black hover:bg-ink-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-jade-deep"
           >
             Back to home
