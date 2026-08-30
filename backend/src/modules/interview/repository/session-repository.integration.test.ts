@@ -38,6 +38,7 @@ describe("SessionRepository (integration)", () => {
       const session = await repository.create({
         userId: user.id,
         resumeId,
+        resumeName: "CV.pdf",
         level,
         interviewLocale: "en",
         maxTurns: 13,
@@ -46,6 +47,7 @@ describe("SessionRepository (integration)", () => {
       expect(session).toMatchObject({
         userId: user.id,
         resumeId,
+        resumeName: "CV.pdf",
         level,
         maxTurns: 13,
         turnCount: 0,
@@ -60,6 +62,7 @@ describe("SessionRepository (integration)", () => {
     const session = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "mid",
       interviewLocale: "en",
     });
@@ -72,7 +75,7 @@ describe("SessionRepository (integration)", () => {
     await expect(
       prisma.$transaction(async (tx) => {
         await repository.create(
-          { userId: user.id, resumeId, level: "mid", interviewLocale: "en" },
+          { userId: user.id, resumeId, resumeName: "CV.pdf", level: "mid", interviewLocale: "en" },
           tx,
         );
         throw new Error("force rollback");
@@ -89,6 +92,7 @@ describe("SessionRepository (integration)", () => {
     const session = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "mid",
       interviewLocale: "pt",
     });
@@ -105,6 +109,7 @@ describe("SessionRepository (integration)", () => {
     const older = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -112,6 +117,7 @@ describe("SessionRepository (integration)", () => {
     const newer = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "mid",
       interviewLocale: "pt",
     });
@@ -129,6 +135,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -139,6 +146,7 @@ describe("SessionRepository (integration)", () => {
       id: created.id,
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
     });
   });
@@ -154,6 +162,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -169,6 +178,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -179,6 +189,7 @@ describe("SessionRepository (integration)", () => {
       id: created.id,
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
     });
   });
@@ -195,6 +206,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -211,6 +223,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -238,6 +251,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -264,6 +278,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -288,6 +303,7 @@ describe("SessionRepository (integration)", () => {
     const created = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });
@@ -311,6 +327,7 @@ describe("SessionRepository (integration)", () => {
     const session = await repository.create({
       userId: user.id,
       resumeId,
+      resumeName: "CV.pdf",
       level: "entry",
       interviewLocale: "en",
     });

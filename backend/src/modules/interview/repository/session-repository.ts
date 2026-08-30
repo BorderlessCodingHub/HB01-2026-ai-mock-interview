@@ -13,6 +13,7 @@ const DEFAULT_MAX_TURNS = 9;
 export type CreateSessionParams = {
   userId: number;
   resumeId: string;
+  resumeName: string;
   level: InterviewLevel;
   interviewLocale: InterviewLocale;
   jobDescription?: string | null;
@@ -25,11 +26,13 @@ export class SessionRepository {
     params: CreateSessionParams,
     db: Prisma.TransactionClient | PrismaClient = prisma,
   ): Promise<InterviewSession> {
-    const { userId, resumeId, level, interviewLocale, jobDescription } = params;
+    const { userId, resumeId, resumeName, level, interviewLocale, jobDescription } =
+      params;
     return db.interviewSession.create({
       data: {
         userId,
         resumeId,
+        resumeName,
         level,
         jobDescription: jobDescription ?? null,
         interviewLocale,

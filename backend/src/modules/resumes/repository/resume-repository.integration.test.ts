@@ -251,6 +251,7 @@ describe("ResumeRepository (integration)", () => {
       data: {
         userId: user.id,
         resumeId,
+        resumeName: "CV.pdf",
         level: "entry",
         interviewLocale: "en",
         maxTurns: 5,
@@ -269,6 +270,7 @@ describe("ResumeRepository (integration)", () => {
       id: session.id,
       userId: user.id,
       resumeId: null,
+      resumeName: "CV.pdf",
     });
   });
 });

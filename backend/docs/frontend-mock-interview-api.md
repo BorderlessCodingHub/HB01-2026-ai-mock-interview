@@ -306,6 +306,7 @@ O backend expõe `turnCount` e `maxTurns` na listagem de sessões e no evento SS
     {
       "id": "uuid",
       "resumeId": "uuid",
+      "resumeName": "cv.pdf",
       "level": "mid",
       "turnCount": 3,
       "maxTurns": 7,
@@ -319,7 +320,7 @@ O backend expõe `turnCount` e `maxTurns` na listagem de sessões e no evento SS
 
 Ordenação: mais recentes primeiro (`createdAt` desc).
 
-`resumeId` é o currículo usado na criação. Após `DELETE /api/resumes/:id`, a sessão **permanece** e `resumeId` passa a `null`.
+`resumeId` é o currículo usado na criação. Após `DELETE /api/resumes/:id`, a sessão **permanece** e `resumeId` passa a `null`. `resumeName` é um snapshot do nome do currículo no momento da criação e **não** muda se o currículo for excluído ou renomeado.
 
 ---
 
