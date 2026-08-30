@@ -4,17 +4,28 @@ import { ChatPromptTemplate } from "@langchain/core/prompts";
 import type { ChatOpenAI } from "@langchain/openai";
 
 import {
+  buildResumeFileHeaders,
+  type ResumeFileHeaders,
+} from "@/modules/resumes/resume-file-headers";
+import {
   RESUME_STATUS,
   type ResumeRecord,
   type ResumeStatus,
 } from "@/modules/resumes/types/resume-record";
 import { env } from "@/config/env";
+import type { TexToMarkdown } from "@/infrastructure/document-parsing/tex-to-markdown";
 import { createUsageCaptureCallback } from "@/modules/token-usage/callbacks/token-usage-callback";
 import type { TokenUsageService } from "@/modules/token-usage/service/token-usage-service";
 import type { IObjectStorage } from "@/modules/resumes/protocols/object-storage";
 import type { IResumeQueue } from "@/modules/resumes/protocols/resume-queue";
 import { buildResumeExtractionPrompt } from "@/modules/resumes/prompts/resume-extraction-prompt";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
+import {
+  classifyResumeSourceFormat,
+  resumeContentType,
+  resumeStorageKey,
+  type ResumeSourceFormat,
+} from "@/modules/resumes/source-format";
 import {
   structuredSummarySchema,
   type StructuredSummary,
@@ -27,8 +38,6 @@ import {
   ServiceUnavailableError,
   TokenLimitExceededError,
 } from "@/shared";
-
-const PDF_MIME_TYPE = "application/pdf";
 
 export type PdfTextExtractor = (buffer: Buffer) => Promise<string>;
 
@@ -55,36 +64,40 @@ export class ResumeService {
     private readonly resumeQueue: IResumeQueue,
     private readonly extractionModel: ChatOpenAI,
     private readonly extractText: PdfTextExtractor,
+    private readonly texToMarkdown: TexToMarkdown,
     private readonly tokenUsageService: TokenUsageService,
     private readonly maxBytes: number = env.RESUME_MAX_BYTES,
   ) {}
 
-  async uploadPdf(
+  async upload(
     userId: number,
     file: Express.Multer.File,
   ): Promise<ResumePreview> {
-    this.validatePdfFile(file);
+    const format = this.validateResumeFile(file);
 
     const resumeId = randomUUID();
-    const storageKey = `users/${userId}/resumes/${resumeId}.pdf`;
-    const pdfUrl = storageKey;
+    const storageKey = resumeStorageKey(userId, resumeId, format);
 
     const resume = await this.resumeRepository.createProcessing(
       userId,
       file.originalname,
-      pdfUrl,
       storageKey,
+      format,
       resumeId,
     );
 
     try {
-      await this.objectStorage.put(storageKey, file.buffer, PDF_MIME_TYPE);
+      await this.objectStorage.put(
+        storageKey,
+        file.buffer,
+        resumeContentType(format),
+      );
     } catch {
       await this.resumeRepository.updateFailed(
         resume.id,
-        "Failed to upload PDF to storage",
+        "Failed to upload resume to storage",
       );
-      throw new BadGatewayError("Failed to upload PDF");
+      throw new BadGatewayError("Failed to upload resume");
     }
 
     try {
@@ -108,6 +121,33 @@ export class ResumeService {
     }
 
     return toResumeDetail(resume);
+  }
+
+  async getFile(
+    userId: number,
+    id: string,
+  ): Promise<{ body: Buffer; headers: ResumeFileHeaders }> {
+    const resume = await this.resumeRepository.findByIdAndUserId(id, userId);
+
+    if (!resume) {
+      throw new NotFoundError("Resume not found");
+    }
+
+    let body: Buffer;
+    try {
+      body = await this.objectStorage.get(resume.storageKey);
+    } catch {
+      throw new BadGatewayError("Failed to fetch resume file");
+    }
+
+    return {
+      body,
+      headers: buildResumeFileHeaders({
+        sourceFormat: resume.sourceFormat,
+        name: resume.name,
+        byteLength: body.length,
+      }),
+    };
   }
 
   async listResumes(userId: number): Promise<ResumePreview[]> {
@@ -149,11 +189,14 @@ export class ResumeService {
     try {
       await this.tokenUsageService.assertWithinLimit(resume.userId);
 
-      const pdfBuffer = await this.objectStorage.get(resume.storageKey);
-      const rawText = await this.extractText(pdfBuffer);
+      const buffer = await this.objectStorage.get(resume.storageKey);
+      const rawText =
+        resume.sourceFormat === "tex"
+          ? await this.texToMarkdown(buffer)
+          : await this.extractText(buffer);
 
       if (!rawText.trim()) {
-        throw new Error("PDF contains no extractable text");
+        throw new Error("Resume contains no extractable text");
       }
 
       const promptText = buildResumeExtractionPrompt(rawText);
@@ -194,20 +237,24 @@ export class ResumeService {
     }
   }
 
-  private validatePdfFile(file: Express.Multer.File): void {
+  private validateResumeFile(file: Express.Multer.File): ResumeSourceFormat {
     if (!file) {
-      throw new BadRequestError("PDF file is required");
+      throw new BadRequestError("Resume file is required");
     }
 
-    if (file.mimetype !== PDF_MIME_TYPE) {
-      throw new BadRequestError("Only PDF files are allowed");
+    const format = classifyResumeSourceFormat(file.originalname);
+
+    if (format === null) {
+      throw new BadRequestError("Only PDF and TeX files are allowed");
     }
 
     if (file.size > this.maxBytes) {
       throw new BadRequestError(
-        `PDF file must be at most ${this.maxBytes} bytes`,
+        `File must be at most ${this.maxBytes} bytes`,
       );
     }
+
+    return format;
   }
 }
 

@@ -54,7 +54,11 @@ Suggest whether this single review item should stay active or be marked learned,
 - If answers show no clear change (neither strong improvement nor reinforcement), keep the same priority.
 - If answers reinforce the gap but the priority would otherwise stay unchanged, bump one step: \`low\` → \`medium\`, \`medium\` → \`high\`, \`high\` stays \`high\`.
 - When the signal is ambiguous, prefer no change: keep \`status: "active"\` with the current priority.
-- Base your decision only on the topic, angle, description, current priority, and review Q&A above — ignore any other context.`;
+- Base your decision only on the topic, angle, description, current priority, and review Q&A above — ignore any other context.
+- Also fill \`wentWell\` (0–4 short bullets of genuine demonstrated strengths for this angle) and \`workOn\` (0–4 actionable gaps from this item's Q&A).
+- Use an empty array when there is no genuine strength or nothing substantial to improve — never invent.
+- Each bullet is one sentence, no markdown, grounded in the turns above.
+- Field names stay English; content follows the language block.`;
 }
 
 export function buildReviewSessionEvaluationPrompt(

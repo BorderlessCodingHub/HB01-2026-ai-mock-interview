@@ -232,7 +232,7 @@ export type InterviewSessionGroupByArgs<ExtArgs extends runtime.Types.Extensions
 export type InterviewSessionGroupByOutputType = {
   id: string
   userId: number
-  resumeId: string
+  resumeId: string | null
   level: $Enums.InterviewLevel
   jobDescription: string | null
   interviewLocale: $Enums.InterviewLocale
@@ -270,7 +270,7 @@ export type InterviewSessionWhereInput = {
   NOT?: Prisma.InterviewSessionWhereInput | Prisma.InterviewSessionWhereInput[]
   id?: Prisma.StringFilter<"InterviewSession"> | string
   userId?: Prisma.IntFilter<"InterviewSession"> | number
-  resumeId?: Prisma.StringFilter<"InterviewSession"> | string
+  resumeId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   level?: Prisma.EnumInterviewLevelFilter<"InterviewSession"> | $Enums.InterviewLevel
   jobDescription?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFilter<"InterviewSession"> | $Enums.InterviewLocale
@@ -281,7 +281,7 @@ export type InterviewSessionWhereInput = {
   reviewGenerationError?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  resume?: Prisma.XOR<Prisma.ResumeScalarRelationFilter, Prisma.ResumeWhereInput>
+  resume?: Prisma.XOR<Prisma.ResumeNullableScalarRelationFilter, Prisma.ResumeWhereInput> | null
   messages?: Prisma.InterviewMessageListRelationFilter
   reviewItems?: Prisma.ReviewItemListRelationFilter
   interviewFeedbacks?: Prisma.InterviewFeedbackListRelationFilter
@@ -292,7 +292,7 @@ export type InterviewSessionWhereInput = {
 export type InterviewSessionOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  resumeId?: Prisma.SortOrder
+  resumeId?: Prisma.SortOrderInput | Prisma.SortOrder
   level?: Prisma.SortOrder
   jobDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   interviewLocale?: Prisma.SortOrder
@@ -317,7 +317,7 @@ export type InterviewSessionWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.InterviewSessionWhereInput[]
   NOT?: Prisma.InterviewSessionWhereInput | Prisma.InterviewSessionWhereInput[]
   userId?: Prisma.IntFilter<"InterviewSession"> | number
-  resumeId?: Prisma.StringFilter<"InterviewSession"> | string
+  resumeId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   level?: Prisma.EnumInterviewLevelFilter<"InterviewSession"> | $Enums.InterviewLevel
   jobDescription?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFilter<"InterviewSession"> | $Enums.InterviewLocale
@@ -328,7 +328,7 @@ export type InterviewSessionWhereUniqueInput = Prisma.AtLeast<{
   reviewGenerationError?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   createdAt?: Prisma.DateTimeFilter<"InterviewSession"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  resume?: Prisma.XOR<Prisma.ResumeScalarRelationFilter, Prisma.ResumeWhereInput>
+  resume?: Prisma.XOR<Prisma.ResumeNullableScalarRelationFilter, Prisma.ResumeWhereInput> | null
   messages?: Prisma.InterviewMessageListRelationFilter
   reviewItems?: Prisma.ReviewItemListRelationFilter
   interviewFeedbacks?: Prisma.InterviewFeedbackListRelationFilter
@@ -339,7 +339,7 @@ export type InterviewSessionWhereUniqueInput = Prisma.AtLeast<{
 export type InterviewSessionOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  resumeId?: Prisma.SortOrder
+  resumeId?: Prisma.SortOrderInput | Prisma.SortOrder
   level?: Prisma.SortOrder
   jobDescription?: Prisma.SortOrderInput | Prisma.SortOrder
   interviewLocale?: Prisma.SortOrder
@@ -362,7 +362,7 @@ export type InterviewSessionScalarWhereWithAggregatesInput = {
   NOT?: Prisma.InterviewSessionScalarWhereWithAggregatesInput | Prisma.InterviewSessionScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"InterviewSession"> | string
   userId?: Prisma.IntWithAggregatesFilter<"InterviewSession"> | number
-  resumeId?: Prisma.StringWithAggregatesFilter<"InterviewSession"> | string
+  resumeId?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
   level?: Prisma.EnumInterviewLevelWithAggregatesFilter<"InterviewSession"> | $Enums.InterviewLevel
   jobDescription?: Prisma.StringNullableWithAggregatesFilter<"InterviewSession"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleWithAggregatesFilter<"InterviewSession"> | $Enums.InterviewLocale
@@ -386,7 +386,7 @@ export type InterviewSessionCreateInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
@@ -397,7 +397,7 @@ export type InterviewSessionCreateInput = {
 export type InterviewSessionUncheckedCreateInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -426,7 +426,7 @@ export type InterviewSessionUpdateInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
@@ -437,7 +437,7 @@ export type InterviewSessionUpdateInput = {
 export type InterviewSessionUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -457,7 +457,7 @@ export type InterviewSessionUncheckedUpdateInput = {
 export type InterviewSessionCreateManyInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -485,7 +485,7 @@ export type InterviewSessionUpdateManyMutationInput = {
 export type InterviewSessionUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -569,6 +569,11 @@ export type InterviewSessionScalarRelationFilter = {
   isNot?: Prisma.InterviewSessionWhereInput
 }
 
+export type InterviewSessionNullableScalarRelationFilter = {
+  is?: Prisma.InterviewSessionWhereInput | null
+  isNot?: Prisma.InterviewSessionWhereInput | null
+}
+
 export type InterviewSessionCreateNestedManyWithoutResumeInput = {
   create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutResumeInput, Prisma.InterviewSessionUncheckedCreateWithoutResumeInput> | Prisma.InterviewSessionCreateWithoutResumeInput[] | Prisma.InterviewSessionUncheckedCreateWithoutResumeInput[]
   connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutResumeInput | Prisma.InterviewSessionCreateOrConnectWithoutResumeInput[]
@@ -647,10 +652,12 @@ export type InterviewSessionCreateNestedOneWithoutReviewItemsInput = {
   connect?: Prisma.InterviewSessionWhereUniqueInput
 }
 
-export type InterviewSessionUpdateOneRequiredWithoutReviewItemsNestedInput = {
+export type InterviewSessionUpdateOneWithoutReviewItemsNestedInput = {
   create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutReviewItemsInput, Prisma.InterviewSessionUncheckedCreateWithoutReviewItemsInput>
   connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutReviewItemsInput
   upsert?: Prisma.InterviewSessionUpsertWithoutReviewItemsInput
+  disconnect?: Prisma.InterviewSessionWhereInput | boolean
+  delete?: Prisma.InterviewSessionWhereInput | boolean
   connect?: Prisma.InterviewSessionWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.InterviewSessionUpdateToOneWithWhereWithoutReviewItemsInput, Prisma.InterviewSessionUpdateWithoutReviewItemsInput>, Prisma.InterviewSessionUncheckedUpdateWithoutReviewItemsInput>
 }
@@ -661,10 +668,12 @@ export type InterviewSessionCreateNestedOneWithoutWeakAnswersInput = {
   connect?: Prisma.InterviewSessionWhereUniqueInput
 }
 
-export type InterviewSessionUpdateOneRequiredWithoutWeakAnswersNestedInput = {
+export type InterviewSessionUpdateOneWithoutWeakAnswersNestedInput = {
   create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutWeakAnswersInput, Prisma.InterviewSessionUncheckedCreateWithoutWeakAnswersInput>
   connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutWeakAnswersInput
   upsert?: Prisma.InterviewSessionUpsertWithoutWeakAnswersInput
+  disconnect?: Prisma.InterviewSessionWhereInput | boolean
+  delete?: Prisma.InterviewSessionWhereInput | boolean
   connect?: Prisma.InterviewSessionWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.InterviewSessionUpdateToOneWithWhereWithoutWeakAnswersInput, Prisma.InterviewSessionUpdateWithoutWeakAnswersInput>, Prisma.InterviewSessionUncheckedUpdateWithoutWeakAnswersInput>
 }
@@ -675,10 +684,12 @@ export type InterviewSessionCreateNestedOneWithoutTopicCoveragesInput = {
   connect?: Prisma.InterviewSessionWhereUniqueInput
 }
 
-export type InterviewSessionUpdateOneRequiredWithoutTopicCoveragesNestedInput = {
+export type InterviewSessionUpdateOneWithoutTopicCoveragesNestedInput = {
   create?: Prisma.XOR<Prisma.InterviewSessionCreateWithoutTopicCoveragesInput, Prisma.InterviewSessionUncheckedCreateWithoutTopicCoveragesInput>
   connectOrCreate?: Prisma.InterviewSessionCreateOrConnectWithoutTopicCoveragesInput
   upsert?: Prisma.InterviewSessionUpsertWithoutTopicCoveragesInput
+  disconnect?: Prisma.InterviewSessionWhereInput | boolean
+  delete?: Prisma.InterviewSessionWhereInput | boolean
   connect?: Prisma.InterviewSessionWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.InterviewSessionUpdateToOneWithWhereWithoutTopicCoveragesInput, Prisma.InterviewSessionUpdateWithoutTopicCoveragesInput>, Prisma.InterviewSessionUncheckedUpdateWithoutTopicCoveragesInput>
 }
@@ -809,7 +820,7 @@ export type InterviewSessionScalarWhereInput = {
   NOT?: Prisma.InterviewSessionScalarWhereInput | Prisma.InterviewSessionScalarWhereInput[]
   id?: Prisma.StringFilter<"InterviewSession"> | string
   userId?: Prisma.IntFilter<"InterviewSession"> | number
-  resumeId?: Prisma.StringFilter<"InterviewSession"> | string
+  resumeId?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   level?: Prisma.EnumInterviewLevelFilter<"InterviewSession"> | $Enums.InterviewLevel
   jobDescription?: Prisma.StringNullableFilter<"InterviewSession"> | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFilter<"InterviewSession"> | $Enums.InterviewLocale
@@ -833,7 +844,7 @@ export type InterviewSessionCreateWithoutMessagesInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
   weakAnswers?: Prisma.WeakAnswerCreateNestedManyWithoutSessionInput
@@ -843,7 +854,7 @@ export type InterviewSessionCreateWithoutMessagesInput = {
 export type InterviewSessionUncheckedCreateWithoutMessagesInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -887,7 +898,7 @@ export type InterviewSessionUpdateWithoutMessagesInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
   weakAnswers?: Prisma.WeakAnswerUpdateManyWithoutSessionNestedInput
@@ -897,7 +908,7 @@ export type InterviewSessionUpdateWithoutMessagesInput = {
 export type InterviewSessionUncheckedUpdateWithoutMessagesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -925,7 +936,7 @@ export type InterviewSessionCreateWithoutReviewItemsInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
   weakAnswers?: Prisma.WeakAnswerCreateNestedManyWithoutSessionInput
@@ -935,7 +946,7 @@ export type InterviewSessionCreateWithoutReviewItemsInput = {
 export type InterviewSessionUncheckedCreateWithoutReviewItemsInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -979,7 +990,7 @@ export type InterviewSessionUpdateWithoutReviewItemsInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
   weakAnswers?: Prisma.WeakAnswerUpdateManyWithoutSessionNestedInput
@@ -989,7 +1000,7 @@ export type InterviewSessionUpdateWithoutReviewItemsInput = {
 export type InterviewSessionUncheckedUpdateWithoutReviewItemsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1017,7 +1028,7 @@ export type InterviewSessionCreateWithoutWeakAnswersInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
@@ -1027,7 +1038,7 @@ export type InterviewSessionCreateWithoutWeakAnswersInput = {
 export type InterviewSessionUncheckedCreateWithoutWeakAnswersInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -1071,7 +1082,7 @@ export type InterviewSessionUpdateWithoutWeakAnswersInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
@@ -1081,7 +1092,7 @@ export type InterviewSessionUpdateWithoutWeakAnswersInput = {
 export type InterviewSessionUncheckedUpdateWithoutWeakAnswersInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1109,7 +1120,7 @@ export type InterviewSessionCreateWithoutTopicCoveragesInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
@@ -1119,7 +1130,7 @@ export type InterviewSessionCreateWithoutTopicCoveragesInput = {
 export type InterviewSessionUncheckedCreateWithoutTopicCoveragesInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -1163,7 +1174,7 @@ export type InterviewSessionUpdateWithoutTopicCoveragesInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
@@ -1173,7 +1184,7 @@ export type InterviewSessionUpdateWithoutTopicCoveragesInput = {
 export type InterviewSessionUncheckedUpdateWithoutTopicCoveragesInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1201,7 +1212,7 @@ export type InterviewSessionCreateWithoutInterviewFeedbacksInput = {
   reviewGenerationError?: string | null
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutInterviewSessionsInput
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   weakAnswers?: Prisma.WeakAnswerCreateNestedManyWithoutSessionInput
@@ -1211,7 +1222,7 @@ export type InterviewSessionCreateWithoutInterviewFeedbacksInput = {
 export type InterviewSessionUncheckedCreateWithoutInterviewFeedbacksInput = {
   id?: string
   userId: number
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -1255,7 +1266,7 @@ export type InterviewSessionUpdateWithoutInterviewFeedbacksInput = {
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutInterviewSessionsNestedInput
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   weakAnswers?: Prisma.WeakAnswerUpdateManyWithoutSessionNestedInput
@@ -1265,7 +1276,7 @@ export type InterviewSessionUpdateWithoutInterviewFeedbacksInput = {
 export type InterviewSessionUncheckedUpdateWithoutInterviewFeedbacksInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1292,7 +1303,7 @@ export type InterviewSessionCreateWithoutUserInput = {
   reviewGenerationStatus?: $Enums.ReviewGenerationStatus
   reviewGenerationError?: string | null
   createdAt?: Date | string
-  resume: Prisma.ResumeCreateNestedOneWithoutSessionsInput
+  resume?: Prisma.ResumeCreateNestedOneWithoutSessionsInput
   messages?: Prisma.InterviewMessageCreateNestedManyWithoutSessionInput
   reviewItems?: Prisma.ReviewItemCreateNestedManyWithoutSessionInput
   interviewFeedbacks?: Prisma.InterviewFeedbackCreateNestedManyWithoutSessionInput
@@ -1302,7 +1313,7 @@ export type InterviewSessionCreateWithoutUserInput = {
 
 export type InterviewSessionUncheckedCreateWithoutUserInput = {
   id?: string
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -1413,7 +1424,7 @@ export type InterviewSessionUncheckedUpdateManyWithoutResumeInput = {
 
 export type InterviewSessionCreateManyUserInput = {
   id?: string
-  resumeId: string
+  resumeId?: string | null
   level: $Enums.InterviewLevel
   jobDescription?: string | null
   interviewLocale?: $Enums.InterviewLocale
@@ -1436,7 +1447,7 @@ export type InterviewSessionUpdateWithoutUserInput = {
   reviewGenerationStatus?: Prisma.EnumReviewGenerationStatusFieldUpdateOperationsInput | $Enums.ReviewGenerationStatus
   reviewGenerationError?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  resume?: Prisma.ResumeUpdateOneRequiredWithoutSessionsNestedInput
+  resume?: Prisma.ResumeUpdateOneWithoutSessionsNestedInput
   messages?: Prisma.InterviewMessageUpdateManyWithoutSessionNestedInput
   reviewItems?: Prisma.ReviewItemUpdateManyWithoutSessionNestedInput
   interviewFeedbacks?: Prisma.InterviewFeedbackUpdateManyWithoutSessionNestedInput
@@ -1446,7 +1457,7 @@ export type InterviewSessionUpdateWithoutUserInput = {
 
 export type InterviewSessionUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1465,7 +1476,7 @@ export type InterviewSessionUncheckedUpdateWithoutUserInput = {
 
 export type InterviewSessionUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  resumeId?: Prisma.StringFieldUpdateOperationsInput | string
+  resumeId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   level?: Prisma.EnumInterviewLevelFieldUpdateOperationsInput | $Enums.InterviewLevel
   jobDescription?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   interviewLocale?: Prisma.EnumInterviewLocaleFieldUpdateOperationsInput | $Enums.InterviewLocale
@@ -1558,7 +1569,7 @@ export type InterviewSessionSelect<ExtArgs extends runtime.Types.Extensions.Inte
   reviewGenerationError?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
   messages?: boolean | Prisma.InterviewSession$messagesArgs<ExtArgs>
   reviewItems?: boolean | Prisma.InterviewSession$reviewItemsArgs<ExtArgs>
   interviewFeedbacks?: boolean | Prisma.InterviewSession$interviewFeedbacksArgs<ExtArgs>
@@ -1581,7 +1592,7 @@ export type InterviewSessionSelectCreateManyAndReturn<ExtArgs extends runtime.Ty
   reviewGenerationError?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
 }, ExtArgs["result"]["interviewSession"]>
 
 export type InterviewSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -1598,7 +1609,7 @@ export type InterviewSessionSelectUpdateManyAndReturn<ExtArgs extends runtime.Ty
   reviewGenerationError?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
 }, ExtArgs["result"]["interviewSession"]>
 
 export type InterviewSessionSelectScalar = {
@@ -1619,7 +1630,7 @@ export type InterviewSessionSelectScalar = {
 export type InterviewSessionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "resumeId" | "level" | "jobDescription" | "interviewLocale" | "turnCount" | "maxTurns" | "isFinished" | "reviewGenerationStatus" | "reviewGenerationError" | "createdAt", ExtArgs["result"]["interviewSession"]>
 export type InterviewSessionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
   messages?: boolean | Prisma.InterviewSession$messagesArgs<ExtArgs>
   reviewItems?: boolean | Prisma.InterviewSession$reviewItemsArgs<ExtArgs>
   interviewFeedbacks?: boolean | Prisma.InterviewSession$interviewFeedbacksArgs<ExtArgs>
@@ -1629,18 +1640,18 @@ export type InterviewSessionInclude<ExtArgs extends runtime.Types.Extensions.Int
 }
 export type InterviewSessionIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
 }
 export type InterviewSessionIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  resume?: boolean | Prisma.ResumeDefaultArgs<ExtArgs>
+  resume?: boolean | Prisma.InterviewSession$resumeArgs<ExtArgs>
 }
 
 export type $InterviewSessionPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "InterviewSession"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
-    resume: Prisma.$ResumePayload<ExtArgs>
+    resume: Prisma.$ResumePayload<ExtArgs> | null
     messages: Prisma.$InterviewMessagePayload<ExtArgs>[]
     reviewItems: Prisma.$ReviewItemPayload<ExtArgs>[]
     interviewFeedbacks: Prisma.$InterviewFeedbackPayload<ExtArgs>[]
@@ -1650,7 +1661,7 @@ export type $InterviewSessionPayload<ExtArgs extends runtime.Types.Extensions.In
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: number
-    resumeId: string
+    resumeId: string | null
     level: $Enums.InterviewLevel
     jobDescription: string | null
     interviewLocale: $Enums.InterviewLocale
@@ -2055,7 +2066,7 @@ readonly fields: InterviewSessionFieldRefs;
 export interface Prisma__InterviewSessionClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  resume<T extends Prisma.ResumeDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.ResumeDefaultArgs<ExtArgs>>): Prisma.Prisma__ResumeClient<runtime.Types.Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  resume<T extends Prisma.InterviewSession$resumeArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$resumeArgs<ExtArgs>>): Prisma.Prisma__ResumeClient<runtime.Types.Result.GetResult<Prisma.$ResumePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   messages<T extends Prisma.InterviewSession$messagesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$messagesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewMessagePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   reviewItems<T extends Prisma.InterviewSession$reviewItemsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$reviewItemsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ReviewItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   interviewFeedbacks<T extends Prisma.InterviewSession$interviewFeedbacksArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSession$interviewFeedbacksArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$InterviewFeedbackPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -2500,6 +2511,25 @@ export type InterviewSessionDeleteManyArgs<ExtArgs extends runtime.Types.Extensi
    * Limit how many InterviewSessions to delete.
    */
   limit?: number
+}
+
+/**
+ * InterviewSession.resume
+ */
+export type InterviewSession$resumeArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the Resume
+   */
+  select?: Prisma.ResumeSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the Resume
+   */
+  omit?: Prisma.ResumeOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.ResumeInclude<ExtArgs> | null
+  where?: Prisma.ResumeWhereInput
 }
 
 /**

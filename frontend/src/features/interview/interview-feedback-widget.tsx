@@ -25,7 +25,10 @@ export function InterviewFeedbackWidget({
     null,
   );
   const [submitted, setSubmitted] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const showForm = !submitted || isEditing || isSubmitting;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -48,6 +51,7 @@ export function InterviewFeedbackWidget({
         { rating: selectedRating, comment: trimmedComment },
         token,
       );
+      setIsEditing(false);
     } catch (err) {
       setSubmitted(previousSubmitted);
       toast.error(
@@ -58,16 +62,33 @@ export function InterviewFeedbackWidget({
     }
   }
 
+  if (!showForm) {
+    return (
+      <div className="mt-2 flex items-center justify-between gap-2 border-t border-jade/20 pt-2">
+        <p className="text-xs text-jade-deep" role="status">
+          Thanks for your feedback!
+        </p>
+        <button
+          type="button"
+          onClick={() => setIsEditing(true)}
+          className="min-h-11 cursor-pointer rounded-sm text-xs font-semibold text-jade-deep underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+        >
+          Edit
+        </button>
+      </div>
+    );
+  }
+
   return (
     <form
       onSubmit={(e) => void handleSubmit(e)}
-      className="mt-3 space-y-3 border-t border-jade/20 pt-3"
+      className="mt-2 space-y-2 border-t border-jade/20 pt-2"
     >
       <p className="text-xs font-medium text-ink-black">
         Was this interview helpful?
       </p>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-1.5">
         <button
           type="button"
           onClick={() => setSelectedRating("up")}
@@ -102,7 +123,7 @@ export function InterviewFeedbackWidget({
       <div>
         <label
           htmlFor={`interview-feedback-comment-${sessionId}`}
-          className="mb-1.5 block text-xs font-medium text-ink-black"
+          className="sr-only"
         >
           Optional comment
         </label>
@@ -111,25 +132,22 @@ export function InterviewFeedbackWidget({
           value={comment}
           onChange={(e) => setComment(e.target.value)}
           maxLength={MAX_COMMENT_LENGTH}
-          placeholder="Share any details…"
-          rows={3}
+          placeholder="Optional comment…"
+          rows={1}
           disabled={isSubmitting}
-          className="w-full resize-none rounded-2xl border border-border-hairline bg-paper-white px-3 py-2.5 text-sm text-ink-black placeholder:text-text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2 disabled:opacity-50"
+          className="w-full resize-none rounded-2xl border border-border-hairline bg-paper-white px-3 py-2 text-sm text-ink-black placeholder:text-text-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2 disabled:opacity-50"
         />
-        <p className="mt-1 text-right text-[10px] text-text-base">
-          {comment.length}/{MAX_COMMENT_LENGTH}
-        </p>
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting || selectedRating === null}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-jade-deep px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+        className="flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-jade-deep px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Sending…
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Saving…
           </>
         ) : submitted ? (
           "Update feedback"
@@ -137,12 +155,6 @@ export function InterviewFeedbackWidget({
           "Submit feedback"
         )}
       </button>
-
-      {submitted && (
-        <p className="text-center text-xs text-jade-deep" role="status">
-          Thanks for your feedback!
-        </p>
-      )}
     </form>
   );
 }

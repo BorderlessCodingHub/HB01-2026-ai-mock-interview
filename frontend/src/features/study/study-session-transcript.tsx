@@ -11,8 +11,10 @@ import {
 } from "@/features/interview/interview-message-list";
 import { useReviewSession } from "@/lib/query/hooks/use-review-session";
 
+import { deriveReviewResultsSummary } from "./lib/derive-review-results-summary";
 import type { ReviewDisplayMessage } from "./lib/review-display-messages";
 import { turnsToDisplayMessages } from "./lib/turns-to-display-messages";
+import { ReviewHistoryResultCard } from "./review-history-result-card";
 
 type StudySessionTranscriptProps = {
   sessionId: string;
@@ -70,8 +72,16 @@ export function StudySessionTranscript({
     [qaMessages],
   );
 
+  const resultsSummary = useMemo(
+    () =>
+      session
+        ? deriveReviewResultsSummary(session.items, "confirmed")
+        : null,
+    [session],
+  );
+
   return (
-    <div className="flex h-full w-full min-h-0 flex-col">
+    <div className="flex h-full w-full min-h-0 flex-col overflow-y-auto">
       <div className="mb-4 flex shrink-0 items-center gap-3">
         {onBack && (
           <button
@@ -84,7 +94,7 @@ export function StudySessionTranscript({
           </button>
         )}
         <h1 className="instrument-serif text-2xl leading-tight text-ink-black">
-          Session transcript
+          Session results
         </h1>
       </div>
 
@@ -119,8 +129,28 @@ export function StudySessionTranscript({
         </div>
       )}
 
-      {!sessionQuery.isLoading && !sessionQuery.error && session && (
-        <>
+      {!sessionQuery.isLoading && !sessionQuery.error && session && resultsSummary && (
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
+          <p className="shrink-0 text-sm text-text-base">
+            {resultsSummary.topicCount} topics reviewed ·{" "}
+            {resultsSummary.learnedCount} marked as learned ·{" "}
+            {resultsSummary.priorityChangeCount} priority changes
+          </p>
+
+          <ul className="list-none space-y-4">
+            {session.items.map((item) => (
+              <ReviewHistoryResultCard
+                key={item.id}
+                item={item}
+                locale={session.interviewLocale ?? "en"}
+              />
+            ))}
+          </ul>
+
+          <h2 className="instrument-serif shrink-0 text-xl leading-tight text-ink-black">
+            Session transcript
+          </h2>
+
           {qaMessages.length === 0 ? (
             <AppEmptyState
               title="No transcript available"
@@ -150,7 +180,7 @@ export function StudySessionTranscript({
               showWelcome={false}
             />
           )}
-        </>
+        </div>
       )}
     </div>
   );

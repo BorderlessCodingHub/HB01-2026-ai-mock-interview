@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -281,12 +282,12 @@ function PracticeContent() {
                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-jade-deep" />
                 <div className="text-[11px] font-medium text-jade-deep">
                   No ready CV found.{" "}
-                  <a
+                  <Link
                     href="/resumes"
                     className="cursor-pointer rounded-sm font-bold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
                   >
                     Upload one
-                  </a>{" "}
+                  </Link>{" "}
                   first to practice.
                 </div>
               </div>
@@ -474,7 +475,9 @@ function PracticeContent() {
               sessions.map((sess) => {
                 const isActive = resolvedSessionId === sess.id;
                 const resumeObj = resumes.find((r) => r.id === sess.resumeId);
-                const resumeName = resumeObj ? resumeObj.name : "Resume";
+                const resumeName =
+                  resumeObj?.name ??
+                  (sess.resumeId ? "Resume" : "Deleted resume");
                 const display = toDisplayTurns(sess.turnCount, sess.maxTurns);
 
                 return (
@@ -616,12 +619,12 @@ function PracticeContent() {
                       : "Select a previous conversation from history or start a new practice in the sidebar panel to begin."}
                   </p>
                   {readyResumes.length === 0 && (
-                    <a
+                    <Link
                       href="/resumes"
                       className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-jade-deep px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
                     >
                       Go to Resumes
-                    </a>
+                    </Link>
                   )}
                 </div>
               }

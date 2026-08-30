@@ -39,9 +39,13 @@ export class WeakAnswerGenerationService {
       .map((message) => `${message.role}: ${message.content}`)
       .join("\n");
 
+    if (!session.resumeId) {
+      return { status: "skipped", sessionId, reason: "resume_not_found" };
+    }
+
     const resume = await this.resumeRepository.findById(session.resumeId);
     if (!resume?.structuredSummary) {
-      throw new Error("Resume structured summary not found");
+      return { status: "skipped", sessionId, reason: "resume_not_found" };
     }
 
     const structuredSummary = resume.structuredSummary as StructuredSummary;

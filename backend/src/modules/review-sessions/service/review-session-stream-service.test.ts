@@ -41,6 +41,8 @@ function createSessionItem(
     pendingQuestion: overrides.pendingQuestion ?? null,
     suggestedStatus: overrides.suggestedStatus ?? null,
     suggestedPriority: overrides.suggestedPriority ?? null,
+    wentWell: [],
+    workOn: [],
     confirmedStatus: overrides.confirmedStatus ?? null,
     confirmedPriority: overrides.confirmedPriority ?? null,
     confirmedAt: overrides.confirmedAt ?? null,
@@ -258,6 +260,7 @@ describe("ReviewSessionStreamService", () => {
     expect(output).toContain('"turnsCompleted":0');
     expect(output).toContain(`"questionsPerItem":${QUESTION_COUNT}`);
     expect(output).toContain('"status":"in_progress"');
+    expect(output).not.toContain('"status":"evaluating"');
     expect(output).toContain("data: [DONE]");
     expect(tokenUsageService.recordUsage).toHaveBeenCalled();
     expect(reviewSessionRepository.appendTurn).not.toHaveBeenCalled();
@@ -298,6 +301,7 @@ describe("ReviewSessionStreamService", () => {
     const output = res.chunks.join("");
     expect(output).toContain('"turnsCompleted":1');
     expect(output).toContain("event: meta");
+    expect(output).not.toContain('"status":"evaluating"');
   });
 
   it("passes only the current item turns into question generation", async () => {
@@ -397,6 +401,7 @@ describe("ReviewSessionStreamService", () => {
     expect(output).toContain('"reviewSessionItemId":"session-item-2"');
     expect(output).toContain('"itemIndex":1');
     expect(output).toContain('"turnsCompleted":0');
+    expect(output).not.toContain('"status":"evaluating"');
   });
 
   it("runs evaluation only after all items reach N turns", async () => {
@@ -435,6 +440,8 @@ describe("ReviewSessionStreamService", () => {
               turns: itemOneTurns,
               suggestedStatus: "active",
               suggestedPriority: "medium",
+              wentWell: ["Cited sharding trade-offs"],
+              workOn: ["Missed replication lag"],
             }),
             createSessionItem({
               id: "session-item-2",
@@ -449,14 +456,26 @@ describe("ReviewSessionStreamService", () => {
               ],
               suggestedStatus: "learned",
               suggestedPriority: null,
+              wentWell: ["Covered REST caching"],
+              workOn: ["Skipped idempotency"],
             }),
           ],
         }),
       );
 
     vi.mocked(evaluator.evaluate)
-      .mockResolvedValueOnce({ status: "active", priority: "medium" })
-      .mockResolvedValueOnce({ status: "learned", priority: null });
+      .mockResolvedValueOnce({
+        status: "active",
+        priority: "medium",
+        wentWell: ["Cited sharding trade-offs"],
+        workOn: ["Missed replication lag"],
+      })
+      .mockResolvedValueOnce({
+        status: "learned",
+        priority: null,
+        wentWell: ["Covered REST caching"],
+        workOn: ["Skipped idempotency"],
+      });
 
     const res = createMockResponse();
 
@@ -486,11 +505,38 @@ describe("ReviewSessionStreamService", () => {
       "review-session-id",
       "pt",
     );
+    expect(reviewSessionRepository.saveSuggestions).toHaveBeenCalledWith(
+      "session-item-1",
+      {
+        status: "active",
+        priority: "medium",
+        wentWell: ["Cited sharding trade-offs"],
+        workOn: ["Missed replication lag"],
+      },
+    );
+    expect(reviewSessionRepository.saveSuggestions).toHaveBeenCalledWith(
+      "session-item-2",
+      {
+        status: "learned",
+        priority: null,
+        wentWell: ["Covered REST caching"],
+        workOn: ["Skipped idempotency"],
+      },
+    );
 
     const output = res.chunks.join("");
+    expect(output.indexOf('"status":"evaluating"')).toBeGreaterThanOrEqual(0);
+    expect(output.indexOf('"status":"evaluating"')).toBeLessThan(
+      output.indexOf('"status":"pending_review"'),
+    );
+    expect(output).toContain('"interviewLocale":"pt"');
     expect(output).toContain('"status":"pending_review"');
     expect(output).toContain('"suggestedStatus":"active"');
     expect(output).toContain('"suggestedStatus":"learned"');
+    expect(output).toContain('"wentWell":["Cited sharding trade-offs"]');
+    expect(output).toContain('"workOn":["Missed replication lag"]');
+    expect(output).toContain('"wentWell":["Covered REST caching"]');
+    expect(output).toContain('"workOn":["Skipped idempotency"]');
     expect(output).toContain("data: [DONE]");
   });
 
@@ -550,7 +596,13 @@ describe("ReviewSessionStreamService", () => {
     expect(output).toContain("event: error");
     expect(output).toContain('"reviewSessionItemId":"session-item-1"');
     expect(output).toContain("OpenAI rate limit");
+    expect(output.indexOf('"status":"evaluating"')).toBeGreaterThanOrEqual(0);
+    expect(output.indexOf('"status":"evaluating"')).toBeLessThan(
+      output.indexOf('"status":"pending_review"'),
+    );
     expect(output).toContain('"status":"pending_review"');
+    expect(output).toContain('"wentWell":[]');
+    expect(output).toContain('"workOn":[]');
   });
 
   it("passes stream-body interviewLocale into question generation", async () => {

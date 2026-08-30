@@ -80,11 +80,15 @@ export const applyReviewSessionSchema = z
     }
   });
 
+const recapBulletsLlmSchema = z.array(z.string()).default([]);
+
 // Flat object schema — OpenAI structured output rejects oneOf/discriminatedUnion.
 export const reviewSessionEvaluationOutputSchema = z
   .object({
     status: reviewItemStatusSchema,
     priority: reviewPrioritySchema.nullable(),
+    wentWell: recapBulletsLlmSchema,
+    workOn: recapBulletsLlmSchema,
   })
   .superRefine((data, ctx) => {
     if (data.status === "active" && data.priority === null) {
@@ -103,6 +107,23 @@ export const reviewSessionEvaluationOutputSchema = z
       });
     }
   });
+
+export function normalizeReviewSessionEvaluation(
+  output: ReviewSessionEvaluationOutput,
+): ReviewSessionEvaluationOutput {
+  return {
+    ...output,
+    wentWell: clampRecapBullets(output.wentWell),
+    workOn: clampRecapBullets(output.workOn),
+  };
+}
+
+function clampRecapBullets(values: string[]): string[] {
+  return values
+    .map((value) => value.trim().slice(0, 180))
+    .filter((value) => value.length > 0)
+    .slice(0, 4);
+}
 
 export type ReviewSessionEvaluationOutput = z.infer<
   typeof reviewSessionEvaluationOutputSchema

@@ -40,6 +40,13 @@ export type IntFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
+export type EnumResumeSourceFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.ResumeSourceFormat | Prisma.EnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel> | $Enums.ResumeSourceFormat
+}
+
 export type JsonNullableFilter<$PrismaModel = never> =
 | Prisma.PatchUndefined<
     Prisma.Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
@@ -134,6 +141,16 @@ export type IntWithAggregatesFilter<$PrismaModel = never> = {
   _sum?: Prisma.NestedIntFilter<$PrismaModel>
   _min?: Prisma.NestedIntFilter<$PrismaModel>
   _max?: Prisma.NestedIntFilter<$PrismaModel>
+}
+
+export type EnumResumeSourceFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ResumeSourceFormat | Prisma.EnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumResumeSourceFormatWithAggregatesFilter<$PrismaModel> | $Enums.ResumeSourceFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel>
 }
 
 export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
@@ -540,6 +557,13 @@ export type NestedIntFilter<$PrismaModel = never> = {
   not?: Prisma.NestedIntFilter<$PrismaModel> | number
 }
 
+export type NestedEnumResumeSourceFormatFilter<$PrismaModel = never> = {
+  equals?: $Enums.ResumeSourceFormat | Prisma.EnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel> | $Enums.ResumeSourceFormat
+}
+
 export type NestedStringNullableFilter<$PrismaModel = never> = {
   equals?: string | Prisma.StringFieldRefInput<$PrismaModel> | null
   in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel> | null
@@ -614,6 +638,16 @@ export type NestedFloatFilter<$PrismaModel = never> = {
   gt?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   gte?: number | Prisma.FloatFieldRefInput<$PrismaModel>
   not?: Prisma.NestedFloatFilter<$PrismaModel> | number
+}
+
+export type NestedEnumResumeSourceFormatWithAggregatesFilter<$PrismaModel = never> = {
+  equals?: $Enums.ResumeSourceFormat | Prisma.EnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  in?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  notIn?: $Enums.ResumeSourceFormat[] | Prisma.ListEnumResumeSourceFormatFieldRefInput<$PrismaModel>
+  not?: Prisma.NestedEnumResumeSourceFormatWithAggregatesFilter<$PrismaModel> | $Enums.ResumeSourceFormat
+  _count?: Prisma.NestedIntFilter<$PrismaModel>
+  _min?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel>
+  _max?: Prisma.NestedEnumResumeSourceFormatFilter<$PrismaModel>
 }
 
 export type NestedIntNullableFilter<$PrismaModel = never> = {

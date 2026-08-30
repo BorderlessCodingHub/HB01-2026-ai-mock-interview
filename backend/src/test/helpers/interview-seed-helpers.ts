@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import prisma from "@/infrastructure/database";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 import type { InterviewLocale } from "@/shared";
-import { ResumeStatus } from "../../../prisma/generated/client";
+import { ResumeSourceFormat, ResumeStatus } from "../../../prisma/generated/client";
 
 export const sampleStructuredSummary: StructuredSummary = {
   personal_info: {
@@ -65,8 +65,8 @@ function resumeSeedBase(userId: number, resumeId: string) {
     id: resumeId,
     userId,
     name: "resume.pdf",
-    pdfUrl: `users/${userId}/resumes/${resumeId}.pdf`,
     storageKey: `users/${userId}/resumes/${resumeId}.pdf`,
+    sourceFormat: ResumeSourceFormat.pdf,
   };
 }
 

@@ -1,5 +1,4 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Loader2 } from "lucide-react";
 
 import { InterviewMicControl } from "@/features/interview/interview-mic-control";
 
@@ -95,14 +94,7 @@ export function InterviewChatInput({
           disabled={isInputDisabled || !draft.trim()}
           className="flex min-h-11 min-w-22 cursor-pointer items-center justify-center gap-1.5 rounded-full bg-jade-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
         >
-          {isStreaming ? (
-            <>
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Sending…
-            </>
-          ) : (
-            "Send"
-          )}
+          Send
         </button>
       </form>
     </div>

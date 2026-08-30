@@ -211,7 +211,7 @@ export type WeakAnswerGroupByArgs<ExtArgs extends runtime.Types.Extensions.Inter
 
 export type WeakAnswerGroupByOutputType = {
   id: string
-  sessionId: string
+  sessionId: string | null
   userId: number
   question: string
   userAnswer: string
@@ -247,7 +247,7 @@ export type WeakAnswerWhereInput = {
   OR?: Prisma.WeakAnswerWhereInput[]
   NOT?: Prisma.WeakAnswerWhereInput | Prisma.WeakAnswerWhereInput[]
   id?: Prisma.StringFilter<"WeakAnswer"> | string
-  sessionId?: Prisma.StringFilter<"WeakAnswer"> | string
+  sessionId?: Prisma.StringNullableFilter<"WeakAnswer"> | string | null
   userId?: Prisma.IntFilter<"WeakAnswer"> | number
   question?: Prisma.StringFilter<"WeakAnswer"> | string
   userAnswer?: Prisma.StringFilter<"WeakAnswer"> | string
@@ -256,13 +256,13 @@ export type WeakAnswerWhereInput = {
   topic?: Prisma.StringFilter<"WeakAnswer"> | string
   priority?: Prisma.EnumReviewPriorityFilter<"WeakAnswer"> | $Enums.ReviewPriority
   createdAt?: Prisma.DateTimeFilter<"WeakAnswer"> | Date | string
-  session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
+  session?: Prisma.XOR<Prisma.InterviewSessionNullableScalarRelationFilter, Prisma.InterviewSessionWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }
 
 export type WeakAnswerOrderByWithRelationInput = {
   id?: Prisma.SortOrder
-  sessionId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   question?: Prisma.SortOrder
   userAnswer?: Prisma.SortOrder
@@ -280,7 +280,7 @@ export type WeakAnswerWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.WeakAnswerWhereInput | Prisma.WeakAnswerWhereInput[]
   OR?: Prisma.WeakAnswerWhereInput[]
   NOT?: Prisma.WeakAnswerWhereInput | Prisma.WeakAnswerWhereInput[]
-  sessionId?: Prisma.StringFilter<"WeakAnswer"> | string
+  sessionId?: Prisma.StringNullableFilter<"WeakAnswer"> | string | null
   userId?: Prisma.IntFilter<"WeakAnswer"> | number
   question?: Prisma.StringFilter<"WeakAnswer"> | string
   userAnswer?: Prisma.StringFilter<"WeakAnswer"> | string
@@ -289,13 +289,13 @@ export type WeakAnswerWhereUniqueInput = Prisma.AtLeast<{
   topic?: Prisma.StringFilter<"WeakAnswer"> | string
   priority?: Prisma.EnumReviewPriorityFilter<"WeakAnswer"> | $Enums.ReviewPriority
   createdAt?: Prisma.DateTimeFilter<"WeakAnswer"> | Date | string
-  session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
+  session?: Prisma.XOR<Prisma.InterviewSessionNullableScalarRelationFilter, Prisma.InterviewSessionWhereInput> | null
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
 }, "id">
 
 export type WeakAnswerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
-  sessionId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   userId?: Prisma.SortOrder
   question?: Prisma.SortOrder
   userAnswer?: Prisma.SortOrder
@@ -316,7 +316,7 @@ export type WeakAnswerScalarWhereWithAggregatesInput = {
   OR?: Prisma.WeakAnswerScalarWhereWithAggregatesInput[]
   NOT?: Prisma.WeakAnswerScalarWhereWithAggregatesInput | Prisma.WeakAnswerScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"WeakAnswer"> | string
-  sessionId?: Prisma.StringWithAggregatesFilter<"WeakAnswer"> | string
+  sessionId?: Prisma.StringNullableWithAggregatesFilter<"WeakAnswer"> | string | null
   userId?: Prisma.IntWithAggregatesFilter<"WeakAnswer"> | number
   question?: Prisma.StringWithAggregatesFilter<"WeakAnswer"> | string
   userAnswer?: Prisma.StringWithAggregatesFilter<"WeakAnswer"> | string
@@ -336,13 +336,13 @@ export type WeakAnswerCreateInput = {
   topic: string
   priority: $Enums.ReviewPriority
   createdAt?: Date | string
-  session: Prisma.InterviewSessionCreateNestedOneWithoutWeakAnswersInput
+  session?: Prisma.InterviewSessionCreateNestedOneWithoutWeakAnswersInput
   user: Prisma.UserCreateNestedOneWithoutWeakAnswersInput
 }
 
 export type WeakAnswerUncheckedCreateInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   userId: number
   question: string
   userAnswer: string
@@ -362,13 +362,13 @@ export type WeakAnswerUpdateInput = {
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  session?: Prisma.InterviewSessionUpdateOneRequiredWithoutWeakAnswersNestedInput
+  session?: Prisma.InterviewSessionUpdateOneWithoutWeakAnswersNestedInput
   user?: Prisma.UserUpdateOneRequiredWithoutWeakAnswersNestedInput
 }
 
 export type WeakAnswerUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   question?: Prisma.StringFieldUpdateOperationsInput | string
   userAnswer?: Prisma.StringFieldUpdateOperationsInput | string
@@ -381,7 +381,7 @@ export type WeakAnswerUncheckedUpdateInput = {
 
 export type WeakAnswerCreateManyInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   userId: number
   question: string
   userAnswer: string
@@ -405,7 +405,7 @@ export type WeakAnswerUpdateManyMutationInput = {
 
 export type WeakAnswerUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   question?: Prisma.StringFieldUpdateOperationsInput | string
   userAnswer?: Prisma.StringFieldUpdateOperationsInput | string
@@ -616,7 +616,7 @@ export type WeakAnswerScalarWhereInput = {
   OR?: Prisma.WeakAnswerScalarWhereInput[]
   NOT?: Prisma.WeakAnswerScalarWhereInput | Prisma.WeakAnswerScalarWhereInput[]
   id?: Prisma.StringFilter<"WeakAnswer"> | string
-  sessionId?: Prisma.StringFilter<"WeakAnswer"> | string
+  sessionId?: Prisma.StringNullableFilter<"WeakAnswer"> | string | null
   userId?: Prisma.IntFilter<"WeakAnswer"> | number
   question?: Prisma.StringFilter<"WeakAnswer"> | string
   userAnswer?: Prisma.StringFilter<"WeakAnswer"> | string
@@ -636,12 +636,12 @@ export type WeakAnswerCreateWithoutUserInput = {
   topic: string
   priority: $Enums.ReviewPriority
   createdAt?: Date | string
-  session: Prisma.InterviewSessionCreateNestedOneWithoutWeakAnswersInput
+  session?: Prisma.InterviewSessionCreateNestedOneWithoutWeakAnswersInput
 }
 
 export type WeakAnswerUncheckedCreateWithoutUserInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   question: string
   userAnswer: string
   evaluation: $Enums.AnswerEvaluation
@@ -727,7 +727,7 @@ export type WeakAnswerUncheckedUpdateManyWithoutSessionInput = {
 
 export type WeakAnswerCreateManyUserInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   question: string
   userAnswer: string
   evaluation: $Enums.AnswerEvaluation
@@ -746,12 +746,12 @@ export type WeakAnswerUpdateWithoutUserInput = {
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   priority?: Prisma.EnumReviewPriorityFieldUpdateOperationsInput | $Enums.ReviewPriority
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  session?: Prisma.InterviewSessionUpdateOneRequiredWithoutWeakAnswersNestedInput
+  session?: Prisma.InterviewSessionUpdateOneWithoutWeakAnswersNestedInput
 }
 
 export type WeakAnswerUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   question?: Prisma.StringFieldUpdateOperationsInput | string
   userAnswer?: Prisma.StringFieldUpdateOperationsInput | string
   evaluation?: Prisma.EnumAnswerEvaluationFieldUpdateOperationsInput | $Enums.AnswerEvaluation
@@ -763,7 +763,7 @@ export type WeakAnswerUncheckedUpdateWithoutUserInput = {
 
 export type WeakAnswerUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   question?: Prisma.StringFieldUpdateOperationsInput | string
   userAnswer?: Prisma.StringFieldUpdateOperationsInput | string
   evaluation?: Prisma.EnumAnswerEvaluationFieldUpdateOperationsInput | $Enums.AnswerEvaluation
@@ -786,7 +786,7 @@ export type WeakAnswerSelect<ExtArgs extends runtime.Types.Extensions.InternalAr
   topic?: boolean
   priority?: boolean
   createdAt?: boolean
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["weakAnswer"]>
 
@@ -801,7 +801,7 @@ export type WeakAnswerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Ex
   topic?: boolean
   priority?: boolean
   createdAt?: boolean
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["weakAnswer"]>
 
@@ -816,7 +816,7 @@ export type WeakAnswerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Ex
   topic?: boolean
   priority?: boolean
   createdAt?: boolean
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["weakAnswer"]>
 
@@ -835,27 +835,27 @@ export type WeakAnswerSelectScalar = {
 
 export type WeakAnswerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "sessionId" | "userId" | "question" | "userAnswer" | "evaluation" | "feedback" | "topic" | "priority" | "createdAt", ExtArgs["result"]["weakAnswer"]>
 export type WeakAnswerInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type WeakAnswerIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 export type WeakAnswerIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.WeakAnswer$sessionArgs<ExtArgs>
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
 
 export type $WeakAnswerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "WeakAnswer"
   objects: {
-    session: Prisma.$InterviewSessionPayload<ExtArgs>
+    session: Prisma.$InterviewSessionPayload<ExtArgs> | null
     user: Prisma.$UserPayload<ExtArgs>
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
-    sessionId: string
+    sessionId: string | null
     userId: number
     question: string
     userAnswer: string
@@ -1258,7 +1258,7 @@ readonly fields: WeakAnswerFieldRefs;
  */
 export interface Prisma__WeakAnswerClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
-  session<T extends Prisma.InterviewSessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSessionDefaultArgs<ExtArgs>>): Prisma.Prisma__InterviewSessionClient<runtime.Types.Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  session<T extends Prisma.WeakAnswer$sessionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.WeakAnswer$sessionArgs<ExtArgs>>): Prisma.Prisma__InterviewSessionClient<runtime.Types.Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -1697,6 +1697,25 @@ export type WeakAnswerDeleteManyArgs<ExtArgs extends runtime.Types.Extensions.In
    * Limit how many WeakAnswers to delete.
    */
   limit?: number
+}
+
+/**
+ * WeakAnswer.session
+ */
+export type WeakAnswer$sessionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InterviewSession
+   */
+  select?: Prisma.InterviewSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InterviewSession
+   */
+  omit?: Prisma.InterviewSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InterviewSessionInclude<ExtArgs> | null
+  where?: Prisma.InterviewSessionWhereInput
 }
 
 /**

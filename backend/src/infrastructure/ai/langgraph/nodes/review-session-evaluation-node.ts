@@ -6,6 +6,7 @@ import { createReviewModel } from "@/infrastructure/ai/openai-models";
 import { buildReviewSessionEvaluationPrompt } from "@/modules/review-sessions/prompts/review-session-evaluation-prompt";
 import type { ReviewSessionEvaluationInput } from "@/modules/review-sessions/protocols/review-session-evaluator";
 import {
+  normalizeReviewSessionEvaluation,
   reviewSessionEvaluationOutputSchema,
   type ReviewSessionEvaluationOutput,
 } from "@/modules/review-sessions/validations/review-session-schemas";
@@ -44,6 +45,8 @@ export function createReviewSessionEvaluationNode(
     const raw = config
       ? await chain.invoke(invokeInput, config)
       : await chain.invoke(invokeInput);
-    return reviewSessionEvaluationOutputSchema.parse(raw);
+    return normalizeReviewSessionEvaluation(
+      reviewSessionEvaluationOutputSchema.parse(raw),
+    );
   };
 }

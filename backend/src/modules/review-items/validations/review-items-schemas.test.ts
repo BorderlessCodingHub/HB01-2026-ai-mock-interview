@@ -63,6 +63,15 @@ describe("reviewItemResponseSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a null sessionId after the source interview is deleted", () => {
+    const result = reviewItemResponseSchema.safeParse({
+      ...validReviewItem,
+      sessionId: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects invalid priority", () => {
     const result = reviewItemResponseSchema.safeParse({
       ...validReviewItem,

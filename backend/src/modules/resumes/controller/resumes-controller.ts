@@ -7,10 +7,10 @@ export class ResumesController {
 
   upload = async (req: Request, res: Response): Promise<void> => {
     if (!req.file) {
-      throw new BadRequestError("PDF file is required");
+      throw new BadRequestError("Resume file is required");
     }
 
-    const preview = await this.resumeService.uploadPdf(req.userId!, req.file);
+    const preview = await this.resumeService.upload(req.userId!, req.file);
     res.status(201).json(preview);
   };
 
@@ -18,6 +18,16 @@ export class ResumesController {
     const id = String(req.params.id);
     const detail = await this.resumeService.getResume(req.userId!, id);
     res.status(200).json(detail);
+  };
+
+  getFile = async (req: Request, res: Response): Promise<void> => {
+    const id = String(req.params.id);
+    const file = await this.resumeService.getFile(req.userId!, id);
+    res.setHeader("Content-Type", file.headers.contentType);
+    res.setHeader("Content-Disposition", file.headers.contentDisposition);
+    res.setHeader("Content-Length", file.headers.contentLength);
+    res.setHeader("Cache-Control", file.headers.cacheControl);
+    res.status(200).send(file.body);
   };
 
   list = async (req: Request, res: Response): Promise<void> => {

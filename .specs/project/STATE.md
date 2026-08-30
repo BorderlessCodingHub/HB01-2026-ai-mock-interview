@@ -1,11 +1,47 @@
 # State
 
-**Last Updated:** 2026-08-19  
-**Current Work:** Session Create Quota — feature-level validation complete (Ready); commits deferred; Interactive UAT pending
+**Last Updated:** 2026-08-29  
+**Current Work:** Quick task 004 (SetNull owned FKs) — automated tests passed; local migration applied. Review session recap — automated validation complete (UAT pending). Resume file preview — Validate found UI regression (`87784e9` Download-only vs spec View/PDF-tab). Resume TeX upload — automated validation complete (commits deferred).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-023: SetNull on resume/session FKs owned by the user (2026-08-29)
+
+**Decision:** `InterviewSession.resumeId`, `ReviewItem.sessionId`, `WeakAnswer.sessionId`, and `TopicCoverage.sessionId` are optional with `onDelete: SetNull`. Deleting a CV removes only that resume. Deleting a practice session keeps study backlog, weak answers, and coverage (`sessionId` becomes null). Messages and interview feedback still cascade with the practice session.
+**Reason:** Those rows are user-owned; Cascade was wiping Study data when a CV or practice chat was deleted.
+**Trade-off:** In-progress practice cannot continue after the CV is gone (stream 404). Review generation marks failed if the resume is missing.
+**Impact:** Prisma migration `20260830120000_owned_fks_set_null`; API `resumeId`/`sessionId` nullable; delete copy on `/resumes` and `/feedback`.
+**Spec:** `.specs/quick/004-set-null-owned-fks/TASK.md`
+
+### AD-022: Review session recap on the report page + history (2026-08-29)
+
+**Decision:** After the last Review Session answer, show **Evaluating your answers…** on the chat, then the existing `/report` as **results**: per-topic Went well / Work on bullets (from the **same** parallel evaluation), then priority/learned controls. Persist bullets; completed `/study` history shows **results above transcript**. No per-question feedback, no second session-level LLM, no new route. Recap copy follows session `interviewLocale`. Apply / auto-apply unchanged.
+**Reason:** Tester had no final feedback and was dropped onto the priority form; evaluation today only stores status/priority; last SSE turn looks like the next question.
+**Trade-off:** Overturns study-session-history “transcript-only” for outcomes; evaluation JSON grows; last-turn latency unchanged (already waiting on eval) but wait is explicit.
+**Impact:** Prisma on `ReviewSessionItem`, evaluation schema/prompt, GET + SSE report, `ReviewSessionChat` / report cards / `StudySessionTranscript`.
+**Spec:** `.specs/features/review-session-recap/spec.md`  
+**Context:** `.specs/features/review-session-recap/context.md`  
+**Design:** `.specs/features/review-session-recap/design.md`  
+**Tasks:** `.specs/features/review-session-recap/tasks.md`
+
+### AD-021: Owner-only original resume file via `GET .../file` (2026-08-29)
+
+**Decision:** Candidates check the **original** file from `/resumes` (PDF new tab, `.tex` download). `GET /api/resumes/:id/file` returns raw bytes after Bearer + `findByIdAndUserId`. No signed R2 URLs; no `fileUrl` on JSON. Cross-user → 404 and no `storage.get`. UUID on `Resume.id` is extra, not authorization. FE fetch-with-Bearer + gesture-opened tab + `blob:` (no Express `<a href>`).
+**Reason:** Tester could not open the uploaded CV; `/profile` is extracted data; `AMI-DEC-05` forbids client R2 URLs.
+**Trade-off:** File traffic goes through Express (≤5 MiB); popup-safe tab dance instead of a native `<a>`; TeX is download-only (no compile).
+**Impact:** New resumes route + service method; `/resumes` View control; E2E owner/cross-user/401; API doc.
+**Spec:** `.specs/features/resume-file-preview/spec.md`  
+**Context:** `.specs/features/resume-file-preview/context.md`
+
+### AD-020: Resume `.tex` via pandoc-wasm GFM then existing extraction (2026-08-29)
+
+**Decision:** Allow `.pdf` / `.tex` on `POST /api/resumes/` classified by **extension**. Convert TeX with `pandoc-wasm@1.1.0` `{ from: "latex", to: "gfm" }` in the worker (`process()`), lazy WASM singleton; same structured-output prompt; `rawText` = GFM. Drop `pdfUrl`; keep `storageKey`; add enum `sourceFormat` (`pdf` \| `tex`), backfill `pdf`. Do not expose format in the API. Single-file `.tex` only; UTF-8; no `\input` scan. Frontend `/resumes` in the same delivery. Generalized 400 copy + API doc.
+**Reason:** Raw LaTeX is too noisy for extraction; PDFLoader-style loading is unnecessary for TeX; MIME for `.tex` is unreliable in browsers.
+**Trade-off:** `\input` / moderncv may extract incompletely; GPL `pandoc-wasm` on the backend; first TeX job pays WASM init; Latin-1 CVs may mojibake.
+**Impact:** Prisma migration, `ResumeService` dispatch, new `texToMarkdown` next to `extractPdfText`, FE picker, E2E/docs strings.
+**Spec:** `.specs/features/resume-tex-upload/spec.md`
 
 ### AD-019: Session create quota via sliding window log (2026-08-19)
 
@@ -108,6 +144,13 @@ _None_
 
 ## Lessons Learned
 
+### L-007: Raw `<a href="/...">` ignores Next.js `basePath` (2026-08-29)
+
+**Context:** Labs serves the app under `/ai-mock-interview`. "Go to Resumes" on `/practice` used a native `<a href="/resumes">`.
+**Problem:** Next.js `Link` prefixes `basePath`; native anchors do not, so production navigated to `labs.borderlesscoding.com/resumes` (404).
+**Solution:** Use `next/link` for in-app routes. Audit remaining raw `/resumes` anchors (profile empty state).
+**Prevents:** In-app CTAs 404ing when `NEXT_BASE_PATH` is set.
+
 ### L-006: ISC-21 soft-hint load every turn (2026-08-02)
 
 **Context:** Spec ISC-21 said inject soft coverage once per session into graph/checkpoint.  
@@ -156,12 +199,26 @@ _None_
 
 | # | Description | Date | Commit | Status |
 | --- | ---------- | ---- | ------ | ------ |
-| — | — | — | — | — |
+| 004 | SetNull owned FKs: resume delete and practice delete keep study data | 2026-08-29 | — | ✅ Done (commit deferred; browser UAT login-blocked) |
+| 003 | Practice tester v1: resumes `Link` + send label + compact feedback | 2026-08-29 | — | ✅ Done (UAT login-blocked) |
 
 ---
 
 ## Deferred Ideas
 
+- [ ] Link `/resumes` → `/profile` for extracted summary — Captured during: resume-file-preview (user chose original file only)
+- [ ] `/resumes/[id]` or in-list PDF iframe/sheet — Captured during: resume-file-preview
+- [ ] Signed R2 GET for file preview — Captured during: resume-file-preview (rejected: AMI-DEC-05)
+- [ ] Next.js BFF file proxy for same-origin `<a target="_blank">` — Captured during: resume-file-preview
+- [ ] Compile `.tex` to PDF for visual preview — Captured during: resume-file-preview (blocked by resume-tex-upload)
+- [ ] Multi-file LaTeX / zip / Overleaf `\input` resolution — Captured during: resume-tex-upload (grill Q2 = single file)
+- [ ] `.latex` extension — Captured during: resume-tex-upload
+- [ ] Expose `sourceFormat` on resume preview/detail — Captured during: resume-tex-upload (grill Q13 = no)
+- [ ] Latin-1 / `inputenc` detection for `.tex` — Captured during: resume-tex-upload
+- [ ] Native `pandoc` binary in Docker if Bun+WASI fails — Captured during: resume-tex-upload (contingency, not MVP)
+- [ ] Mutex for `pandoc-wasm` if resume worker concurrency > 1 — Captured during: resume-tex-upload
+- [ ] Extraction prompt line about leftover LaTeX commands — Captured during: resume-tex-upload (grill Q15 = unchanged prompt)
+- [ ] Profile empty-state "Go to Resumes" still uses raw `<a href="/resumes">` (same `basePath` bug as practice) — Captured during: 003-practice-tester-feedback
 - [ ] Normal-interview topic diversity via angles on review_items (fulfilled by review-item-angles) — Captured during: review-items-learned-status / review-item-angles
 - [ ] App-wide UI i18n (`appLocale` or similar) — Captured during: interview-locale
 - [ ] DB table for editable language prompt instructions — Captured during: interview-locale
@@ -177,6 +234,8 @@ _None_
 - [ ] Token bucket recovery (~1 slot / 80 min after binge) — Captured during: session-create-quota (rejected: would allow up to 6 in 4h)
 - [ ] Backfill quota log from existing session `createdAt` at deploy — Captured during: session-create-quota
 - [ ] Daily (or other) purge job for `session_quota_events` older than the window — Captured during: session-create-quota (removed from MVP; table growth acceptable at current usage)
+- [ ] Per-question feedback during Review Session Q&A — Captured during: review-session-recap (grill: final recap only)
+- [ ] Session-level closing LLM after parallel evaluation — Captured during: review-session-recap (rejected: wait/cost; derived header only)
 
 ---
 
@@ -214,6 +273,28 @@ _None_
 - [x] Fix collateral E2E: rate-limit-redis + token-usage send `interviewLocale`
 - [x] Align spec.md acceptance text 400 → 422 (design already documents)
 - [x] Delete leftover `.tmp-wip-*` prompt scratch folders
+- [x] Specify resume-file-preview → `spec.md` + `context.md` (2026-08-29)
+- [x] Spec approved; Design skipped; Tasks drafted (`tasks.md` T1–T6) (2026-08-29)
+- [x] Execute resume-file-preview T1–T6 (2026-08-29) — headers helper, getFile, GET /:id/file E2E, API docs, getResumeFile, View on `/resumes`
+- [x] Commit resume-file-preview T1–T6 (2026-08-29)
+- [x] Feature-level automated validation for resume-file-preview (2026-08-29) — backend lint/types/unit (564)/resumes e2e (22) green; FE feature ESLint clean; project `check-types` still red on unrelated `*.test.ts`
+- [ ] Fix resume-file-preview UI: restore View + PDF `blob:` tab (`87784e9` replaced T6 with download-only; RFP-10/11/13)
+- [ ] Interactive UAT for resume-file-preview (View PDF, fail network, `.tex` download) — agent blocked at `/login` (Borderless)
+- [x] Discuss + Specify review-session-recap → `spec.md` + `context.md` (2026-08-29)
+- [x] Design phase for review-session-recap (`design.md`) — approved (2026-08-29)
+- [x] Tasks breakdown for review-session-recap (`tasks.md`) — approved via Execute
+- [x] Execute review-session-recap T1–T18 (2026-08-29) — implemented; commits deferred (L-005; user git rule: no commit unless asked)
+- [x] Feature-level automated validation for review-session-recap (2026-08-29) — backend lint/types/unit (575)/pandoc-wasm (1)/integration (83)/e2e (134) green; FE recap files ESLint clean except known `react-hooks/refs` in `review-session-chat.tsx`; `next build` TypeScript green; project `check-types` still red on unrelated `*.test.ts` vitest imports
+- [ ] Apply local Prisma migration `20260829120000_add_review_session_item_recap` before live UAT (`prisma migrate status` shows it pending on `hackathon2026`)
+- [ ] Interactive UAT for review-session-recap (evaluating wait, report recap, history results) — agent blocked at `/login` (Borderless)
+- [ ] Commit review-session-recap (deferred — user requested no commits)
+- [x] Grill-me + Specify resume-tex-upload → `spec.md` (2026-08-29)
+- [x] Design phase for resume-tex-upload (`design.md`) — approved
+- [x] Tasks breakdown for resume-tex-upload (`tasks.md`) — approved via Execute
+- [x] Execute resume-tex-upload T1–T8 (2026-08-29) — implemented; commits deferred (L-005; user git rule: no commit unless asked)
+- [x] Feature-level automated validation for resume-tex-upload (2026-08-29) — backend lint/types/unit (552)/pandoc-wasm (1)/integration (81)/e2e (126) green; FE feature files type-clean (project `check-types` still red on unrelated `*.test.ts` vitest imports)
+- [ ] Interactive UAT for resume-tex-upload (`/resumes`: `.tex` upload, `.txt` reject, PDF success) — agent blocked at `/login` (Borderless)
+- [ ] Commit resume-tex-upload (deferred — user requested no commits)
 - [x] Grill-me + Specify session-create-quota → `spec.md` (2026-08-19)
 - [x] Design phase for session-create-quota (`design.md`) — draft used as Tasks input
 - [x] Tasks breakdown for session-create-quota (`tasks.md`) — approved via Execute
@@ -236,7 +317,8 @@ _None_
 
 ## Preferences
 
-- Grill-me used for disambiguation before Specify on interview-locale, interview-speech-to-text, interview-soft-coverage, and session-create-quota
+- Grill-me used for disambiguation before Specify on interview-locale, interview-speech-to-text, interview-soft-coverage, session-create-quota, resume-tex-upload, and review-session-recap
+- Spec-driven Specify used for resume-file-preview after in-chat UX + ownership discussion (2026-08-29)
 - Spec-driven Specify used for async-review-items-generation (architecture pre-aligned in chat)
 - Prefer single end-of-feature commit over per-task commits when requested
 - External providers must stay behind ports/adapters (R2, mailer, LLM generators, STT)

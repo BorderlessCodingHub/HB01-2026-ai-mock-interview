@@ -18,6 +18,7 @@ import { ApiError } from "@/lib/api/client";
 import { reviewSessionsApi } from "@/lib/api/review-sessions";
 import { useReviewSession } from "@/lib/query/hooks/use-review-session";
 import { queryKeys } from "@/lib/query/keys";
+import type { InterviewLocale } from "@/types/interview";
 import type { ReviewSessionItemReport } from "@/types/review-sessions";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
@@ -25,6 +26,7 @@ import {
   ApplyPayloadValidationError,
   buildApplyPayload,
 } from "./lib/build-apply-payload";
+import { deriveReviewResultsSummary } from "./lib/derive-review-results-summary";
 import { clearLastReviewSessionId } from "./lib/review-session-storage";
 import {
   initReportCardState,
@@ -39,9 +41,10 @@ type ReviewSessionReportProps = {
 type ReportCardsFormProps = {
   sessionId: string;
   items: ReviewSessionItemReport[];
+  locale: InterviewLocale;
 };
 
-function ReportCardsForm({ sessionId, items }: ReportCardsFormProps) {
+function ReportCardsForm({ sessionId, items, locale }: ReportCardsFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { getAccessToken, accessToken } = useAuth();
@@ -183,18 +186,27 @@ function ReportCardsForm({ sessionId, items }: ReportCardsFormProps) {
     }
   };
 
+  const summary = deriveReviewResultsSummary(items, "suggested");
+  const topicLabel =
+    summary.topicCount === 1 ? "topic reviewed" : "topics reviewed";
+
   return (
     <div className="mx-auto w-full max-w-3xl space-y-6 p-4 md:p-6">
       <AppPageHeader
-        title="Review suggestions"
-        description="Adjust each topic if needed, then apply your choices to update your study list."
+        title="Review results"
+        description="See how the session went, then confirm what happens to your study list."
       />
+
+      <p className="text-sm text-text-base">
+        {`${summary.topicCount} ${topicLabel} · ${summary.learnedCount} suggested as learned · ${summary.priorityChangeCount} priority changes`}
+      </p>
 
       <ul className="list-none space-y-4">
         {cards.map((card) => (
           <ReviewReportCard
             key={card.reviewSessionItemId}
             card={card}
+            locale={locale}
             onChange={(patch) =>
               handleCardChange(card.reviewSessionItemId, patch)
             }
@@ -274,6 +286,7 @@ export function ReviewSessionReport({ sessionId }: ReviewSessionReportProps) {
       key={sessionId}
       sessionId={sessionId}
       items={session.items}
+      locale={session.interviewLocale}
     />
   );
 }

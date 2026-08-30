@@ -18,6 +18,14 @@ export const ResumeStatus = {
 export type ResumeStatus = (typeof ResumeStatus)[keyof typeof ResumeStatus]
 
 
+export const ResumeSourceFormat = {
+  pdf: 'pdf',
+  tex: 'tex'
+} as const
+
+export type ResumeSourceFormat = (typeof ResumeSourceFormat)[keyof typeof ResumeSourceFormat]
+
+
 export const InterviewLevel = {
   entry: 'entry',
   mid: 'mid',

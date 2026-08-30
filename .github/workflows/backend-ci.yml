@@ -36,3 +36,6 @@ jobs:
 
       - name: Unit tests
         run: bun run test
+
+      - name: Pandoc WASM live test
+        run: bun run test:pandoc-wasm

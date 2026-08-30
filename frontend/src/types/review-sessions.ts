@@ -15,7 +15,7 @@ export type ReviewSessionTurn = {
 
 export type ReviewSessionItemReport = {
   id: string;
-  reviewItemId: string;
+  reviewItemId: string | null;
   topic: string;
   angle: string;
   currentPriority: ReviewPriority;
@@ -24,6 +24,8 @@ export type ReviewSessionItemReport = {
   confirmedStatus: ReviewItemStatus | null;
   confirmedPriority: ReviewPriority | null;
   turns: ReviewSessionTurn[];
+  wentWell: string[];
+  workOn: string[];
 };
 
 export type ReviewSessionSummary = {
@@ -44,6 +46,7 @@ export type ListReviewSessionsResponse = {
 export type ReviewSession = {
   id: string;
   status: ReviewSessionStatus;
+  interviewLocale: InterviewLocale;
   items: ReviewSessionItemReport[];
 };
 
@@ -69,22 +72,31 @@ export type ReviewSessionStreamMetaProgress = {
   status: "in_progress";
 };
 
+/** SSE meta — evaluation in flight */
+export type ReviewSessionStreamMetaEvaluating = {
+  status: "evaluating";
+};
+
 /** SSE meta — evaluation complete */
 export type ReviewSessionStreamMetaComplete = {
   status: "pending_review";
+  interviewLocale: InterviewLocale;
   report: Array<{
     reviewSessionItemId: string;
-    reviewItemId: string;
+    reviewItemId: string | null;
     topic: string;
     angle: string;
     currentPriority: ReviewPriority;
     suggestedStatus: ReviewItemStatus | null;
     suggestedPriority: ReviewPriority | null;
+    wentWell: string[];
+    workOn: string[];
   }>;
 };
 
 export type ReviewSessionStreamMeta =
   | ReviewSessionStreamMetaProgress
+  | ReviewSessionStreamMetaEvaluating
   | ReviewSessionStreamMetaComplete;
 
 export type ApplyReviewSessionItem = {

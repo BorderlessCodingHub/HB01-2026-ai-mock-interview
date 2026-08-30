@@ -4,6 +4,7 @@ import {
   applyReviewSessionSchema,
   createReviewSessionSchema,
   listReviewSessionsQuerySchema,
+  normalizeReviewSessionEvaluation,
   reviewItemStatusSchema,
   reviewSessionEvaluationOutputSchema,
   reviewSessionStatusSchema,
@@ -308,7 +309,12 @@ describe("reviewSessionEvaluationOutputSchema", () => {
         status: "learned",
         priority: null,
       }),
-    ).toEqual({ status: "learned", priority: null });
+    ).toEqual({
+      status: "learned",
+      priority: null,
+      wentWell: [],
+      workOn: [],
+    });
   });
 
   it("accepts active status with priority", () => {
@@ -317,7 +323,12 @@ describe("reviewSessionEvaluationOutputSchema", () => {
         status: "active",
         priority: "medium",
       }),
-    ).toEqual({ status: "active", priority: "medium" });
+    ).toEqual({
+      status: "active",
+      priority: "medium",
+      wentWell: [],
+      workOn: [],
+    });
   });
 
   it("rejects active status with null priority", () => {
@@ -354,6 +365,73 @@ describe("reviewSessionEvaluationOutputSchema", () => {
         priority: "low",
       }),
     ).toThrow();
+  });
+
+  it("defaults missing wentWell and workOn keys to empty arrays", () => {
+    expect(
+      reviewSessionEvaluationOutputSchema.parse({
+        status: "learned",
+        priority: null,
+      }),
+    ).toEqual({
+      status: "learned",
+      priority: null,
+      wentWell: [],
+      workOn: [],
+    });
+  });
+});
+
+describe("normalizeReviewSessionEvaluation", () => {
+  it("keeps at most 4 bullets per recap list", () => {
+    const result = normalizeReviewSessionEvaluation({
+      status: "active",
+      priority: "medium",
+      wentWell: ["one", "two", "three", "four", "five"],
+      workOn: ["a", "b", "c", "d", "e"],
+    });
+
+    expect(result.wentWell).toEqual(["one", "two", "three", "four"]);
+    expect(result.workOn).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("clamps bullets longer than 180 characters after trim", () => {
+    const longBullet = "x".repeat(181);
+
+    const result = normalizeReviewSessionEvaluation({
+      status: "learned",
+      priority: null,
+      wentWell: [longBullet],
+      workOn: [`  ${"y".repeat(181)}  `],
+    });
+
+    expect(result.wentWell).toEqual(["x".repeat(180)]);
+    expect(result.workOn[0]).toHaveLength(180);
+    expect(result.workOn[0]).toBe("y".repeat(180));
+  });
+
+  it("drops blank and whitespace-only bullets", () => {
+    const result = normalizeReviewSessionEvaluation({
+      status: "active",
+      priority: "low",
+      wentWell: ["kept", "   ", "", "also kept"],
+      workOn: ["\t", "  \n  ", "work"],
+    });
+
+    expect(result.wentWell).toEqual(["kept", "also kept"]);
+    expect(result.workOn).toEqual(["work"]);
+  });
+
+  it("trims surrounding whitespace on bullets", () => {
+    const result = normalizeReviewSessionEvaluation({
+      status: "learned",
+      priority: null,
+      wentWell: ["  clear structure  "],
+      workOn: ["\tneed examples\t"],
+    });
+
+    expect(result.wentWell).toEqual(["clear structure"]);
+    expect(result.workOn).toEqual(["need examples"]);
   });
 });
 

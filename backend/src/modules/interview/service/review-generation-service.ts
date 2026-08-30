@@ -103,9 +103,33 @@ export class ReviewGenerationService {
       .map((message) => `${message.role}: ${message.content}`)
       .join("\n");
 
+    if (!session.resumeId) {
+      const message = "Resume not found";
+      await this.sessionRepository.markReviewGenerationFailed(
+        sessionId,
+        message,
+      );
+      return {
+        status: "failed",
+        sessionId,
+        error: message,
+        retryable: false,
+      };
+    }
+
     const resume = await this.resumeRepository.findById(session.resumeId);
     if (!resume?.structuredSummary) {
-      throw new Error("Resume structured summary not found");
+      const message = "Resume structured summary not found";
+      await this.sessionRepository.markReviewGenerationFailed(
+        sessionId,
+        message,
+      );
+      return {
+        status: "failed",
+        sessionId,
+        error: message,
+        retryable: false,
+      };
     }
 
     const structuredSummary = resume.structuredSummary as StructuredSummary;

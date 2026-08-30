@@ -16,7 +16,7 @@ async function seedSession() {
     data: {
       userId: user.id,
       name: "Test Resume",
-      pdfUrl: "https://example.com/resume.pdf",
+      sourceFormat: "pdf",
       storageKey: "resumes/review-test.pdf",
       status: "ready",
     },
@@ -217,7 +217,7 @@ describe("ReviewRepository (integration)", () => {
       data: {
         userId: otherUser.id,
         name: "Other Resume",
-        pdfUrl: "https://example.com/other-resume.pdf",
+        sourceFormat: "pdf",
         storageKey: "resumes/other-review.pdf",
         status: "ready",
       },
