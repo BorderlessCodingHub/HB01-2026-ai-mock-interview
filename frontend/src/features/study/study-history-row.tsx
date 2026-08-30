@@ -53,8 +53,8 @@ export function StudyHistoryRow({
         className="flex min-w-0 flex-1 cursor-pointer flex-col gap-1 p-3.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-jade"
       >
         <div className="flex min-w-0 items-start justify-between gap-2">
-          <span className="line-clamp-2 flex-1 text-xs font-semibold text-ink-black">
-            {topicsLabel}
+          <span className="line-clamp-2 min-w-0 flex-1 text-xs font-semibold text-ink-black">
+            {topicsLabel || "Untitled session"}
           </span>
           <span className="shrink-0 rounded-full bg-(--status-neutral-surface) px-2 py-0.5 text-[10px] font-semibold text-(--status-neutral-foreground)">
             Completed
