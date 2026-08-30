@@ -4,6 +4,7 @@ import { AlertCircle } from "lucide-react";
 
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
 import { cn } from "@/lib/utils";
+import type { InterviewLocale } from "@/types/interview";
 import type { ReviewPriority } from "@/types/review-items";
 import { AppCard } from "@/components/app/app-card";
 
@@ -11,11 +12,13 @@ import type {
   ReportCardState,
   ReportCardStatePatch,
 } from "./lib/report-card-state";
+import { ReviewTopicRecap } from "./review-topic-recap";
 
 const PRIORITY_OPTIONS: ReviewPriority[] = ["low", "medium", "high"];
 
 type ReviewReportCardProps = {
   card: ReportCardState;
+  locale?: InterviewLocale;
   onChange: (patch: ReportCardStatePatch) => void;
 };
 
@@ -35,7 +38,11 @@ function formatSuggestedCopy(card: ReportCardState): string {
   return "No suggestion";
 }
 
-export function ReviewReportCard({ card, onChange }: ReviewReportCardProps) {
+export function ReviewReportCard({
+  card,
+  locale = "en",
+  onChange,
+}: ReviewReportCardProps) {
   const isActive = card.status === "active";
 
   return (
@@ -49,6 +56,13 @@ export function ReviewReportCard({ card, onChange }: ReviewReportCardProps) {
           <span>Current:</span>
           <ReviewPriorityBadge priority={card.currentPriority} />
         </div>
+
+        <ReviewTopicRecap
+          evaluationFailed={card.evaluationFailed}
+          wentWell={card.wentWell}
+          workOn={card.workOn}
+          locale={locale}
+        />
 
         {card.evaluationFailed ? (
           <div className="flex items-start gap-2 rounded-lg border border-border-hairline bg-(--status-critical-surface) px-3 py-2 text-xs text-text-base">
