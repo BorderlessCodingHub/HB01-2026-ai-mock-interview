@@ -45,6 +45,11 @@ export async function createApp(): Promise<Express> {
   await setupCheckpointer();
 
   const app = express();
+  // Express enables weak ETags by default, which makes conditional GETs (incl.
+  // requests that fall through to the 404 handler, since its body is constant)
+  // come back as 304 with no body on repeat calls. That's misleading for a JSON
+  // API where every response is per-user/auth-scoped, so we opt out entirely.
+  app.set("etag", false);
 
   app.use(
     cors({

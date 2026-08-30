@@ -7,6 +7,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/features/auth/session-provider";
 import { AppShell } from "@/features/dashboard/app-shell";
 import { DashboardStats } from "@/features/dashboard/dashboard-stats";
+import {
+  DashboardFeedbackSkeleton,
+  DashboardOverviewSkeleton,
+} from "@/features/dashboard/dashboard-skeleton";
 import { deriveDashboardStats } from "@/features/dashboard/lib/stats";
 import { OnboardingTour } from "@/features/onboarding/onboarding-tour";
 import {
@@ -98,9 +102,7 @@ export default function DashboardPage() {
         hidden={activeTab !== "Overview"}
         className="space-y-7 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-jade-deep"
       >
-        {isLoading && (
-          <p className="manrope text-sm text-text-base">Loading dashboard…</p>
-        )}
+        {isLoading && <DashboardOverviewSkeleton />}
         {error && (
           <p
             role="alert"
@@ -197,9 +199,7 @@ export default function DashboardPage() {
         hidden={activeTab !== "Feedback"}
         className="space-y-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-jade-deep"
       >
-        {isLoading && (
-          <p className="manrope text-sm text-text-base">Loading dashboard…</p>
-        )}
+        {isLoading && <DashboardFeedbackSkeleton />}
         {error && (
           <p
             role="alert"

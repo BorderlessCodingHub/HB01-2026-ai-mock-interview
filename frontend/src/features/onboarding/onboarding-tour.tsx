@@ -158,9 +158,6 @@ export function OnboardingTour({ ready }: { ready: boolean }) {
           fontFamily: "var(--font-manrope), system-ui, sans-serif",
           color: "var(--text-base)",
         },
-        overlay: {
-          backdropFilter: "blur(1px)",
-        },
       }}
     />
   );
