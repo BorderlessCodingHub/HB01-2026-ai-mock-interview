@@ -1,12 +1,12 @@
 "use client";
 
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Sparkles } from "lucide-react";
 
+import { AppCard } from "@/components/app/app-card";
 import { ReviewPriorityBadge } from "@/features/study/review-priority-badge";
 import { cn } from "@/lib/utils";
 import type { InterviewLocale } from "@/types/interview";
 import type { ReviewPriority } from "@/types/review-items";
-import { AppCard } from "@/components/app/app-card";
 
 import type {
   ReportCardState,
@@ -16,26 +16,50 @@ import { ReviewTopicRecap } from "./review-topic-recap";
 
 const PRIORITY_OPTIONS: ReviewPriority[] = ["low", "medium", "high"];
 
+const PRIORITY_PILL_SELECTED: Record<ReviewPriority, string> = {
+  high: "border-red-200 bg-red-100 text-red-700",
+  medium: "border-jade bg-jade-pale text-jade-deep",
+  low: "border-border-hairline bg-mist-gray text-text-base",
+};
+
+const segmentedButtonClass =
+  "min-h-11 cursor-pointer rounded-full px-3.5 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2";
+
 type ReviewReportCardProps = {
   card: ReportCardState;
   locale?: InterviewLocale;
   onChange: (patch: ReportCardStatePatch) => void;
 };
 
-function formatSuggestedCopy(card: ReportCardState): string {
+function SuggestionLine({ card }: { card: ReportCardState }) {
   if (card.evaluationFailed) {
-    return "Evaluation unavailable — choose an outcome below";
+    return (
+      <div className="flex items-start gap-2 rounded-2xl border border-border-hairline bg-(--status-critical-surface) px-3 py-2 text-xs text-text-base">
+        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-(--status-critical-foreground)" />
+        <span>Evaluation unavailable — choose an outcome below</span>
+      </div>
+    );
   }
 
   if (card.suggestedStatus === "learned") {
-    return "Suggested: mark as learned";
+    return (
+      <p className="flex items-center gap-2 text-xs text-text-base">
+        <Sparkles className="h-3.5 w-3.5 shrink-0 text-jade-deep" aria-hidden />
+        Suggested: mark as learned
+      </p>
+    );
   }
 
   if (card.suggestedPriority) {
-    return `Suggested: ${card.suggestedPriority} priority`;
+    return (
+      <p className="flex items-center gap-2 text-xs text-text-base">
+        <Sparkles className="h-3.5 w-3.5 shrink-0 text-jade-deep" aria-hidden />
+        {`Suggested: ${card.suggestedPriority} priority`}
+      </p>
+    );
   }
 
-  return "No suggestion";
+  return <p className="text-xs text-text-base">No suggestion</p>;
 }
 
 export function ReviewReportCard({
@@ -44,18 +68,20 @@ export function ReviewReportCard({
   onChange,
 }: ReviewReportCardProps) {
   const isActive = card.status === "active";
+  const selectedPriority = card.priority ?? card.currentPriority;
 
   return (
-    <AppCard as="li" className="space-y-4 p-5">
-      <div className="space-y-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <h2 className="font-semibold text-ink-black">{card.topic}</h2>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2 text-xs text-text-base">
-          <span>Current:</span>
-          <ReviewPriorityBadge priority={card.currentPriority} />
-        </div>
+    <AppCard as="li" className="overflow-hidden p-0">
+      <div className="space-y-4 p-5">
+        <header className="flex flex-wrap items-start justify-between gap-2">
+          <h2 className="min-w-0 flex-1 font-semibold text-ink-black">
+            {card.topic}
+          </h2>
+          <ReviewPriorityBadge
+            className="shrink-0"
+            priority={card.currentPriority}
+          />
+        </header>
 
         <ReviewTopicRecap
           evaluationFailed={card.evaluationFailed}
@@ -64,31 +90,27 @@ export function ReviewReportCard({
           locale={locale}
         />
 
-        {card.evaluationFailed ? (
-          <div className="flex items-start gap-2 rounded-lg border border-border-hairline bg-(--status-critical-surface) px-3 py-2 text-xs text-text-base">
-            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-(--status-critical-foreground)" />
-            <span>{formatSuggestedCopy(card)}</span>
-          </div>
-        ) : (
-          <p className="text-xs text-text-base">{formatSuggestedCopy(card)}</p>
-        )}
+        <SuggestionLine card={card} />
       </div>
 
-      <div className="space-y-3">
+      <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-border-hairline px-5 py-4">
         <fieldset>
           <legend className="mb-2 text-xs font-medium text-text-base">
             Review outcome
           </legend>
-          <div className="flex flex-wrap gap-2">
+          <div
+            className="inline-flex rounded-full border border-border-hairline bg-mist-gray p-0.5"
+            role="group"
+          >
             <button
               type="button"
               onClick={() => onChange({ status: "active" })}
               aria-pressed={isActive}
               className={cn(
-                "min-h-11 cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
+                segmentedButtonClass,
                 isActive
-                  ? "border-jade-deep bg-jade-deep text-white"
-                  : "border-border-hairline text-ink-black hover:bg-mist-gray",
+                  ? "bg-paper-white text-ink-black shadow-sm"
+                  : "text-text-base hover:text-ink-black",
               )}
             >
               Keep active
@@ -98,10 +120,10 @@ export function ReviewReportCard({
               onClick={() => onChange({ status: "learned" })}
               aria-pressed={!isActive}
               className={cn(
-                "min-h-11 cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
+                segmentedButtonClass,
                 !isActive
-                  ? "border-jade-deep bg-jade-deep text-white"
-                  : "border-border-hairline text-ink-black hover:bg-mist-gray",
+                  ? "bg-paper-white text-ink-black shadow-sm"
+                  : "text-text-base hover:text-ink-black",
               )}
             >
               Mark as learned
@@ -110,22 +132,34 @@ export function ReviewReportCard({
         </fieldset>
 
         {isActive && (
-          <label className="flex flex-col gap-1.5">
-            <span className="text-xs font-medium text-text-base">Priority</span>
-            <select
-              value={card.priority ?? card.currentPriority}
-              onChange={(event) =>
-                onChange({ priority: event.target.value as ReviewPriority })
-              }
-              className="w-full max-w-xs cursor-pointer rounded-2xl border border-border-hairline bg-paper-white px-3 py-2 text-sm text-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-            >
-              {PRIORITY_OPTIONS.map((priority) => (
-                <option key={priority} value={priority}>
-                  {priority.charAt(0).toUpperCase() + priority.slice(1)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <fieldset>
+            <legend className="mb-2 text-xs font-medium text-text-base">
+              Priority
+            </legend>
+            <div className="flex flex-wrap gap-1.5" role="radiogroup">
+              {PRIORITY_OPTIONS.map((priority) => {
+                const isSelected = selectedPriority === priority;
+
+                return (
+                  <button
+                    key={priority}
+                    type="button"
+                    role="radio"
+                    aria-checked={isSelected}
+                    onClick={() => onChange({ priority })}
+                    className={cn(
+                      "min-h-11 cursor-pointer rounded-full border px-3 py-1.5 text-xs font-medium capitalize transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
+                      isSelected
+                        ? PRIORITY_PILL_SELECTED[priority]
+                        : "border-border-hairline bg-paper-white text-ink-black hover:bg-mist-gray",
+                    )}
+                  >
+                    {priority}
+                  </button>
+                );
+              })}
+            </div>
+          </fieldset>
         )}
       </div>
     </AppCard>

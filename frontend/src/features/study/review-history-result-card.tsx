@@ -17,7 +17,11 @@ function AppliedOutcome({ item }: { item: ReviewSessionItemReport }) {
   }
 
   if (item.confirmedStatus === "learned") {
-    return <p className="text-xs text-text-base">Marked as learned</p>;
+    return (
+      <p className="inline-flex items-center rounded-full bg-jade-pale px-2.5 py-1 text-[11px] font-semibold text-jade-deep">
+        Marked as learned
+      </p>
+    );
   }
 
   return (
@@ -34,18 +38,26 @@ export function ReviewHistoryResultCard({
   item,
   locale,
 }: ReviewHistoryResultCardProps) {
+  const hasOutcome = item.confirmedStatus !== null;
+
   return (
-    <AppCard as="li" className="space-y-4 p-5">
-      <h2 className="font-semibold text-ink-black">
-        {formatTopicAngleLabel(item.topic, item.angle)}
-      </h2>
-      <ReviewTopicRecap
-        locale={locale}
-        wentWell={item.wentWell}
-        workOn={item.workOn}
-        evaluationFailed={item.suggestedStatus === null}
-      />
-      <AppliedOutcome item={item} />
+    <AppCard as="li" className="overflow-hidden p-0">
+      <div className="space-y-4 p-5">
+        <h2 className="font-semibold text-ink-black">
+          {formatTopicAngleLabel(item.topic, item.angle)}
+        </h2>
+        <ReviewTopicRecap
+          locale={locale}
+          wentWell={item.wentWell}
+          workOn={item.workOn}
+          evaluationFailed={item.suggestedStatus === null}
+        />
+      </div>
+      {hasOutcome ? (
+        <div className="border-t border-border-hairline px-5 py-3">
+          <AppliedOutcome item={item} />
+        </div>
+      ) : null}
     </AppCard>
   );
 }
