@@ -112,7 +112,7 @@ export default function ResumesPage() {
     const confirmed = await confirmDialog({
       title: "Delete this resume?",
       description:
-        "All related interview sessions will be lost. This cannot be undone.",
+        "This resume file will be permanently deleted. Interview sessions and study data are kept.",
     });
     if (!confirmed) return;
 

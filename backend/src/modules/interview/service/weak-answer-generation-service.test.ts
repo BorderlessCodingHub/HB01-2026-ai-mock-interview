@@ -129,7 +129,25 @@ describe("WeakAnswerGenerationService", () => {
       expect(weakAnswersGenerator.generate).not.toHaveBeenCalled();
     });
 
-    it("throws when the resume has no structured summary", async () => {
+    it("skips when the session resume was deleted", async () => {
+      vi.mocked(sessionRepository.findById).mockResolvedValue({
+        ...baseSession,
+        resumeId: null,
+      } as never);
+      vi.mocked(messageRepository.listBySessionId).mockResolvedValue([]);
+
+      const result = await service.process(baseSession.id);
+
+      expect(result).toEqual({
+        status: "skipped",
+        sessionId: baseSession.id,
+        reason: "resume_not_found",
+      });
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+      expect(weakAnswersGenerator.generate).not.toHaveBeenCalled();
+    });
+
+    it("skips when the resume has no structured summary", async () => {
       vi.mocked(sessionRepository.findById).mockResolvedValue(
         baseSession as never,
       );
@@ -139,9 +157,14 @@ describe("WeakAnswerGenerationService", () => {
         structuredSummary: null,
       } as never);
 
-      await expect(service.process(baseSession.id)).rejects.toThrow(
-        "Resume structured summary not found",
-      );
+      const result = await service.process(baseSession.id);
+
+      expect(result).toEqual({
+        status: "skipped",
+        sessionId: baseSession.id,
+        reason: "resume_not_found",
+      });
+      expect(weakAnswersGenerator.generate).not.toHaveBeenCalled();
     });
 
     it("generates and persists weak answers, then records token usage", async () => {

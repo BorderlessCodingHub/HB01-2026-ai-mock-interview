@@ -1,4 +1,5 @@
 import { afterAll, afterEach, describe, expect, it } from "vitest";
+import prisma from "@/infrastructure/database";
 import { disconnectDatabase, resetDatabase } from "@/test/integration/helpers";
 import { UserRepository } from "@/modules/auth/repository/user-repository";
 import { ResumeRepository } from "./resume-repository";
@@ -232,6 +233,42 @@ describe("ResumeRepository (integration)", () => {
       id: resumeId,
       status: "failed",
       errorMessage,
+    });
+  });
+
+  it("deleteByIdAndUserId removes only the resume and nulls session.resumeId", async () => {
+    const user = await createTestUser();
+    const resumeId = crypto.randomUUID();
+    await repository.createProcessing(
+      user.id,
+      "CV.pdf",
+      "storage-key",
+      "pdf",
+      resumeId,
+    );
+
+    const session = await prisma.interviewSession.create({
+      data: {
+        userId: user.id,
+        resumeId,
+        level: "entry",
+        interviewLocale: "en",
+        maxTurns: 5,
+      },
+    });
+
+    const deleted = await repository.deleteByIdAndUserId(resumeId, user.id);
+
+    expect(deleted?.id).toBe(resumeId);
+    expect(await prisma.resume.findUnique({ where: { id: resumeId } })).toBeNull();
+
+    const survivingSession = await prisma.interviewSession.findUnique({
+      where: { id: session.id },
+    });
+    expect(survivingSession).toMatchObject({
+      id: session.id,
+      userId: user.id,
+      resumeId: null,
     });
   });
 });

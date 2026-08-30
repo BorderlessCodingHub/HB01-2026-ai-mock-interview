@@ -4,7 +4,7 @@ export type ReviewItemStatus = "active" | "learned";
 
 export type ReviewItem = {
   id: string;
-  sessionId: string;
+  sessionId: string | null;
   topic: string;
   angle: string;
   description: string;

@@ -12,7 +12,7 @@ import type { InterviewSession } from "../../../../prisma/generated/client";
 
 export type SessionSummary = {
   id: string;
-  resumeId: string;
+  resumeId: string | null;
   level: InterviewLevel;
   turnCount: number;
   maxTurns: number;

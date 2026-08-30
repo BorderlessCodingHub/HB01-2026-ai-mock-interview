@@ -4,7 +4,7 @@ import type { ReviewItemStatus } from "../../../../prisma/generated/client";
 export type ReviewItemRecord = {
   id: string;
   userId: number;
-  sessionId: string;
+  sessionId: string | null;
   topic: string;
   angle: string;
   description: string;

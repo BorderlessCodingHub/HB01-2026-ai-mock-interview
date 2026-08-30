@@ -290,6 +290,59 @@ describe("ReviewGenerationService", () => {
       expect(tokenUsageService.assertWithinLimit).not.toHaveBeenCalled();
     });
 
+    it("marks failed when the session resume was deleted", async () => {
+      vi.mocked(sessionRepository.findById).mockResolvedValue({
+        ...baseSession,
+        resumeId: null,
+      });
+      vi.mocked(messageRepository.listBySessionId).mockResolvedValue([]);
+      vi.mocked(sessionRepository.markReviewGenerationFailed).mockResolvedValue({
+        ...baseSession,
+        resumeId: null,
+        reviewGenerationStatus: "failed",
+        reviewGenerationError: "Resume not found",
+      });
+
+      const result = await service.process(baseSession.id);
+
+      expect(result).toEqual({
+        status: "failed",
+        sessionId: baseSession.id,
+        error: "Resume not found",
+        retryable: false,
+      });
+      expect(sessionRepository.markReviewGenerationFailed).toHaveBeenCalledWith(
+        baseSession.id,
+        "Resume not found",
+      );
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+      expect(reviewItemsGenerator.generate).not.toHaveBeenCalled();
+    });
+
+    it("marks failed when the resume has no structured summary", async () => {
+      vi.mocked(sessionRepository.findById).mockResolvedValue(baseSession);
+      vi.mocked(messageRepository.listBySessionId).mockResolvedValue([]);
+      vi.mocked(resumeRepository.findById).mockResolvedValue({
+        id: "resume-1",
+        structuredSummary: null,
+      } as unknown as Awaited<ReturnType<ResumeRepository["findById"]>>);
+      vi.mocked(sessionRepository.markReviewGenerationFailed).mockResolvedValue({
+        ...baseSession,
+        reviewGenerationStatus: "failed",
+        reviewGenerationError: "Resume structured summary not found",
+      });
+
+      const result = await service.process(baseSession.id);
+
+      expect(result).toEqual({
+        status: "failed",
+        sessionId: baseSession.id,
+        error: "Resume structured summary not found",
+        retryable: false,
+      });
+      expect(reviewItemsGenerator.generate).not.toHaveBeenCalled();
+    });
+
     it("skips when review generation is already ready", async () => {
       vi.mocked(sessionRepository.findById).mockResolvedValue({
         ...baseSession,

@@ -63,6 +63,15 @@ describe("weakAnswerResponseSchema", () => {
     expect(result.success).toBe(false);
   });
 
+  it("accepts a null sessionId after the source interview is deleted", () => {
+    const result = weakAnswerResponseSchema.safeParse({
+      ...validWeakAnswer,
+      sessionId: null,
+    });
+
+    expect(result.success).toBe(true);
+  });
+
   it("rejects invalid evaluation", () => {
     const result = weakAnswerResponseSchema.safeParse({
       ...validWeakAnswer,

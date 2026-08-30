@@ -4,7 +4,7 @@ import { z } from "zod";
 
 export const reviewItemResponseSchema = z.object({
   id: z.uuid(),
-  sessionId: z.uuid(),
+  sessionId: z.uuid().nullable(),
   topic: z.string(),
   angle: z.string(),
   description: z.string(),
