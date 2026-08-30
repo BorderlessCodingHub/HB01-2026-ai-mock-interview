@@ -3,6 +3,7 @@ import { ResumeStatus as PrismaResumeStatus } from "../../../../prisma/generated
 import prisma from "@/infrastructure/database";
 import type {
   ResumeRecord,
+  ResumeSourceFormat,
   ResumeStatus,
 } from "@/modules/resumes/types/resume-record";
 import { structuredSummarySchema } from "@/modules/resumes/validations/resume-schemas";
@@ -11,14 +12,20 @@ function toResumeStatus(status: PrismaResume["status"]): ResumeStatus {
   return status as ResumeStatus;
 }
 
+function toResumeSourceFormat(
+  sourceFormat: PrismaResume["sourceFormat"],
+): ResumeSourceFormat {
+  return sourceFormat as ResumeSourceFormat;
+}
+
 function toResumeRecord(row: PrismaResume): ResumeRecord {
   return {
     id: row.id,
     userId: row.userId,
     name: row.name,
     status: toResumeStatus(row.status),
-    pdfUrl: row.pdfUrl,
     storageKey: row.storageKey,
+    sourceFormat: toResumeSourceFormat(row.sourceFormat),
     structuredSummary: row.structuredSummary,
     rawText: row.rawText,
     errorMessage: row.errorMessage,
@@ -31,8 +38,8 @@ export class ResumeRepository {
   async createProcessing(
     userId: number,
     name: string,
-    pdfUrl: string,
     storageKey: string,
+    sourceFormat: ResumeSourceFormat,
     id?: string,
   ): Promise<ResumeRecord> {
     const row = await prisma.resume.create({
@@ -40,8 +47,8 @@ export class ResumeRepository {
         ...(id !== undefined ? { id } : {}),
         userId,
         name,
-        pdfUrl,
         storageKey,
+        sourceFormat,
         status: PrismaResumeStatus.processing,
       },
     });

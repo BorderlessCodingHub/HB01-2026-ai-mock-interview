@@ -19,6 +19,7 @@ import {
   BadRequestError,
   ConflictError,
   NotFoundError,
+  type InterviewLocale,
 } from "@/shared";
 import type {
   ReviewItemStatus,
@@ -27,7 +28,7 @@ import type {
 
 export type ReviewSessionSummaryItem = {
   id: string;
-  reviewItemId: string;
+  reviewItemId: string | null;
   topic: string;
   angle: string;
   currentPriority: ReviewPriority;
@@ -56,7 +57,7 @@ export type ListReviewSessionsResult = {
 
 export type ReviewSessionReportItem = {
   id: string;
-  reviewItemId: string;
+  reviewItemId: string | null;
   topic: string;
   angle: string;
   currentPriority: ReviewPriority;
@@ -65,11 +66,14 @@ export type ReviewSessionReportItem = {
   suggestedPriority: ReviewPriority | null;
   confirmedStatus: ReviewItemStatus | null;
   confirmedPriority: ReviewPriority | null;
+  wentWell: string[];
+  workOn: string[];
 };
 
 export type ReviewSessionReport = {
   id: string;
   status: ReviewSessionStatus;
+  interviewLocale: InterviewLocale;
   items: ReviewSessionReportItem[];
 };
 
@@ -101,6 +105,8 @@ function toReportItem(item: ReviewSessionItemRecord): ReviewSessionReportItem {
     suggestedPriority: item.suggestedPriority,
     confirmedStatus: item.confirmedStatus,
     confirmedPriority: item.confirmedPriority,
+    wentWell: item.wentWell,
+    workOn: item.workOn,
   };
 }
 
@@ -128,6 +134,7 @@ function toReport(session: ReviewSessionRecord): ReviewSessionReport {
   return {
     id: session.id,
     status: session.status,
+    interviewLocale: session.interviewLocale,
     items: session.items.map(toReportItem),
   };
 }
@@ -292,11 +299,13 @@ export class ReviewSessionsService {
 
       const resolved = toMergeConfirmation(applyItem);
 
-      await this.reviewMergeService.applyReviewSessionConfirmation(
-        userId,
-        sessionItem.reviewItemId,
-        resolved,
-      );
+      if (sessionItem.reviewItemId) {
+        await this.reviewMergeService.applyReviewSessionConfirmation(
+          userId,
+          sessionItem.reviewItemId,
+          resolved,
+        );
+      }
 
       await this.reviewSessionRepository.confirmItem(
         sessionItem.id,

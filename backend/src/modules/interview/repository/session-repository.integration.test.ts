@@ -20,8 +20,8 @@ describe("SessionRepository (integration)", () => {
     await resumeRepository.createProcessing(
       user.id,
       "CV.pdf",
-      "pdf-url",
       "storage-key",
+      "pdf",
       resumeId,
     );
     return { user, resumeId };
@@ -304,5 +304,74 @@ describe("SessionRepository (integration)", () => {
     expect(found?.isFinished).toBe(true);
     expect(found?.reviewGenerationStatus).toBe("pending");
     expect(found?.reviewGenerationError).toBeNull();
+  });
+
+  it("deleteByIdAndUserId keeps review items, weak answers, and topic coverage", async () => {
+    const { user, resumeId } = await seedUserAndResume();
+    const session = await repository.create({
+      userId: user.id,
+      resumeId,
+      level: "entry",
+      interviewLocale: "en",
+    });
+
+    await prisma.interviewMessage.create({
+      data: {
+        sessionId: session.id,
+        userId: user.id,
+        role: "ai",
+        content: "Tell me about yourself.",
+      },
+    });
+    const reviewItem = await prisma.reviewItem.create({
+      data: {
+        userId: user.id,
+        sessionId: session.id,
+        topic: "system design",
+        angle: "caching",
+        description: "Practice caching trade-offs.",
+        priority: "high",
+      },
+    });
+    const weakAnswer = await prisma.weakAnswer.create({
+      data: {
+        userId: user.id,
+        sessionId: session.id,
+        question: "How would you scale reads?",
+        userAnswer: "Add more servers.",
+        evaluation: "insufficient",
+        feedback: "Mention caching.",
+        topic: "system design",
+        priority: "high",
+      },
+    });
+    const coverage = await prisma.topicCoverage.create({
+      data: {
+        userId: user.id,
+        sessionId: session.id,
+        topic: "system design",
+        angle: "caching",
+      },
+    });
+
+    const deleted = await repository.deleteByIdAndUserId(session.id, user.id);
+
+    expect(deleted?.id).toBe(session.id);
+    expect(
+      await prisma.interviewSession.findUnique({ where: { id: session.id } }),
+    ).toBeNull();
+    expect(
+      await prisma.interviewMessage.count({ where: { sessionId: session.id } }),
+    ).toBe(0);
+
+    expect(
+      await prisma.reviewItem.findUnique({ where: { id: reviewItem.id } }),
+    ).toMatchObject({ id: reviewItem.id, sessionId: null });
+    expect(
+      await prisma.weakAnswer.findUnique({ where: { id: weakAnswer.id } }),
+    ).toMatchObject({ id: weakAnswer.id, sessionId: null });
+    expect(
+      await prisma.topicCoverage.findUnique({ where: { id: coverage.id } }),
+    ).toMatchObject({ id: coverage.id, sessionId: null });
   });
 });

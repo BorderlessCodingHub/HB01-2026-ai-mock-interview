@@ -188,7 +188,7 @@ export type TopicCoverageGroupByArgs<ExtArgs extends runtime.Types.Extensions.In
 export type TopicCoverageGroupByOutputType = {
   id: string
   userId: number
-  sessionId: string
+  sessionId: string | null
   topic: string
   angle: string
   createdAt: Date
@@ -220,18 +220,18 @@ export type TopicCoverageWhereInput = {
   NOT?: Prisma.TopicCoverageWhereInput | Prisma.TopicCoverageWhereInput[]
   id?: Prisma.StringFilter<"TopicCoverage"> | string
   userId?: Prisma.IntFilter<"TopicCoverage"> | number
-  sessionId?: Prisma.StringFilter<"TopicCoverage"> | string
+  sessionId?: Prisma.StringNullableFilter<"TopicCoverage"> | string | null
   topic?: Prisma.StringFilter<"TopicCoverage"> | string
   angle?: Prisma.StringFilter<"TopicCoverage"> | string
   createdAt?: Prisma.DateTimeFilter<"TopicCoverage"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
+  session?: Prisma.XOR<Prisma.InterviewSessionNullableScalarRelationFilter, Prisma.InterviewSessionWhereInput> | null
 }
 
 export type TopicCoverageOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  sessionId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   topic?: Prisma.SortOrder
   angle?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -245,18 +245,18 @@ export type TopicCoverageWhereUniqueInput = Prisma.AtLeast<{
   OR?: Prisma.TopicCoverageWhereInput[]
   NOT?: Prisma.TopicCoverageWhereInput | Prisma.TopicCoverageWhereInput[]
   userId?: Prisma.IntFilter<"TopicCoverage"> | number
-  sessionId?: Prisma.StringFilter<"TopicCoverage"> | string
+  sessionId?: Prisma.StringNullableFilter<"TopicCoverage"> | string | null
   topic?: Prisma.StringFilter<"TopicCoverage"> | string
   angle?: Prisma.StringFilter<"TopicCoverage"> | string
   createdAt?: Prisma.DateTimeFilter<"TopicCoverage"> | Date | string
   user?: Prisma.XOR<Prisma.UserScalarRelationFilter, Prisma.UserWhereInput>
-  session?: Prisma.XOR<Prisma.InterviewSessionScalarRelationFilter, Prisma.InterviewSessionWhereInput>
+  session?: Prisma.XOR<Prisma.InterviewSessionNullableScalarRelationFilter, Prisma.InterviewSessionWhereInput> | null
 }, "id">
 
 export type TopicCoverageOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
-  sessionId?: Prisma.SortOrder
+  sessionId?: Prisma.SortOrderInput | Prisma.SortOrder
   topic?: Prisma.SortOrder
   angle?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -273,7 +273,7 @@ export type TopicCoverageScalarWhereWithAggregatesInput = {
   NOT?: Prisma.TopicCoverageScalarWhereWithAggregatesInput | Prisma.TopicCoverageScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"TopicCoverage"> | string
   userId?: Prisma.IntWithAggregatesFilter<"TopicCoverage"> | number
-  sessionId?: Prisma.StringWithAggregatesFilter<"TopicCoverage"> | string
+  sessionId?: Prisma.StringNullableWithAggregatesFilter<"TopicCoverage"> | string | null
   topic?: Prisma.StringWithAggregatesFilter<"TopicCoverage"> | string
   angle?: Prisma.StringWithAggregatesFilter<"TopicCoverage"> | string
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"TopicCoverage"> | Date | string
@@ -285,13 +285,13 @@ export type TopicCoverageCreateInput = {
   angle: string
   createdAt?: Date | string
   user: Prisma.UserCreateNestedOneWithoutTopicCoveragesInput
-  session: Prisma.InterviewSessionCreateNestedOneWithoutTopicCoveragesInput
+  session?: Prisma.InterviewSessionCreateNestedOneWithoutTopicCoveragesInput
 }
 
 export type TopicCoverageUncheckedCreateInput = {
   id?: string
   userId: number
-  sessionId: string
+  sessionId?: string | null
   topic: string
   angle: string
   createdAt?: Date | string
@@ -303,13 +303,13 @@ export type TopicCoverageUpdateInput = {
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneRequiredWithoutTopicCoveragesNestedInput
-  session?: Prisma.InterviewSessionUpdateOneRequiredWithoutTopicCoveragesNestedInput
+  session?: Prisma.InterviewSessionUpdateOneWithoutTopicCoveragesNestedInput
 }
 
 export type TopicCoverageUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -318,7 +318,7 @@ export type TopicCoverageUncheckedUpdateInput = {
 export type TopicCoverageCreateManyInput = {
   id?: string
   userId: number
-  sessionId: string
+  sessionId?: string | null
   topic: string
   angle: string
   createdAt?: Date | string
@@ -334,7 +334,7 @@ export type TopicCoverageUpdateManyMutationInput = {
 export type TopicCoverageUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -517,7 +517,7 @@ export type TopicCoverageScalarWhereInput = {
   NOT?: Prisma.TopicCoverageScalarWhereInput | Prisma.TopicCoverageScalarWhereInput[]
   id?: Prisma.StringFilter<"TopicCoverage"> | string
   userId?: Prisma.IntFilter<"TopicCoverage"> | number
-  sessionId?: Prisma.StringFilter<"TopicCoverage"> | string
+  sessionId?: Prisma.StringNullableFilter<"TopicCoverage"> | string | null
   topic?: Prisma.StringFilter<"TopicCoverage"> | string
   angle?: Prisma.StringFilter<"TopicCoverage"> | string
   createdAt?: Prisma.DateTimeFilter<"TopicCoverage"> | Date | string
@@ -528,12 +528,12 @@ export type TopicCoverageCreateWithoutUserInput = {
   topic: string
   angle: string
   createdAt?: Date | string
-  session: Prisma.InterviewSessionCreateNestedOneWithoutTopicCoveragesInput
+  session?: Prisma.InterviewSessionCreateNestedOneWithoutTopicCoveragesInput
 }
 
 export type TopicCoverageUncheckedCreateWithoutUserInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   topic: string
   angle: string
   createdAt?: Date | string
@@ -599,7 +599,7 @@ export type TopicCoverageUncheckedUpdateManyWithoutSessionInput = {
 
 export type TopicCoverageCreateManyUserInput = {
   id?: string
-  sessionId: string
+  sessionId?: string | null
   topic: string
   angle: string
   createdAt?: Date | string
@@ -610,12 +610,12 @@ export type TopicCoverageUpdateWithoutUserInput = {
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
-  session?: Prisma.InterviewSessionUpdateOneRequiredWithoutTopicCoveragesNestedInput
+  session?: Prisma.InterviewSessionUpdateOneWithoutTopicCoveragesNestedInput
 }
 
 export type TopicCoverageUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -623,7 +623,7 @@ export type TopicCoverageUncheckedUpdateWithoutUserInput = {
 
 export type TopicCoverageUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
-  sessionId?: Prisma.StringFieldUpdateOperationsInput | string
+  sessionId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   topic?: Prisma.StringFieldUpdateOperationsInput | string
   angle?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -639,7 +639,7 @@ export type TopicCoverageSelect<ExtArgs extends runtime.Types.Extensions.Interna
   angle?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }, ExtArgs["result"]["topicCoverage"]>
 
 export type TopicCoverageSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -650,7 +650,7 @@ export type TopicCoverageSelectCreateManyAndReturn<ExtArgs extends runtime.Types
   angle?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }, ExtArgs["result"]["topicCoverage"]>
 
 export type TopicCoverageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
@@ -661,7 +661,7 @@ export type TopicCoverageSelectUpdateManyAndReturn<ExtArgs extends runtime.Types
   angle?: boolean
   createdAt?: boolean
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }, ExtArgs["result"]["topicCoverage"]>
 
 export type TopicCoverageSelectScalar = {
@@ -676,27 +676,27 @@ export type TopicCoverageSelectScalar = {
 export type TopicCoverageOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "sessionId" | "topic" | "angle" | "createdAt", ExtArgs["result"]["topicCoverage"]>
 export type TopicCoverageInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }
 export type TopicCoverageIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }
 export type TopicCoverageIncludeUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
-  session?: boolean | Prisma.InterviewSessionDefaultArgs<ExtArgs>
+  session?: boolean | Prisma.TopicCoverage$sessionArgs<ExtArgs>
 }
 
 export type $TopicCoveragePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "TopicCoverage"
   objects: {
     user: Prisma.$UserPayload<ExtArgs>
-    session: Prisma.$InterviewSessionPayload<ExtArgs>
+    session: Prisma.$InterviewSessionPayload<ExtArgs> | null
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: number
-    sessionId: string
+    sessionId: string | null
     topic: string
     angle: string
     createdAt: Date
@@ -1095,7 +1095,7 @@ readonly fields: TopicCoverageFieldRefs;
 export interface Prisma__TopicCoverageClient<T, Null = never, ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
   readonly [Symbol.toStringTag]: "PrismaPromise"
   user<T extends Prisma.UserDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.UserDefaultArgs<ExtArgs>>): Prisma.Prisma__UserClient<runtime.Types.Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-  session<T extends Prisma.InterviewSessionDefaultArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.InterviewSessionDefaultArgs<ExtArgs>>): Prisma.Prisma__InterviewSessionClient<runtime.Types.Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+  session<T extends Prisma.TopicCoverage$sessionArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.TopicCoverage$sessionArgs<ExtArgs>>): Prisma.Prisma__InterviewSessionClient<runtime.Types.Result.GetResult<Prisma.$InterviewSessionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1529,6 +1529,25 @@ export type TopicCoverageDeleteManyArgs<ExtArgs extends runtime.Types.Extensions
    * Limit how many TopicCoverages to delete.
    */
   limit?: number
+}
+
+/**
+ * TopicCoverage.session
+ */
+export type TopicCoverage$sessionArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the InterviewSession
+   */
+  select?: Prisma.InterviewSessionSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the InterviewSession
+   */
+  omit?: Prisma.InterviewSessionOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.InterviewSessionInclude<ExtArgs> | null
+  where?: Prisma.InterviewSessionWhereInput
 }
 
 /**

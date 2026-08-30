@@ -188,7 +188,7 @@ function FeedbackContent() {
     const confirmed = await confirmDialog({
       title: "Delete this feedback?",
       description:
-        "This interview feedback and all its review topics will be permanently deleted.",
+        "This will permanently delete this interview and its conversation. Study topics and weak answers are kept.",
     });
     if (!confirmed) return;
 
@@ -212,7 +212,11 @@ function FeedbackContent() {
   const selectedResume = selectedSession
     ? resumes.find((r) => r.id === selectedSession.resumeId)
     : null;
-  const selectedResumeName = selectedResume ? selectedResume.name : "Resume";
+  const selectedResumeName = selectedResume
+    ? selectedResume.name
+    : selectedSession?.resumeId
+      ? "Resume"
+      : "Deleted resume";
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden md:flex-row">
@@ -271,7 +275,9 @@ function FeedbackContent() {
             finishedSessions.map((sess) => {
               const isActive = resolvedSessionId === sess.id;
               const resumeObj = resumes.find((r) => r.id === sess.resumeId);
-              const resumeName = resumeObj ? resumeObj.name : "Resume";
+              const resumeName =
+                resumeObj?.name ??
+                (sess.resumeId ? "Resume" : "Deleted resume");
 
               return (
                 <div

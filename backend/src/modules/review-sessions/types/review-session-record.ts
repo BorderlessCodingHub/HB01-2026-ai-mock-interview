@@ -13,7 +13,7 @@ export type ReviewSessionTurn = {
 export type ReviewSessionItemRecord = {
   id: string;
   reviewSessionId: string;
-  reviewItemId: string;
+  reviewItemId: string | null;
   order: number;
   topic: string;
   angle: string;
@@ -23,6 +23,8 @@ export type ReviewSessionItemRecord = {
   pendingQuestion: string | null;
   suggestedStatus: ReviewItemStatus | null;
   suggestedPriority: ReviewPriority | null;
+  wentWell: string[];
+  workOn: string[];
   confirmedStatus: ReviewItemStatus | null;
   confirmedPriority: ReviewPriority | null;
   confirmedAt: Date | null;

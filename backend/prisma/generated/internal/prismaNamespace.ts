@@ -1346,8 +1346,8 @@ export const ResumeScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   name: 'name',
-  pdfUrl: 'pdfUrl',
   storageKey: 'storageKey',
+  sourceFormat: 'sourceFormat',
   structuredSummary: 'structuredSummary',
   rawText: 'rawText',
   status: 'status',
@@ -1431,6 +1431,8 @@ export const ReviewSessionItemScalarFieldEnum = {
   pendingQuestion: 'pendingQuestion',
   suggestedStatus: 'suggestedStatus',
   suggestedPriority: 'suggestedPriority',
+  wentWell: 'wentWell',
+  workOn: 'workOn',
   confirmedStatus: 'confirmedStatus',
   confirmedPriority: 'confirmedPriority',
   confirmedAt: 'confirmedAt',
@@ -1596,6 +1598,20 @@ export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'In
  * Reference to a field of type 'Int[]'
  */
 export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
+ * Reference to a field of type 'ResumeSourceFormat'
+ */
+export type EnumResumeSourceFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ResumeSourceFormat'>
+    
+
+
+/**
+ * Reference to a field of type 'ResumeSourceFormat[]'
+ */
+export type ListEnumResumeSourceFormatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ResumeSourceFormat[]'>
     
 
 

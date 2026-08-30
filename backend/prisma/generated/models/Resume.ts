@@ -38,8 +38,8 @@ export type ResumeMinAggregateOutputType = {
   id: string | null
   userId: number | null
   name: string | null
-  pdfUrl: string | null
   storageKey: string | null
+  sourceFormat: $Enums.ResumeSourceFormat | null
   rawText: string | null
   status: $Enums.ResumeStatus | null
   errorMessage: string | null
@@ -50,8 +50,8 @@ export type ResumeMaxAggregateOutputType = {
   id: string | null
   userId: number | null
   name: string | null
-  pdfUrl: string | null
   storageKey: string | null
+  sourceFormat: $Enums.ResumeSourceFormat | null
   rawText: string | null
   status: $Enums.ResumeStatus | null
   errorMessage: string | null
@@ -62,8 +62,8 @@ export type ResumeCountAggregateOutputType = {
   id: number
   userId: number
   name: number
-  pdfUrl: number
   storageKey: number
+  sourceFormat: number
   structuredSummary: number
   rawText: number
   status: number
@@ -85,8 +85,8 @@ export type ResumeMinAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  pdfUrl?: true
   storageKey?: true
+  sourceFormat?: true
   rawText?: true
   status?: true
   errorMessage?: true
@@ -97,8 +97,8 @@ export type ResumeMaxAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  pdfUrl?: true
   storageKey?: true
+  sourceFormat?: true
   rawText?: true
   status?: true
   errorMessage?: true
@@ -109,8 +109,8 @@ export type ResumeCountAggregateInputType = {
   id?: true
   userId?: true
   name?: true
-  pdfUrl?: true
   storageKey?: true
+  sourceFormat?: true
   structuredSummary?: true
   rawText?: true
   status?: true
@@ -209,8 +209,8 @@ export type ResumeGroupByOutputType = {
   id: string
   userId: number
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary: runtime.JsonValue | null
   rawText: string | null
   status: $Enums.ResumeStatus
@@ -245,8 +245,8 @@ export type ResumeWhereInput = {
   id?: Prisma.StringFilter<"Resume"> | string
   userId?: Prisma.IntFilter<"Resume"> | number
   name?: Prisma.StringFilter<"Resume"> | string
-  pdfUrl?: Prisma.StringFilter<"Resume"> | string
   storageKey?: Prisma.StringFilter<"Resume"> | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFilter<"Resume"> | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.JsonNullableFilter<"Resume">
   rawText?: Prisma.StringNullableFilter<"Resume"> | string | null
   status?: Prisma.EnumResumeStatusFilter<"Resume"> | $Enums.ResumeStatus
@@ -260,8 +260,8 @@ export type ResumeOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  pdfUrl?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  sourceFormat?: Prisma.SortOrder
   structuredSummary?: Prisma.SortOrderInput | Prisma.SortOrder
   rawText?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -278,8 +278,8 @@ export type ResumeWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.ResumeWhereInput | Prisma.ResumeWhereInput[]
   userId?: Prisma.IntFilter<"Resume"> | number
   name?: Prisma.StringFilter<"Resume"> | string
-  pdfUrl?: Prisma.StringFilter<"Resume"> | string
   storageKey?: Prisma.StringFilter<"Resume"> | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFilter<"Resume"> | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.JsonNullableFilter<"Resume">
   rawText?: Prisma.StringNullableFilter<"Resume"> | string | null
   status?: Prisma.EnumResumeStatusFilter<"Resume"> | $Enums.ResumeStatus
@@ -293,8 +293,8 @@ export type ResumeOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  pdfUrl?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  sourceFormat?: Prisma.SortOrder
   structuredSummary?: Prisma.SortOrderInput | Prisma.SortOrder
   rawText?: Prisma.SortOrderInput | Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -314,8 +314,8 @@ export type ResumeScalarWhereWithAggregatesInput = {
   id?: Prisma.StringWithAggregatesFilter<"Resume"> | string
   userId?: Prisma.IntWithAggregatesFilter<"Resume"> | number
   name?: Prisma.StringWithAggregatesFilter<"Resume"> | string
-  pdfUrl?: Prisma.StringWithAggregatesFilter<"Resume"> | string
   storageKey?: Prisma.StringWithAggregatesFilter<"Resume"> | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatWithAggregatesFilter<"Resume"> | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.JsonNullableWithAggregatesFilter<"Resume">
   rawText?: Prisma.StringNullableWithAggregatesFilter<"Resume"> | string | null
   status?: Prisma.EnumResumeStatusWithAggregatesFilter<"Resume"> | $Enums.ResumeStatus
@@ -326,8 +326,8 @@ export type ResumeScalarWhereWithAggregatesInput = {
 export type ResumeCreateInput = {
   id?: string
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -341,8 +341,8 @@ export type ResumeUncheckedCreateInput = {
   id?: string
   userId: number
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -354,8 +354,8 @@ export type ResumeUncheckedCreateInput = {
 export type ResumeUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -369,8 +369,8 @@ export type ResumeUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -383,8 +383,8 @@ export type ResumeCreateManyInput = {
   id?: string
   userId: number
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -395,8 +395,8 @@ export type ResumeCreateManyInput = {
 export type ResumeUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -408,8 +408,8 @@ export type ResumeUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -421,8 +421,8 @@ export type ResumeCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  pdfUrl?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  sourceFormat?: Prisma.SortOrder
   structuredSummary?: Prisma.SortOrder
   rawText?: Prisma.SortOrder
   status?: Prisma.SortOrder
@@ -438,8 +438,8 @@ export type ResumeMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  pdfUrl?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  sourceFormat?: Prisma.SortOrder
   rawText?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
@@ -450,8 +450,8 @@ export type ResumeMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   name?: Prisma.SortOrder
-  pdfUrl?: Prisma.SortOrder
   storageKey?: Prisma.SortOrder
+  sourceFormat?: Prisma.SortOrder
   rawText?: Prisma.SortOrder
   status?: Prisma.SortOrder
   errorMessage?: Prisma.SortOrder
@@ -462,9 +462,9 @@ export type ResumeSumOrderByAggregateInput = {
   userId?: Prisma.SortOrder
 }
 
-export type ResumeScalarRelationFilter = {
-  is?: Prisma.ResumeWhereInput
-  isNot?: Prisma.ResumeWhereInput
+export type ResumeNullableScalarRelationFilter = {
+  is?: Prisma.ResumeWhereInput | null
+  isNot?: Prisma.ResumeWhereInput | null
 }
 
 export type ResumeListRelationFilter = {
@@ -479,6 +479,10 @@ export type ResumeOrderByRelationAggregateInput = {
 
 export type StringFieldUpdateOperationsInput = {
   set?: string
+}
+
+export type EnumResumeSourceFormatFieldUpdateOperationsInput = {
+  set?: $Enums.ResumeSourceFormat
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
@@ -507,10 +511,12 @@ export type ResumeCreateNestedOneWithoutSessionsInput = {
   connect?: Prisma.ResumeWhereUniqueInput
 }
 
-export type ResumeUpdateOneRequiredWithoutSessionsNestedInput = {
+export type ResumeUpdateOneWithoutSessionsNestedInput = {
   create?: Prisma.XOR<Prisma.ResumeCreateWithoutSessionsInput, Prisma.ResumeUncheckedCreateWithoutSessionsInput>
   connectOrCreate?: Prisma.ResumeCreateOrConnectWithoutSessionsInput
   upsert?: Prisma.ResumeUpsertWithoutSessionsInput
+  disconnect?: Prisma.ResumeWhereInput | boolean
+  delete?: Prisma.ResumeWhereInput | boolean
   connect?: Prisma.ResumeWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ResumeUpdateToOneWithWhereWithoutSessionsInput, Prisma.ResumeUpdateWithoutSessionsInput>, Prisma.ResumeUncheckedUpdateWithoutSessionsInput>
 }
@@ -560,8 +566,8 @@ export type ResumeUncheckedUpdateManyWithoutUserNestedInput = {
 export type ResumeCreateWithoutSessionsInput = {
   id?: string
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -574,8 +580,8 @@ export type ResumeUncheckedCreateWithoutSessionsInput = {
   id?: string
   userId: number
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -602,8 +608,8 @@ export type ResumeUpdateToOneWithWhereWithoutSessionsInput = {
 export type ResumeUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -616,8 +622,8 @@ export type ResumeUncheckedUpdateWithoutSessionsInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.IntFieldUpdateOperationsInput | number
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -628,8 +634,8 @@ export type ResumeUncheckedUpdateWithoutSessionsInput = {
 export type ResumeCreateWithoutUserInput = {
   id?: string
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -641,8 +647,8 @@ export type ResumeCreateWithoutUserInput = {
 export type ResumeUncheckedCreateWithoutUserInput = {
   id?: string
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -684,8 +690,8 @@ export type ResumeScalarWhereInput = {
   id?: Prisma.StringFilter<"Resume"> | string
   userId?: Prisma.IntFilter<"Resume"> | number
   name?: Prisma.StringFilter<"Resume"> | string
-  pdfUrl?: Prisma.StringFilter<"Resume"> | string
   storageKey?: Prisma.StringFilter<"Resume"> | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFilter<"Resume"> | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.JsonNullableFilter<"Resume">
   rawText?: Prisma.StringNullableFilter<"Resume"> | string | null
   status?: Prisma.EnumResumeStatusFilter<"Resume"> | $Enums.ResumeStatus
@@ -696,8 +702,8 @@ export type ResumeScalarWhereInput = {
 export type ResumeCreateManyUserInput = {
   id?: string
   name: string
-  pdfUrl: string
   storageKey: string
+  sourceFormat: $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: string | null
   status?: $Enums.ResumeStatus
@@ -708,8 +714,8 @@ export type ResumeCreateManyUserInput = {
 export type ResumeUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -721,8 +727,8 @@ export type ResumeUpdateWithoutUserInput = {
 export type ResumeUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -734,8 +740,8 @@ export type ResumeUncheckedUpdateWithoutUserInput = {
 export type ResumeUncheckedUpdateManyWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   name?: Prisma.StringFieldUpdateOperationsInput | string
-  pdfUrl?: Prisma.StringFieldUpdateOperationsInput | string
   storageKey?: Prisma.StringFieldUpdateOperationsInput | string
+  sourceFormat?: Prisma.EnumResumeSourceFormatFieldUpdateOperationsInput | $Enums.ResumeSourceFormat
   structuredSummary?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   rawText?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   status?: Prisma.EnumResumeStatusFieldUpdateOperationsInput | $Enums.ResumeStatus
@@ -778,8 +784,8 @@ export type ResumeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs =
   id?: boolean
   userId?: boolean
   name?: boolean
-  pdfUrl?: boolean
   storageKey?: boolean
+  sourceFormat?: boolean
   structuredSummary?: boolean
   rawText?: boolean
   status?: boolean
@@ -794,8 +800,8 @@ export type ResumeSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extens
   id?: boolean
   userId?: boolean
   name?: boolean
-  pdfUrl?: boolean
   storageKey?: boolean
+  sourceFormat?: boolean
   structuredSummary?: boolean
   rawText?: boolean
   status?: boolean
@@ -808,8 +814,8 @@ export type ResumeSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extens
   id?: boolean
   userId?: boolean
   name?: boolean
-  pdfUrl?: boolean
   storageKey?: boolean
+  sourceFormat?: boolean
   structuredSummary?: boolean
   rawText?: boolean
   status?: boolean
@@ -822,8 +828,8 @@ export type ResumeSelectScalar = {
   id?: boolean
   userId?: boolean
   name?: boolean
-  pdfUrl?: boolean
   storageKey?: boolean
+  sourceFormat?: boolean
   structuredSummary?: boolean
   rawText?: boolean
   status?: boolean
@@ -831,7 +837,7 @@ export type ResumeSelectScalar = {
   createdAt?: boolean
 }
 
-export type ResumeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "pdfUrl" | "storageKey" | "structuredSummary" | "rawText" | "status" | "errorMessage" | "createdAt", ExtArgs["result"]["resume"]>
+export type ResumeOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "name" | "storageKey" | "sourceFormat" | "structuredSummary" | "rawText" | "status" | "errorMessage" | "createdAt", ExtArgs["result"]["resume"]>
 export type ResumeInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
   sessions?: boolean | Prisma.Resume$sessionsArgs<ExtArgs>
@@ -854,8 +860,8 @@ export type $ResumePayload<ExtArgs extends runtime.Types.Extensions.InternalArgs
     id: string
     userId: number
     name: string
-    pdfUrl: string
     storageKey: string
+    sourceFormat: $Enums.ResumeSourceFormat
     structuredSummary: runtime.JsonValue | null
     rawText: string | null
     status: $Enums.ResumeStatus
@@ -1289,8 +1295,8 @@ export interface ResumeFieldRefs {
   readonly id: Prisma.FieldRef<"Resume", 'String'>
   readonly userId: Prisma.FieldRef<"Resume", 'Int'>
   readonly name: Prisma.FieldRef<"Resume", 'String'>
-  readonly pdfUrl: Prisma.FieldRef<"Resume", 'String'>
   readonly storageKey: Prisma.FieldRef<"Resume", 'String'>
+  readonly sourceFormat: Prisma.FieldRef<"Resume", 'ResumeSourceFormat'>
   readonly structuredSummary: Prisma.FieldRef<"Resume", 'Json'>
   readonly rawText: Prisma.FieldRef<"Resume", 'String'>
   readonly status: Prisma.FieldRef<"Resume", 'ResumeStatus'>

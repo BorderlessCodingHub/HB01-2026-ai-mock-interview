@@ -16,7 +16,7 @@ async function seedSession() {
     data: {
       userId: user.id,
       name: "Test Resume",
-      pdfUrl: "https://example.com/resume.pdf",
+      sourceFormat: "pdf",
       storageKey: "resumes/feedback-test.pdf",
       status: "ready",
     },

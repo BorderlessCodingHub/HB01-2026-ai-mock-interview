@@ -60,6 +60,18 @@ describe("buildReviewSessionEvaluationPrompt", () => {
     expect(prompt).toContain("clear evidence of improvement");
   });
 
+  it("encodes recap bullet instructions", () => {
+    const prompt = buildReviewSessionEvaluationPrompt(baseParams);
+
+    expect(prompt).toContain("`wentWell`");
+    expect(prompt).toContain("`workOn`");
+    expect(prompt).toContain("never invent");
+    expect(prompt).toContain("empty array");
+    expect(prompt).toContain("no markdown");
+    expect(prompt).toContain("grounded in the turns");
+    expect(prompt).toContain("Q&A");
+  });
+
   it.each(["en", "pt"] as const)(
     "ends with the %s language block as the last section",
     (interviewLocale) => {

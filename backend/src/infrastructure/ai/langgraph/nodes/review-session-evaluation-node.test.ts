@@ -52,7 +52,12 @@ function humanMessageContentFromInvokeArg(input: unknown): string {
 
 describe("createReviewSessionEvaluationNode", () => {
   it("invokes structuredModel via ChatPromptTemplate with scoped item prompt content", async () => {
-    const evaluated = { status: "learned" as const, priority: null };
+    const evaluated = {
+      status: "learned" as const,
+      priority: null,
+      wentWell: [],
+      workOn: [],
+    };
     const invoke = vi.fn().mockResolvedValue(evaluated);
     const node = createReviewSessionEvaluationNode({
       structuredModel: RunnableLambda.from(
@@ -77,7 +82,12 @@ describe("createReviewSessionEvaluationNode", () => {
   });
 
   it("returns active suggestions with priority after schema.parse re-validation", async () => {
-    const evaluated = { status: "active" as const, priority: "low" as const };
+    const evaluated = {
+      status: "active" as const,
+      priority: "low" as const,
+      wentWell: [],
+      workOn: [],
+    };
     const invoke = vi.fn().mockResolvedValue(evaluated);
     const node = createReviewSessionEvaluationNode({
       structuredModel: RunnableLambda.from(
@@ -112,5 +122,90 @@ describe("createReviewSessionEvaluationNode", () => {
 
     await expect(node(baseInput)).rejects.toBe(failure);
     expect(failure.message).toBe("OpenAI request failed after retries");
+  });
+
+  it("defaults missing recap keys to empty arrays", async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      status: "learned",
+      priority: null,
+    });
+    const node = createReviewSessionEvaluationNode({
+      structuredModel: RunnableLambda.from(
+        invoke,
+      ) as unknown as StructuredEvaluationModel,
+    });
+
+    const result = await node(baseInput);
+
+    expect(result).toEqual({
+      status: "learned",
+      priority: null,
+      wentWell: [],
+      workOn: [],
+    });
+  });
+
+  it("clamps over-cap recap bullets instead of throwing", async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      status: "learned",
+      priority: null,
+      wentWell: ["one", "two", "three", "four", "five"],
+      workOn: ["a", "b", "c", "d", "e"],
+    });
+    const node = createReviewSessionEvaluationNode({
+      structuredModel: RunnableLambda.from(
+        invoke,
+      ) as unknown as StructuredEvaluationModel,
+    });
+
+    await expect(node(baseInput)).resolves.toEqual({
+      status: "learned",
+      priority: null,
+      wentWell: ["one", "two", "three", "four"],
+      workOn: ["a", "b", "c", "d"],
+    });
+  });
+
+  it("truncates recap bullets longer than 180 characters instead of throwing", async () => {
+    const longBullet = "x".repeat(181);
+    const invoke = vi.fn().mockResolvedValue({
+      status: "active",
+      priority: "medium",
+      wentWell: [longBullet],
+      workOn: [longBullet],
+    });
+    const node = createReviewSessionEvaluationNode({
+      structuredModel: RunnableLambda.from(
+        invoke,
+      ) as unknown as StructuredEvaluationModel,
+    });
+
+    await expect(node(baseInput)).resolves.toEqual({
+      status: "active",
+      priority: "medium",
+      wentWell: ["x".repeat(180)],
+      workOn: ["x".repeat(180)],
+    });
+  });
+
+  it("drops blank recap bullets after trim", async () => {
+    const invoke = vi.fn().mockResolvedValue({
+      status: "learned",
+      priority: null,
+      wentWell: ["kept", "   ", "", "also kept"],
+      workOn: ["  "],
+    });
+    const node = createReviewSessionEvaluationNode({
+      structuredModel: RunnableLambda.from(
+        invoke,
+      ) as unknown as StructuredEvaluationModel,
+    });
+
+    await expect(node(baseInput)).resolves.toEqual({
+      status: "learned",
+      priority: null,
+      wentWell: ["kept", "also kept"],
+      workOn: [],
+    });
   });
 });

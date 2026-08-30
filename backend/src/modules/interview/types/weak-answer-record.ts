@@ -6,7 +6,7 @@ import type {
 export type WeakAnswerRecord = {
   id: string;
   userId: number;
-  sessionId: string;
+  sessionId: string | null;
   question: string;
   userAnswer: string;
   evaluation: AnswerEvaluation;

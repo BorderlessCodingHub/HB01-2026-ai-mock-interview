@@ -17,6 +17,7 @@ export default function resumesRoutes(router: Router): void {
     asyncHandler(controller.upload),
   );
   router.get("/", asyncHandler(controller.list));
+  router.get("/:id/file", asyncHandler(controller.getFile));
   router.get("/:id", asyncHandler(controller.getById));
   router.delete("/:id", asyncHandler(controller.delete));
 }

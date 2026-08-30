@@ -8,7 +8,7 @@ export type AnswerEvaluation =
 
 export type WeakAnswer = {
   id: string;
-  sessionId: string;
+  sessionId: string | null;
   question: string;
   userAnswer: string;
   evaluation: AnswerEvaluation;

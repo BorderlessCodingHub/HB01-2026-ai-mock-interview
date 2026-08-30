@@ -50,7 +50,9 @@ function createSessionItem(
   return {
     id: overrides.id ?? "session-item-1",
     reviewSessionId: overrides.reviewSessionId ?? "review-session-id",
-    reviewItemId: overrides.reviewItemId ?? "review-item-1",
+    reviewItemId: overrides.reviewItemId !== undefined
+      ? overrides.reviewItemId
+      : "review-item-1",
     order: overrides.order ?? 0,
     topic: overrides.topic ?? "system design",
     angle: overrides.angle ?? "sharding strategies",
@@ -60,6 +62,8 @@ function createSessionItem(
     pendingQuestion: overrides.pendingQuestion ?? null,
     suggestedStatus: overrides.suggestedStatus ?? null,
     suggestedPriority: overrides.suggestedPriority ?? null,
+    wentWell: overrides.wentWell ?? [],
+    workOn: overrides.workOn ?? [],
     confirmedStatus: overrides.confirmedStatus ?? null,
     confirmedPriority: overrides.confirmedPriority ?? null,
     confirmedAt: overrides.confirmedAt ?? null,
@@ -309,6 +313,7 @@ describe("ReviewSessionsService", () => {
       expect(result).toEqual({
         id: "review-session-id",
         status: "pending_review",
+        interviewLocale: "en",
         items: [
           {
             id: "session-item-1",
@@ -321,9 +326,38 @@ describe("ReviewSessionsService", () => {
             suggestedPriority: "medium",
             confirmedStatus: null,
             confirmedPriority: null,
+            wentWell: [],
+            workOn: [],
           },
         ],
       });
+    });
+
+    it("includes interviewLocale and per-item recap on the report", async () => {
+      vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+        createReviewSessionRecord({
+          status: "pending_review",
+          interviewLocale: "pt",
+          items: [
+            createSessionItem({
+              suggestedStatus: "active",
+              suggestedPriority: "medium",
+              wentWell: ["Covered sharding trade-offs"],
+              workOn: ["Practice hash vs range partitions"],
+            }),
+          ],
+        }),
+      );
+
+      const result = await service.getById(1, "review-session-id");
+
+      expect(result.interviewLocale).toBe("pt");
+      expect(result.items[0]!.wentWell).toEqual([
+        "Covered sharding trade-offs",
+      ]);
+      expect(result.items[0]!.workOn).toEqual([
+        "Practice hash vs range partitions",
+      ]);
     });
 
     it("includes turns on each report item", async () => {
@@ -489,6 +523,8 @@ describe("ReviewSessionsService", () => {
       const itemOne = mockPendingSessionItem({
         id: "session-item-1",
         reviewItemId: "review-item-1",
+        wentWell: ["Explained consistent hashing"],
+        workOn: ["Name hotspot mitigation"],
       });
       const itemTwo = mockPendingSessionItem({
         id: "session-item-2",
@@ -497,9 +533,12 @@ describe("ReviewSessionsService", () => {
         topic: "typescript",
         suggestedStatus: "learned",
         suggestedPriority: null,
+        wentWell: ["Mapped union narrowing"],
+        workOn: [],
       });
       const updatedSession = createReviewSessionRecord({
         status: "completed",
+        interviewLocale: "pt",
         items: [
           {
             ...itemOne,
@@ -552,6 +591,56 @@ describe("ReviewSessionsService", () => {
       ).toHaveBeenCalledWith("review-session-id");
       expect(result.status).toBe("completed");
       expect(result.items).toHaveLength(2);
+      expect(result.interviewLocale).toBe("pt");
+      expect(result.items[0]!.wentWell).toEqual([
+        "Explained consistent hashing",
+      ]);
+      expect(result.items[0]!.workOn).toEqual(["Name hotspot mitigation"]);
+      expect(result.items[1]!.wentWell).toEqual(["Mapped union narrowing"]);
+      expect(result.items[1]!.workOn).toEqual([]);
+    });
+
+    it("skips list merge when the live review item was deleted", async () => {
+      const pendingItem = mockPendingSessionItem({
+        reviewItemId: null,
+      });
+      const updatedSession = createReviewSessionRecord({
+        status: "completed",
+        items: [
+          {
+            ...pendingItem,
+            confirmedStatus: "active",
+            confirmedPriority: "medium",
+            confirmedAt: baseDate,
+          },
+        ],
+      });
+
+      vi.mocked(reviewSessionRepository.findByIdAndUserId)
+        .mockResolvedValueOnce(
+          createReviewSessionRecord({
+            status: "pending_review",
+            items: [pendingItem],
+          }),
+        )
+        .mockResolvedValueOnce(updatedSession);
+      vi.mocked(
+        reviewSessionRepository.markCompletedIfAllConfirmed,
+      ).mockResolvedValue(true);
+
+      const result = await service.apply(1, "review-session-id", [
+        {
+          reviewSessionItemId: "session-item-1",
+          status: "active",
+          priority: "medium",
+        },
+      ]);
+
+      expect(
+        reviewMergeService.applyReviewSessionConfirmation,
+      ).not.toHaveBeenCalled();
+      expect(reviewSessionRepository.confirmItem).toHaveBeenCalledTimes(1);
+      expect(result.status).toBe("completed");
     });
 
     it("throws BadRequestError when not all session items are included", async () => {

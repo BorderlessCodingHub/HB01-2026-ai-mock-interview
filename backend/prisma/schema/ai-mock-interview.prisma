@@ -4,6 +4,11 @@ enum ResumeStatus {
   failed
 }
 
+enum ResumeSourceFormat {
+  pdf
+  tex
+}
+
 enum InterviewLevel {
   entry
   mid
@@ -57,16 +62,16 @@ enum AnswerEvaluation {
 }
 
 model Resume {
-  id                String       @id @default(uuid())
+  id                String             @id @default(uuid())
   userId            Int
   name              String
-  pdfUrl            String       @map("pdf_url")
-  storageKey        String       @map("storage_key")
-  structuredSummary Json?        @map("structured_summary")
-  rawText           String?      @map("raw_text") @db.Text
-  status            ResumeStatus @default(processing)
-  errorMessage      String?      @map("error_message") @db.Text
-  createdAt         DateTime     @default(now()) @map("created_at")
+  storageKey        String             @map("storage_key")
+  sourceFormat      ResumeSourceFormat @map("source_format")
+  structuredSummary Json?              @map("structured_summary")
+  rawText           String?            @map("raw_text") @db.Text
+  status            ResumeStatus       @default(processing)
+  errorMessage      String?            @map("error_message") @db.Text
+  createdAt         DateTime           @default(now()) @map("created_at")
 
   user     User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessions InterviewSession[]
@@ -80,7 +85,7 @@ model Resume {
 model InterviewSession {
   id                     String                 @id @default(uuid())
   userId                 Int
-  resumeId               String                 @map("resume_id")
+  resumeId               String?                @map("resume_id")
   level                  InterviewLevel
   jobDescription         String?                @map("job_description") @db.Text
   interviewLocale        InterviewLocale        @default(en) @map("interview_locale")
@@ -92,7 +97,7 @@ model InterviewSession {
   createdAt              DateTime               @default(now()) @map("created_at")
 
   user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  resume             Resume              @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resume             Resume?             @relation(fields: [resumeId], references: [id], onDelete: SetNull)
   messages           InterviewMessage[]
   reviewItems        ReviewItem[]
   interviewFeedbacks InterviewFeedback[]
@@ -121,7 +126,7 @@ model InterviewMessage {
 
 model ReviewItem {
   id          String           @id @default(uuid())
-  sessionId   String           @map("session_id")
+  sessionId   String?          @map("session_id")
   userId      Int              @map("user_id")
   topic       String
   angle       String
@@ -132,7 +137,7 @@ model ReviewItem {
   createdAt   DateTime         @default(now()) @map("created_at")
   updatedAt   DateTime         @updatedAt @map("updated_at")
 
-  session      InterviewSession    @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  session      InterviewSession?   @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   user         User                @relation(fields: [userId], references: [id], onDelete: Cascade)
   sessionItems ReviewSessionItem[]
 
@@ -161,7 +166,7 @@ model ReviewSession {
 model ReviewSessionItem {
   id                String            @id @default(uuid())
   reviewSessionId   String            @map("review_session_id")
-  reviewItemId      String            @map("review_item_id")
+  reviewItemId      String?           @map("review_item_id")
   order             Int
   topic             String
   angle             String
@@ -171,13 +176,15 @@ model ReviewSessionItem {
   pendingQuestion   String?           @map("pending_question")
   suggestedStatus   ReviewItemStatus? @map("suggested_status")
   suggestedPriority ReviewPriority?   @map("suggested_priority")
+  wentWell          String[]          @default([]) @map("went_well")
+  workOn            String[]          @default([]) @map("work_on")
   confirmedStatus   ReviewItemStatus? @map("confirmed_status")
   confirmedPriority ReviewPriority?   @map("confirmed_priority")
   confirmedAt       DateTime?         @map("confirmed_at")
   createdAt         DateTime          @default(now()) @map("created_at")
 
   reviewSession ReviewSession @relation(fields: [reviewSessionId], references: [id], onDelete: Cascade)
-  reviewItem    ReviewItem    @relation(fields: [reviewItemId], references: [id], onDelete: Cascade)
+  reviewItem    ReviewItem?   @relation(fields: [reviewItemId], references: [id], onDelete: SetNull)
 
   @@map("review_session_items")
   @@index([reviewSessionId])
@@ -186,7 +193,7 @@ model ReviewSessionItem {
 
 model WeakAnswer {
   id         String           @id @default(uuid())
-  sessionId  String           @map("session_id")
+  sessionId  String?          @map("session_id")
   userId     Int              @map("user_id")
   question   String           @db.Text
   userAnswer String           @map("user_answer") @db.Text
@@ -196,8 +203,8 @@ model WeakAnswer {
   priority   ReviewPriority
   createdAt  DateTime         @default(now()) @map("created_at")
 
-  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session InterviewSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("weak_answers")
   @@index([userId])
@@ -207,13 +214,13 @@ model WeakAnswer {
 model TopicCoverage {
   id        String   @id @default(uuid())
   userId    Int      @map("user_id")
-  sessionId String   @map("session_id")
+  sessionId String?  @map("session_id")
   topic     String
   angle     String
   createdAt DateTime @default(now()) @map("created_at")
 
-  user    User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  session InterviewSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  session InterviewSession? @relation(fields: [sessionId], references: [id], onDelete: SetNull)
 
   @@map("topic_coverage")
   @@index([userId, createdAt(sort: Desc)])

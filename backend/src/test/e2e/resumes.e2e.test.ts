@@ -37,7 +37,10 @@ import type { Express } from "express";
 import { createApp } from "@/config/app";
 import { env } from "@/config/env";
 import prisma from "@/infrastructure/database";
-import { ResumeStatus } from "../../../prisma/generated/client";
+import {
+  ResumeSourceFormat,
+  ResumeStatus,
+} from "../../../prisma/generated/client";
 import {
   authHeader,
   seedAuthenticatedUser,
@@ -50,6 +53,10 @@ import { truncateTables } from "@/test/containers/truncate-tables";
 
 const minimalPdfBuffer = Buffer.from(
   "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF",
+);
+
+const minimalTexBuffer = Buffer.from(
+  "\\documentclass{article}\\begin{document}Hi\\end{document}",
 );
 
 async function authenticate(): Promise<{
@@ -72,6 +79,8 @@ describe("Resumes API E2E", () => {
 
   beforeEach(async () => {
     storageMock.put.mockClear();
+    storageMock.get.mockClear();
+    storageMock.get.mockResolvedValue(Buffer.from("%PDF-1.4"));
     resumeQueueMock.add.mockClear();
     await truncateTables();
   });
@@ -96,7 +105,7 @@ describe("Resumes API E2E", () => {
     });
 
     it("returns 201 and uploads PDF with mocked storage and queue", async () => {
-      const { token } = await authenticate();
+      const { token, userId } = await authenticate();
 
       const response = await request(app)
         .post("/api/resumes/")
@@ -113,7 +122,40 @@ describe("Resumes API E2E", () => {
         status: ResumeStatus.processing,
       });
       expect(response.body.createdAt).toEqual(expect.any(String));
-      expect(storageMock.put).toHaveBeenCalledTimes(1);
+      expect(response.body).not.toHaveProperty("sourceFormat");
+      expect(storageMock.put).toHaveBeenCalledWith(
+        `users/${userId}/resumes/${response.body.id}.pdf`,
+        expect.any(Buffer),
+        "application/pdf",
+      );
+      expect(resumeQueueMock.add).toHaveBeenCalledWith({
+        resumeId: response.body.id,
+      });
+    });
+
+    it("returns 201 and uploads TeX classified by extension, ignoring MIME", async () => {
+      const { token, userId } = await authenticate();
+
+      const response = await request(app)
+        .post("/api/resumes/")
+        .set(authHeader(token))
+        .attach("file", minimalTexBuffer, {
+          filename: "cv.tex",
+          contentType: "text/plain",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body).toMatchObject({
+        id: expect.any(String),
+        name: "cv.tex",
+        status: ResumeStatus.processing,
+      });
+      expect(response.body).not.toHaveProperty("sourceFormat");
+      expect(storageMock.put).toHaveBeenCalledWith(
+        `users/${userId}/resumes/${response.body.id}.tex`,
+        expect.any(Buffer),
+        "text/x-tex",
+      );
       expect(resumeQueueMock.add).toHaveBeenCalledWith({
         resumeId: response.body.id,
       });
@@ -128,7 +170,7 @@ describe("Resumes API E2E", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: "PDF file is required",
+        message: "Resume file is required",
       });
       expect(storageMock.put).not.toHaveBeenCalled();
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
@@ -147,7 +189,7 @@ describe("Resumes API E2E", () => {
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        message: "Only PDF files are allowed",
+        message: "Only PDF and TeX files are allowed",
       });
       expect(storageMock.put).not.toHaveBeenCalled();
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
@@ -171,7 +213,7 @@ describe("Resumes API E2E", () => {
       expect(response.status).toBe(400);
       expect(response.body.message).toMatch(
         new RegExp(
-          `PDF file must be at most ${env.RESUME_MAX_BYTES} bytes|File exceeds maximum allowed size`,
+          `File must be at most ${env.RESUME_MAX_BYTES} bytes|File exceeds maximum allowed size`,
         ),
       );
       expect(storageMock.put).not.toHaveBeenCalled();
@@ -191,7 +233,7 @@ describe("Resumes API E2E", () => {
         });
 
       expect(response.status).toBe(502);
-      expect(response.body).toEqual({ message: "Failed to upload PDF" });
+      expect(response.body).toEqual({ message: "Failed to upload resume" });
       expect(resumeQueueMock.add).not.toHaveBeenCalled();
 
       const resume = await prisma.resume.findFirst({
@@ -199,7 +241,7 @@ describe("Resumes API E2E", () => {
         orderBy: { createdAt: "desc" },
       });
       expect(resume?.status).toBe(ResumeStatus.failed);
-      expect(resume?.errorMessage).toBe("Failed to upload PDF to storage");
+      expect(resume?.errorMessage).toBe("Failed to upload resume to storage");
     });
 
     it("returns 503 when resume queue is unavailable", async () => {
@@ -254,6 +296,7 @@ describe("Resumes API E2E", () => {
         status: ResumeStatus.ready,
         structuredSummary: sampleStructuredSummary,
       });
+      expect(response.body).not.toHaveProperty("sourceFormat");
     });
 
     it("returns 404 when resume does not exist", async () => {
@@ -282,6 +325,125 @@ describe("Resumes API E2E", () => {
 
       expect(response.status).toBe(404);
       expect(response.body).toEqual({ message: "Resume not found" });
+    });
+  });
+
+  describe("GET /api/resumes/:id/file", () => {
+    function requestFile(appInstance: Express, resumeId: string, token?: string) {
+      const req = request(appInstance)
+        .get(`/api/resumes/${resumeId}/file`)
+        .buffer(true)
+        .parse((res, callback) => {
+          const chunks: Buffer[] = [];
+          res.on("data", (chunk: Buffer | string) => {
+            chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+          });
+          res.on("end", () => {
+            callback(null, Buffer.concat(chunks));
+          });
+        });
+
+      return token ? req.set(authHeader(token)) : req;
+    }
+
+    it("returns 200 with the original PDF bytes for the owner", async () => {
+      const { token, userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+      const fileBuffer = minimalPdfBuffer;
+      storageMock.get.mockResolvedValue(fileBuffer);
+
+      const response = await requestFile(app, resume.id, token);
+
+      expect(response.status).toBe(200);
+      expect(Buffer.isBuffer(response.body)).toBe(true);
+      expect(response.body.equals(fileBuffer)).toBe(true);
+      expect(response.headers["content-type"]).toMatch(/application\/pdf/);
+      expect(response.headers["content-disposition"]).toContain("inline");
+      expect(response.headers["content-disposition"]).toContain("resume.pdf");
+      expect(response.headers["cache-control"]).toBe("private, no-store");
+      expect(response.headers["content-length"]).toBe(String(fileBuffer.length));
+      expect(response.body).not.toEqual(expect.objectContaining({ message: expect.any(String) }));
+      expect(storageMock.get).toHaveBeenCalledWith(resume.storageKey);
+    });
+
+    it("returns 401 without authentication", async () => {
+      const response = await request(app).get(`/api/resumes/${randomUUID()}/file`);
+
+      expect(response.status).toBe(401);
+      expect(response.body).toEqual({
+        message: "Authentication required",
+      });
+    });
+
+    it("returns 404 when resume belongs to another user without fetching storage", async () => {
+      const { userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+
+      const other = await seedAuthenticatedUser({
+        email: "other-file@example.com",
+        name: "Other File User",
+      });
+
+      const response = await request(app)
+        .get(`/api/resumes/${resume.id}/file`)
+        .set(authHeader(other.accessToken));
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "Resume not found" });
+      expect(storageMock.get).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when resume does not exist without fetching storage", async () => {
+      const { token } = await authenticate();
+
+      const response = await request(app)
+        .get(`/api/resumes/${randomUUID()}/file`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(404);
+      expect(response.body).toEqual({ message: "Resume not found" });
+      expect(storageMock.get).not.toHaveBeenCalled();
+    });
+
+    it("returns 502 when object storage get fails without leaking the storage key", async () => {
+      const { token, userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+      storageMock.get.mockRejectedValueOnce(new Error("R2 down"));
+
+      const response = await request(app)
+        .get(`/api/resumes/${resume.id}/file`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(502);
+      expect(response.body).toEqual({
+        message: "Failed to fetch resume file",
+      });
+      expect(JSON.stringify(response.body)).not.toContain(resume.storageKey);
+      expect(response.text).not.toContain(resume.storageKey);
+    });
+
+    it("returns 200 with TeX attachment headers for a TeX resume", async () => {
+      const { token, userId } = await authenticate();
+      const resumeId = randomUUID();
+      const resume = await prisma.resume.create({
+        data: {
+          id: resumeId,
+          userId,
+          name: "cv.tex",
+          storageKey: `users/${userId}/resumes/${resumeId}.tex`,
+          sourceFormat: ResumeSourceFormat.tex,
+          status: ResumeStatus.ready,
+        },
+      });
+      storageMock.get.mockResolvedValue(minimalTexBuffer);
+
+      const response = await requestFile(app, resume.id, token);
+
+      expect(response.status).toBe(200);
+      expect(response.body.equals(minimalTexBuffer)).toBe(true);
+      expect(response.headers["content-type"]).toMatch(/text\/x-tex/);
+      expect(response.headers["content-disposition"]).toContain("attachment");
+      expect(response.headers["content-disposition"]).toContain("cv.tex");
     });
   });
 
@@ -401,6 +563,27 @@ describe("Resumes API E2E", () => {
         .set(authHeader(token));
 
       expect(response.status).toBe(200);
+    });
+
+    it("returns 200 on GET /api/resumes/:id/file after 429 on upload", async () => {
+      const { token, userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+
+      await uploadResume(rateLimitedApp, token, "resume.pdf").expect(201);
+      await uploadResume(rateLimitedApp, token, "resume-2.pdf").expect(429);
+
+      const response = await request(rateLimitedApp)
+        .get(`/api/resumes/${resume.id}/file`)
+        .set(authHeader(token));
+
+      expect(response.status).toBe(200);
+
+      const stillLimited = await uploadResume(
+        rateLimitedApp,
+        token,
+        "resume-3.pdf",
+      );
+      expect(stillLimited.status).toBe(429);
     });
   });
 });

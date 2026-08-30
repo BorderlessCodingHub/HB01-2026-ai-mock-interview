@@ -10,6 +10,8 @@ export type ReportCardState = {
   suggestedStatus: ReviewItemStatus | null;
   suggestedPriority: ReviewPriority | null;
   evaluationFailed: boolean;
+  wentWell: string[];
+  workOn: string[];
   status: ReviewItemStatus;
   priority: ReviewPriority | null;
 };
@@ -31,6 +33,8 @@ export function initReportCardState(
       suggestedStatus: item.suggestedStatus,
       suggestedPriority: item.suggestedPriority,
       evaluationFailed: true,
+      wentWell: item.wentWell,
+      workOn: item.workOn,
       status: "active",
       priority: item.currentPriority,
     };
@@ -49,6 +53,8 @@ export function initReportCardState(
     suggestedStatus: item.suggestedStatus,
     suggestedPriority: item.suggestedPriority,
     evaluationFailed: false,
+    wentWell: item.wentWell,
+    workOn: item.workOn,
     status,
     priority,
   };

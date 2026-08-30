@@ -61,6 +61,10 @@ export class InterviewStreamService {
       throw new ConflictError("Interview session is finished");
     }
 
+    if (!session.resumeId) {
+      throw new NotFoundError();
+    }
+
     const resume = await this.resumeRepository.findByIdAndUserId(
       session.resumeId,
       userId,

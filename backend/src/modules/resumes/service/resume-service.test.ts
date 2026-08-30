@@ -45,8 +45,8 @@ const sampleResume = {
   id: "resume-uuid",
   userId: 42,
   name: "Jane Doe CV.pdf",
-  pdfUrl: "users/42/resumes/resume-uuid.pdf",
   storageKey: "users/42/resumes/resume-uuid.pdf",
+  sourceFormat: "pdf" as const,
   structuredSummary: null,
   rawText: null,
   status: RESUME_STATUS.processing,
@@ -101,6 +101,7 @@ describe("ResumeService", () => {
   let structuredModelInvoke: ReturnType<typeof vi.fn>;
   let extractionModel: { withStructuredOutput: ReturnType<typeof vi.fn> };
   let extractText: ReturnType<typeof vi.fn>;
+  let texToMarkdown: ReturnType<typeof vi.fn>;
   let tokenUsageService: TokenUsageService;
   let service: ResumeService;
 
@@ -136,6 +137,7 @@ describe("ResumeService", () => {
     };
 
     extractText = vi.fn().mockResolvedValue(rawText);
+    texToMarkdown = vi.fn();
 
     tokenUsageService = {
       assertWithinLimit: vi.fn().mockResolvedValue(undefined),
@@ -149,24 +151,25 @@ describe("ResumeService", () => {
       resumeQueue,
       extractionModel as never,
       extractText,
+      texToMarkdown,
       tokenUsageService,
       5_242_880,
     );
   });
 
-  describe("uploadPdf", () => {
+  describe("upload", () => {
     it("creates a processing resume, uploads to storage, and enqueues a job", async () => {
       vi.mocked(resumeRepository.createProcessing).mockResolvedValue(
         sampleResume,
       );
 
-      const result = await service.uploadPdf(42, createPdfFile());
+      const result = await service.upload(42, createPdfFile());
 
       expect(resumeRepository.createProcessing).toHaveBeenCalledWith(
         42,
         "resume.pdf",
         "users/42/resumes/resume-uuid.pdf",
-        "users/42/resumes/resume-uuid.pdf",
+        "pdf",
         "resume-uuid",
       );
       expect(objectStorage.put).toHaveBeenCalledWith(
@@ -181,29 +184,37 @@ describe("ResumeService", () => {
         status: RESUME_STATUS.processing,
         createdAt: sampleResume.createdAt,
       });
+      expect(result).not.toHaveProperty("sourceFormat");
     });
 
     it("throws BadRequestError when file is missing", async () => {
       await expect(
-        service.uploadPdf(42, undefined as unknown as UploadedFile),
-      ).rejects.toThrow(BadRequestError);
+        service.upload(42, undefined as unknown as UploadedFile),
+      ).rejects.toThrow(new BadRequestError("Resume file is required"));
 
       expect(resumeRepository.createProcessing).not.toHaveBeenCalled();
     });
 
     it("throws BadRequestError for non-PDF mimetype", async () => {
       await expect(
-        service.uploadPdf(
+        service.upload(
           42,
           createPdfFile({ mimetype: "text/plain", originalname: "notes.txt" }),
         ),
-      ).rejects.toThrow(new BadRequestError("Only PDF files are allowed"));
+      ).rejects.toThrow(
+        new BadRequestError("Only PDF and TeX files are allowed"),
+      );
+
+      expect(resumeRepository.createProcessing).not.toHaveBeenCalled();
+      expect(objectStorage.put).not.toHaveBeenCalled();
     });
 
     it("throws BadRequestError when file exceeds max bytes", async () => {
       await expect(
-        service.uploadPdf(42, createPdfFile({ size: 5_242_881 })),
-      ).rejects.toThrow(BadRequestError);
+        service.upload(42, createPdfFile({ size: 5_242_881 })),
+      ).rejects.toThrow(
+        new BadRequestError("File must be at most 5242880 bytes"),
+      );
     });
 
     it("marks resume failed and throws BadGatewayError when storage upload fails", async () => {
@@ -212,13 +223,13 @@ describe("ResumeService", () => {
       );
       vi.mocked(objectStorage.put).mockRejectedValue(new Error("R2 down"));
 
-      await expect(service.uploadPdf(42, createPdfFile())).rejects.toThrow(
-        BadGatewayError,
+      await expect(service.upload(42, createPdfFile())).rejects.toThrow(
+        new BadGatewayError("Failed to upload resume"),
       );
 
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
-        "Failed to upload PDF to storage",
+        "Failed to upload resume to storage",
       );
       expect(resumeQueue.add).not.toHaveBeenCalled();
     });
@@ -229,7 +240,7 @@ describe("ResumeService", () => {
       );
       vi.mocked(resumeQueue.add).mockRejectedValue(new Error("Redis down"));
 
-      await expect(service.uploadPdf(42, createPdfFile())).rejects.toThrow(
+      await expect(service.upload(42, createPdfFile())).rejects.toThrow(
         new ServiceUnavailableError("Resume processing is unavailable"),
       );
 
@@ -237,6 +248,62 @@ describe("ResumeService", () => {
         "resume-uuid",
         "Failed to enqueue resume processing",
       );
+    });
+
+    it("accepts .tex by extension even when MIME is application/pdf", async () => {
+      const texResume = {
+        ...sampleResume,
+        name: "cv.tex",
+        storageKey: "users/42/resumes/resume-uuid.tex",
+        sourceFormat: "tex" as const,
+      };
+      vi.mocked(resumeRepository.createProcessing).mockResolvedValue(texResume);
+
+      const result = await service.upload(
+        42,
+        createPdfFile({
+          originalname: "cv.tex",
+          mimetype: "application/pdf",
+          buffer: Buffer.from("\\documentclass{article}"),
+        }),
+      );
+
+      expect(resumeRepository.createProcessing).toHaveBeenCalledWith(
+        42,
+        "cv.tex",
+        "users/42/resumes/resume-uuid.tex",
+        "tex",
+        "resume-uuid",
+      );
+      expect(objectStorage.put).toHaveBeenCalledWith(
+        "users/42/resumes/resume-uuid.tex",
+        expect.any(Buffer),
+        "text/x-tex",
+      );
+      expect(result).toEqual({
+        id: "resume-uuid",
+        name: "cv.tex",
+        status: RESUME_STATUS.processing,
+        createdAt: sampleResume.createdAt,
+      });
+      expect(result).not.toHaveProperty("sourceFormat");
+    });
+
+    it("rejects .txt even when MIME is application/pdf", async () => {
+      await expect(
+        service.upload(
+          42,
+          createPdfFile({
+            originalname: "notes.txt",
+            mimetype: "application/pdf",
+          }),
+        ),
+      ).rejects.toThrow(
+        new BadRequestError("Only PDF and TeX files are allowed"),
+      );
+
+      expect(resumeRepository.createProcessing).not.toHaveBeenCalled();
+      expect(objectStorage.put).not.toHaveBeenCalled();
     });
   });
 
@@ -258,7 +325,6 @@ describe("ResumeService", () => {
           projects: [{ name: "Portfolio" }],
         },
         rawText: "secret text",
-        pdfUrl: "users/42/resumes/resume-uuid.pdf",
         storageKey: "users/42/resumes/resume-uuid.pdf",
         errorMessage: "should not leak",
       };
@@ -278,6 +344,7 @@ describe("ResumeService", () => {
       });
       expect(result).not.toHaveProperty("rawText");
       expect(result).not.toHaveProperty("pdfUrl");
+      expect(result).not.toHaveProperty("sourceFormat");
       expect(result).not.toHaveProperty("errorMessage");
     });
 
@@ -303,6 +370,72 @@ describe("ResumeService", () => {
       await expect(service.getResume(42, "missing-id")).rejects.toThrow(
         NotFoundError,
       );
+    });
+  });
+
+  describe("getFile", () => {
+    it("returns the file body and T1 headers for the owner", async () => {
+      const body = Buffer.from("pdf-bytes");
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(
+        sampleResume,
+      );
+
+      const result = await service.getFile(42, "resume-uuid");
+
+      expect(resumeRepository.findByIdAndUserId).toHaveBeenCalledWith(
+        "resume-uuid",
+        42,
+      );
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+      expect(objectStorage.get).toHaveBeenCalledWith(sampleResume.storageKey);
+      expect(result.body.equals(body)).toBe(true);
+      expect(result.headers.contentType).toBe("application/pdf");
+      expect(result.headers.contentDisposition).toContain("inline");
+      expect(result.headers.contentDisposition).toContain("Jane Doe CV.pdf");
+      expect(result.headers.cacheControl).toBe("private, no-store");
+      expect(result.headers.contentLength).toBe(String(body.length));
+    });
+
+    it("throws NotFoundError when resume is missing or not owned", async () => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(null);
+
+      await expect(service.getFile(42, "missing-id")).rejects.toThrow(
+        new NotFoundError("Resume not found"),
+      );
+
+      expect(objectStorage.get).not.toHaveBeenCalled();
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
+    });
+
+    it("throws BadGatewayError without leaking the storage key when get fails", async () => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(
+        sampleResume,
+      );
+      vi.mocked(objectStorage.get).mockRejectedValue(
+        new Error(`R2 missing ${sampleResume.storageKey}`),
+      );
+
+      const error = await service.getFile(42, "resume-uuid").catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect((error as Error).message).toBe("Failed to fetch resume file");
+      expect((error as Error).message).not.toContain(sampleResume.storageKey);
+    });
+
+    it.each([
+      RESUME_STATUS.processing,
+      RESUME_STATUS.failed,
+      RESUME_STATUS.ready,
+    ] as const)("returns the file when status is %s", async (status) => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+        ...sampleResume,
+        status,
+      });
+
+      const result = await service.getFile(42, "resume-uuid");
+
+      expect(result.body.equals(Buffer.from("pdf-bytes"))).toBe(true);
+      expect(resumeRepository.findById).not.toHaveBeenCalled();
     });
   });
 
@@ -374,6 +507,7 @@ describe("ResumeService", () => {
       expect(objectStorage.get).toHaveBeenCalledWith(sampleResume.storageKey);
       expect(result).toEqual({ status: "ready", resumeId: "resume-uuid" });
       expect(extractText).toHaveBeenCalledWith(Buffer.from("pdf-bytes"));
+      expect(texToMarkdown).not.toHaveBeenCalled();
       expect(extractionModel.withStructuredOutput).toHaveBeenCalledWith(
         structuredSummarySchema,
       );
@@ -442,14 +576,100 @@ describe("ResumeService", () => {
       expect(result).toEqual({
         status: "failed",
         resumeId: "resume-uuid",
-        error: "PDF contains no extractable text",
+        error: "Resume contains no extractable text",
         cause: expect.any(Error),
       });
       expect(extractionModel.withStructuredOutput).not.toHaveBeenCalled();
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
-        "PDF contains no extractable text",
+        "Resume contains no extractable text",
       );
+      expect(resumeRepository.updateReady).not.toHaveBeenCalled();
+    });
+
+    it("converts TeX to GFM, structures with LLM, and marks resume ready", async () => {
+      const texResume = {
+        ...sampleResume,
+        name: "cv.tex",
+        storageKey: "users/42/resumes/resume-uuid.tex",
+        sourceFormat: "tex" as const,
+      };
+      const gfm = "# Jane Doe";
+      vi.mocked(resumeRepository.findById).mockResolvedValue(texResume);
+      vi.mocked(objectStorage.get).mockResolvedValue(Buffer.from("tex-bytes"));
+      texToMarkdown.mockResolvedValue(gfm);
+      vi.mocked(resumeRepository.updateReady).mockResolvedValue({
+        ...texResume,
+        status: RESUME_STATUS.ready,
+        structuredSummary,
+        rawText: gfm,
+      });
+
+      const result = await service.process("resume-uuid");
+
+      expect(objectStorage.get).toHaveBeenCalledWith(texResume.storageKey);
+      expect(texToMarkdown).toHaveBeenCalledWith(Buffer.from("tex-bytes"));
+      expect(extractText).not.toHaveBeenCalled();
+      expect(result).toEqual({ status: "ready", resumeId: "resume-uuid" });
+      expect(extractionModel.withStructuredOutput).toHaveBeenCalledWith(
+        structuredSummarySchema,
+      );
+      expect(structuredModelInvoke).toHaveBeenCalledOnce();
+      const invokeArg = structuredModelInvoke.mock.calls[0]?.[0];
+      const messages =
+        invokeArg &&
+        typeof invokeArg === "object" &&
+        "toChatMessages" in invokeArg &&
+        typeof invokeArg.toChatMessages === "function"
+          ? invokeArg.toChatMessages()
+          : invokeArg &&
+              typeof invokeArg === "object" &&
+              "messages" in invokeArg
+            ? (invokeArg as { messages: HumanMessage[] }).messages
+            : (invokeArg as HumanMessage[]);
+      expect(messages[0]).toBeInstanceOf(HumanMessage);
+      const promptContent = messages[0]?.content as string;
+      expect(promptContent).toBe(buildResumeExtractionPrompt(gfm));
+      expect(promptContent).toContain(gfm);
+      expect(resumeRepository.updateReady).toHaveBeenCalledWith(
+        "resume-uuid",
+        structuredSummary,
+        gfm,
+      );
+      expect(resumeRepository.updateFailed).not.toHaveBeenCalled();
+    });
+
+    it("marks resume failed with converter message when TeX conversion throws", async () => {
+      const texResume = {
+        ...sampleResume,
+        name: "cv.tex",
+        storageKey: "users/42/resumes/resume-uuid.tex",
+        sourceFormat: "tex" as const,
+      };
+      vi.mocked(resumeRepository.findById).mockResolvedValue(texResume);
+      const conversionError = new Error("Failed to convert TeX resume");
+      conversionError.stack =
+        "Error: Failed to convert TeX resume\n    at texToMarkdown (tex-to-markdown.ts:32:11)";
+      texToMarkdown.mockRejectedValue(conversionError);
+
+      const result = await service.process("resume-uuid");
+
+      expect(result).toEqual({
+        status: "failed",
+        resumeId: "resume-uuid",
+        error: "Failed to convert TeX resume",
+        cause: conversionError,
+      });
+      expect(extractText).not.toHaveBeenCalled();
+      expect(extractionModel.withStructuredOutput).not.toHaveBeenCalled();
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "Failed to convert TeX resume",
+      );
+      const storedErrorMessage = vi.mocked(resumeRepository.updateFailed).mock
+        .calls[0]?.[1];
+      expect(storedErrorMessage).not.toContain("at texToMarkdown");
+      expect(storedErrorMessage).not.toContain("\n");
       expect(resumeRepository.updateReady).not.toHaveBeenCalled();
     });
 

@@ -6,7 +6,7 @@ import { z } from "zod";
 
 export const weakAnswerResponseSchema = z.object({
   id: z.uuid(),
-  sessionId: z.uuid(),
+  sessionId: z.uuid().nullable(),
   question: z.string(),
   userAnswer: z.string(),
   evaluation: answerEvaluationSchema,

@@ -14,8 +14,9 @@ This project uses a **three-suite Vitest pyramid**: unit (fast, no Docker), inte
 | `controller/` | **None** — covered by E2E | — | — |
 | Thin wrappers (e.g. checkpoint singleton) | **None** | — | — |
 | `prompts/`, pure LangGraph helpers | **Unit** | `*.test.ts` | `bun run test` |
+| `document-parsing/` live WASM (`texToMarkdown`) | **Bun live** (not Vitest) | `*.bun.test.ts` | `bun run test:pandoc-wasm` |
 
-Pre-commit runs **unit tests only** (plus lint) — no Docker. See [CI vs Husky vs local](#ci-vs-husky-vs-local) for the full matrix.
+Pre-commit runs **unit tests only** (plus lint) — no Docker, no `test:pandoc-wasm`. See [CI vs Husky vs local](#ci-vs-husky-vs-local) for the full matrix.
 
 ---
 
@@ -24,9 +25,10 @@ Pre-commit runs **unit tests only** (plus lint) — no Docker. See [CI vs Husky 
 | Command | Scope | Docker required |
 |---------|-------|-----------------|
 | `bun run test` | Unit tests | No |
+| `bun run test:pandoc-wasm` | Real `pandoc-wasm` TeX→GFM (not Vitest) | No |
 | `bun run test:integration` | Repository integration | Yes |
 | `bun run test:e2e` | HTTP E2E suites | Yes |
-| `bun run test:all` | All three suites | Yes |
+| `bun run test:all` | Unit + pandoc-wasm live + integration + E2E | Yes |
 | `bun run test:watch` | Unit watch mode | No |
 | `bun run test:coverage` | Unit tests + V8 coverage report | No |
 
@@ -46,9 +48,9 @@ Three contexts run checks at different depth. Use this table to see what runs wh
 
 | Context | When | Lint | Types | Unit | Integration / E2E | Docker |
 |---------|------|------|-------|------|-------------------|--------|
-| **CI — quality** ([`backend-ci.yml`](../../.github/workflows/backend-ci.yml)) | PR + push to `main` / `master` | Yes | Yes | Yes | No | No |
+| **CI — quality** ([`backend-ci.yml`](../../.github/workflows/backend-ci.yml)) | PR + push to `main` / `master` | Yes | Yes | Yes + pandoc-wasm live | No | No |
 | **CI — integration/E2E** ([`backend-integration-e2e.yml`](../../.github/workflows/backend-integration-e2e.yml)) | Push to `main` or manual | No | No | No | Yes | Yes (runner) |
-| **Husky** (`.husky/pre-commit`) | Every commit | Yes | No | Yes | No | No |
+| **Husky** (`.husky/pre-commit`) | Every commit | Yes | No | Yes (unit only; no pandoc-wasm live) | No | No |
 | **Local quick** | Before push (recommended) | Yes | Yes | Yes | No | No |
 | **Local full** | Before release or risky test changes | — | — | Yes | Yes (`test:all`) | Yes |
 
@@ -65,8 +67,9 @@ Workflow file (repo root): [`.github/workflows/backend-ci.yml`](../../.github/wo
   4. `bun run lint`
   5. `bun run check-types`
   6. `bun run test` (unit suite only)
+  7. `bun run test:pandoc-wasm` (real WASM TeX→GFM under Bun)
 
-PR **quality** CI does **not** run integration or E2E (no Docker on that job). Use `bun run test:all` locally before release (or when changing repositories, routes, or Testcontainers setup).
+PR **quality** CI does **not** run integration or E2E (no Docker on that job). It **does** run the pandoc-wasm live test after unit tests. Use `bun run test:all` locally before release (or when changing repositories, routes, or Testcontainers setup).
 
 ### GitHub Actions: Backend Integration & E2E
 
@@ -91,7 +94,7 @@ This is an **optional / main gate**: it does not run on every PR, only after mer
 bun run lint && bun run test
 ```
 
-Unit tests only — no `check-types`, no Docker. Keeps commits fast while catching lint and unit regressions.
+Unit tests only — no `check-types`, no Docker, no `test:pandoc-wasm`. Keeps commits fast while catching lint and unit regressions.
 
 ### Local gates
 
@@ -107,7 +110,7 @@ bun run lint && bun run check-types && bun run test
 bun run test:all
 ```
 
-Runs unit, then integration, then E2E in sequence. Requires Docker Desktop (or Engine).
+Runs unit, then pandoc-wasm live, then integration, then E2E in sequence. Requires Docker Desktop (or Engine).
 
 ### Coverage (local only)
 
@@ -132,6 +135,7 @@ Runs the unit suite with `@vitest/coverage-v8` and prints a text summary. An HTM
 | Suffix | Location | Notes |
 |--------|----------|-------|
 | `*.test.ts` | Colocated with source | Mocked dependencies; excluded from integration/E2E configs |
+| `*.bun.test.ts` | Colocated with source | Real `pandoc-wasm` under Bun; excluded from Vitest (`exclude` includes `**/*.bun.test.ts`) |
 | `*.integration.test.ts` | Colocated with repository | Real DB; `resetDatabase()` in `afterEach` |
 | `*.e2e.test.ts` | `src/test/e2e/` | Full app via `createApp()` + supertest |
 
@@ -164,7 +168,7 @@ describe("loginSchema", () => {
 });
 ```
 
-Unit config (`vitest.config.ts`) excludes `*.integration.test.ts` and `*.e2e.test.ts`. The `bun:` alias mocks Bun's password API for bcrypt tests.
+Unit config (`vitest.config.ts`) excludes `*.integration.test.ts`, `*.e2e.test.ts`, and `*.bun.test.ts`. The `bun:` alias mocks Bun's password API for bcrypt tests.
 
 ---
 

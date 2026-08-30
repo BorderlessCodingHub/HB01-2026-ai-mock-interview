@@ -229,7 +229,7 @@ describe("InterviewStreamService", () => {
     expect(res.writeHead).not.toHaveBeenCalled();
   });
 
-  it("throws NotFoundError when session does not belong to user", async () => {
+    it("throws NotFoundError when session does not belong to user", async () => {
     vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue(null);
 
     const res = createMockResponse();
@@ -237,6 +237,22 @@ describe("InterviewStreamService", () => {
     await expect(
       service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res),
     ).rejects.toBeInstanceOf(NotFoundError);
+  });
+
+  it("throws NotFoundError when the session resume was deleted", async () => {
+    vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValue({
+      ...baseSession,
+      resumeId: null,
+    });
+
+    const res = createMockResponse();
+
+    await expect(
+      service.streamTurn(1, baseSession.id, { content: "Hello", interviewLocale: "en" }, res),
+    ).rejects.toBeInstanceOf(NotFoundError);
+
+    expect(resumeRepository.findByIdAndUserId).not.toHaveBeenCalled();
+    expect(res.writeHead).not.toHaveBeenCalled();
   });
 
   it("streams tokens, meta, and DONE on success", async () => {

@@ -12,12 +12,15 @@ import {
   Trash2,
   Calendar,
   Star,
+  Download,
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useAuth } from "@/features/auth/session-provider";
-import { uploadResume } from "@/lib/api/resumes";
+import { downloadResumeFile } from "@/features/resumes/download-resume-file";
+import { getResumeFile, uploadResume } from "@/lib/api/resumes";
+import { isAllowedResumeFile } from "@/lib/resumes/is-allowed-resume-file";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { queryKeys } from "@/lib/query/keys";
@@ -45,6 +48,8 @@ export default function ResumesPage() {
   const [activeResumeId, setActiveResumeId] = useState<string | null>(() =>
     getStoredResumeId(),
   );
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const downloadingIdRef = useRef<string | null>(null);
 
   const { data, isLoading, error } = useResumes();
   const resumes = data?.resumes ?? [];
@@ -63,6 +68,11 @@ export default function ResumesPage() {
   async function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     if (!file) return;
+
+    if (!isAllowedResumeFile(file)) {
+      setUploadError("Only PDF and TeX files are allowed");
+      return;
+    }
 
     const token = await getAccessToken();
     if (!token) {
@@ -102,7 +112,7 @@ export default function ResumesPage() {
     const confirmed = await confirmDialog({
       title: "Delete this resume?",
       description:
-        "All related interview sessions will be lost. This cannot be undone.",
+        "This resume file will be permanently deleted. Interview sessions and study data are kept.",
     });
     if (!confirmed) return;
 
@@ -128,6 +138,24 @@ export default function ResumesPage() {
     toast.success("Active resume updated!");
   }
 
+  async function handleDownload(resume: { id: string; name: string }) {
+    if (downloadingIdRef.current) return;
+
+    downloadingIdRef.current = resume.id;
+    setDownloadingId(resume.id);
+    try {
+      await downloadResumeFile({
+        id: resume.id,
+        name: resume.name,
+        getToken: getAccessToken,
+        fetchBlob: getResumeFile,
+      });
+    } finally {
+      downloadingIdRef.current = null;
+      setDownloadingId(null);
+    }
+  }
+
   return (
     <AppShell>
       <div className="mx-auto max-w-4xl space-y-8">
@@ -145,10 +173,17 @@ export default function ResumesPage() {
             <input
               ref={fileInputRef}
               type="file"
-              accept="application/pdf"
+              accept=".pdf,.tex,application/pdf"
               className="hidden"
               onChange={(e) => {
-                setFile(e.target.files?.[0] ?? null);
+                const selected = e.target.files?.[0] ?? null;
+                if (selected && !isAllowedResumeFile(selected)) {
+                  setFile(null);
+                  if (fileInputRef.current) fileInputRef.current.value = "";
+                  setUploadError("Only PDF and TeX files are allowed");
+                  return;
+                }
+                setFile(selected);
                 setUploadError(null);
               }}
             />
@@ -168,17 +203,17 @@ export default function ResumesPage() {
                     {file.name}
                   </span>
                   <span className="text-xs text-text-base">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB · PDF selected
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
                   </span>
                 </>
               ) : (
                 <>
                   <Upload className="h-10 w-10 text-text-base" />
                   <span className="text-sm font-medium text-ink-black">
-                    Click to select a PDF resume
+                    Click to select a resume
                   </span>
                   <span className="text-xs text-text-base">
-                    Only PDF files are supported
+                    PDF and LaTeX (.tex) files are supported
                   </span>
                 </>
               )}
@@ -204,7 +239,7 @@ export default function ResumesPage() {
               )}
               {uploadState === "uploading"
                 ? "Uploading & Enqueuing…"
-                : "Upload PDF Resume"}
+                : "Upload resume"}
             </button>
           </form>
         </AppCard>
@@ -238,7 +273,7 @@ export default function ResumesPage() {
               icon={<FileText className="h-6 w-6" />}
               headingLevel={3}
               title="No resumes yet"
-              description="Upload your first PDF resume above to start practicing."
+              description="Upload your first resume above to start practicing."
             />
           )}
 
@@ -318,6 +353,21 @@ export default function ResumesPage() {
                           {isActive ? "Active" : "Set Active"}
                         </button>
                       )}
+
+                      <button
+                        type="button"
+                        disabled={downloadingId === resume.id}
+                        onClick={() => void handleDownload(resume)}
+                        className="flex size-11 cursor-pointer items-center justify-center rounded-full border border-border-hairline text-ink-black transition-colors hover:bg-mist-gray disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+                        aria-label={`Download ${resume.name}`}
+                        title="Download resume"
+                      >
+                        {downloadingId === resume.id ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4" />
+                        )}
+                      </button>
 
                       <button
                         type="button"

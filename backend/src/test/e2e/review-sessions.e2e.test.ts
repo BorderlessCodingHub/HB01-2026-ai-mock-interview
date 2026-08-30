@@ -159,6 +159,11 @@ async function seedCompletedReviewSession(
   });
 }
 
+const MOCK_EVALUATION_RECAP = {
+  wentWell: ["Named a concrete trade-off"],
+  workOn: ["Tie the answer to this angle"],
+};
+
 function configureReviewSessionAiMocks(): void {
   reviewSessionAiMock.streamQuestion.mockImplementation(
     (input: ReviewSessionQuestionInput) => {
@@ -174,12 +179,24 @@ function configureReviewSessionAiMocks(): void {
   reviewSessionAiMock.evaluate.mockImplementation(
     async (input: ReviewSessionQuestionInput) => {
       if (input.topic === "System Design") {
-        return { status: "active", priority: "medium" };
+        return {
+          status: "active",
+          priority: "medium",
+          ...MOCK_EVALUATION_RECAP,
+        };
       }
       if (input.topic === "TypeScript") {
-        return { status: "learned" };
+        return {
+          status: "learned",
+          priority: null,
+          ...MOCK_EVALUATION_RECAP,
+        };
       }
-      return { status: "active", priority: "high" };
+      return {
+        status: "active",
+        priority: "high",
+        ...MOCK_EVALUATION_RECAP,
+      };
     },
   );
 }
@@ -221,7 +238,12 @@ async function runStreamThroughEvaluation(
 
     if (index === itemCount - 1) {
       expect(response.text).toContain("event: meta");
+      expect(response.text).toContain("evaluating");
       expect(response.text).toContain("pending_review");
+      expect(response.text.indexOf("evaluating")).toBeGreaterThanOrEqual(0);
+      expect(response.text.indexOf("evaluating")).toBeLessThan(
+        response.text.indexOf("pending_review"),
+      );
       expect(response.text).toContain("data: [DONE]");
     } else {
       expect(response.text).toContain("event: token");
@@ -851,6 +873,85 @@ describe("Review Sessions API E2E", () => {
       expect(pending?.status).toBe("pending_review");
       expect(pending?.interviewLocale).toBe("pt");
     });
+
+    it("emits evaluating then pending_review with empty recap when evaluation fails", async () => {
+      const { token, userId } = await authenticate();
+      const item = await seedReviewItem(userId, {
+        topic: "System Design",
+        description: "Practice scalability trade-offs.",
+        priority: ReviewPriority.high,
+      });
+
+      const createResponse = await request(app)
+        .post("/api/review-sessions/")
+        .set(authHeader(token))
+        .send({ reviewItemIds: [item.id], interviewLocale: "en" });
+
+      const sessionId = createResponse.body.id as string;
+
+      const firstQuestion = await streamReviewSessionTurn(app, token, sessionId);
+      expect(firstQuestion.status).toBe(200);
+
+      reviewSessionAiMock.evaluate.mockRejectedValueOnce(
+        new Error("OpenAI rate limit"),
+      );
+
+      const lastResponse = await streamReviewSessionTurn(app, token, sessionId, {
+        answer: "Answer 1 for review session item.",
+      });
+
+      expect(lastResponse.status).toBe(200);
+      expect(lastResponse.text).toContain("evaluating");
+      expect(lastResponse.text).toContain("pending_review");
+      expect(lastResponse.text.indexOf("evaluating")).toBeGreaterThanOrEqual(0);
+      expect(lastResponse.text.indexOf("evaluating")).toBeLessThan(
+        lastResponse.text.indexOf("pending_review"),
+      );
+      expect(lastResponse.text).toContain("event: error");
+      expect(lastResponse.text).toContain("OpenAI rate limit");
+      expect(lastResponse.text).toContain("data: [DONE]");
+
+      const report = await request(app)
+        .get(`/api/review-sessions/${sessionId}`)
+        .set(authHeader(token));
+
+      expect(report.status).toBe(200);
+      expect(report.body.status).toBe("pending_review");
+      expect(report.body.interviewLocale).toBe("en");
+      expect(report.body.items).toEqual([
+        expect.objectContaining({
+          reviewItemId: item.id,
+          suggestedStatus: null,
+          suggestedPriority: null,
+          wentWell: [],
+          workOn: [],
+        }),
+      ]);
+
+      const applyResponse = await request(app)
+        .post(`/api/review-sessions/${sessionId}/apply`)
+        .set(authHeader(token))
+        .send({
+          items: [
+            {
+              reviewSessionItemId: report.body.items[0].id as string,
+              status: "active",
+              priority: "medium",
+            },
+          ],
+        });
+
+      expect(applyResponse.status).toBe(200);
+      expect(applyResponse.body).toMatchObject({
+        status: "completed",
+        items: expect.arrayContaining([
+          expect.objectContaining({
+            confirmedStatus: "active",
+            confirmedPriority: "medium",
+          }),
+        ]),
+      });
+    });
   });
 
   describe("POST /api/review-sessions/:id/apply", () => {
@@ -1053,6 +1154,7 @@ describe("Review Sessions API E2E", () => {
 
       expect(afterEvaluation.status).toBe(200);
       expect(afterEvaluation.body.status).toBe("pending_review");
+      expect(afterEvaluation.body.interviewLocale).toBe("en");
       expect(afterEvaluation.body.items).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -1060,18 +1162,24 @@ describe("Review Sessions API E2E", () => {
             suggestedStatus: "active",
             suggestedPriority: "medium",
             confirmedStatus: null,
+            wentWell: MOCK_EVALUATION_RECAP.wentWell,
+            workOn: MOCK_EVALUATION_RECAP.workOn,
           }),
           expect.objectContaining({
             reviewItemId: itemTwo.id,
             suggestedStatus: "learned",
             suggestedPriority: null,
             confirmedStatus: null,
+            wentWell: MOCK_EVALUATION_RECAP.wentWell,
+            workOn: MOCK_EVALUATION_RECAP.workOn,
           }),
           expect.objectContaining({
             reviewItemId: itemThree.id,
             suggestedStatus: "active",
             suggestedPriority: "high",
             confirmedStatus: null,
+            wentWell: MOCK_EVALUATION_RECAP.wentWell,
+            workOn: MOCK_EVALUATION_RECAP.workOn,
           }),
         ]),
       );

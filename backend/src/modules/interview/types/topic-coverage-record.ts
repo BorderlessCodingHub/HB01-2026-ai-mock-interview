@@ -1,7 +1,7 @@
 export type TopicCoverageRecord = {
   id: string;
   userId: number;
-  sessionId: string;
+  sessionId: string | null;
   topic: string;
   angle: string;
   createdAt: Date;
