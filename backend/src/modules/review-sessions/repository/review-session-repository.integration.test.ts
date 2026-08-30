@@ -102,6 +102,8 @@ describe("ReviewSessionRepository (integration)", () => {
       pendingQuestion: null,
       suggestedStatus: null,
       suggestedPriority: null,
+      wentWell: [],
+      workOn: [],
       confirmedStatus: null,
       confirmedPriority: null,
       confirmedAt: null,
@@ -258,6 +260,8 @@ describe("ReviewSessionRepository (integration)", () => {
     expect(found!.items[0]).toMatchObject({
       suggestedStatus: "active",
       suggestedPriority: ReviewPriority.low,
+      wentWell: [],
+      workOn: [],
     });
 
     await repository.saveSuggestions(itemId, null);
@@ -265,6 +269,78 @@ describe("ReviewSessionRepository (integration)", () => {
     expect(found!.items[0]).toMatchObject({
       suggestedStatus: null,
       suggestedPriority: null,
+      wentWell: [],
+      workOn: [],
+    });
+  });
+
+  it("saveSuggestions round-trips recap bullets", async () => {
+    const { user, first } = await seedReviewItems();
+
+    const created = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          angle: first.angle,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    const itemId = created.items[0]!.id;
+
+    await repository.saveSuggestions(itemId, {
+      status: "learned",
+      priority: null,
+      wentWell: ["Cited sharding trade-offs from the prompt"],
+      workOn: ["Did not mention replication lag"],
+    });
+
+    const found = await repository.findByIdAndUserId(created.id, user.id);
+    expect(found!.items[0]).toMatchObject({
+      suggestedStatus: "learned",
+      suggestedPriority: null,
+      wentWell: ["Cited sharding trade-offs from the prompt"],
+      workOn: ["Did not mention replication lag"],
+    });
+  });
+
+  it("saveSuggestions(null) clears recap to empty arrays", async () => {
+    const { user, first } = await seedReviewItems();
+
+    const created = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          angle: first.angle,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+    const itemId = created.items[0]!.id;
+
+    await repository.saveSuggestions(itemId, {
+      status: "active",
+      priority: ReviewPriority.high,
+      wentWell: ["Named CAP trade-offs"],
+      workOn: ["Skipped consistency models"],
+    });
+
+    await repository.saveSuggestions(itemId, null);
+
+    const found = await repository.findByIdAndUserId(created.id, user.id);
+    expect(found!.items[0]).toMatchObject({
+      suggestedStatus: null,
+      suggestedPriority: null,
+      wentWell: [],
+      workOn: [],
     });
   });
 
@@ -657,5 +733,76 @@ describe("ReviewSessionRepository (integration)", () => {
       where: { userId: user.id },
     });
     expect(remaining).toHaveLength(0);
+  });
+
+  it("keeps session item snapshots when the live review item is deleted", async () => {
+    const { user, first } = await seedReviewItems();
+    const reviewRepository = new ReviewRepository();
+
+    const created = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          angle: first.angle,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+
+    await repository.appendTurn(created.items[0]!.id, {
+      question: "How would you shard?",
+      answer: "By tenant id",
+    });
+
+    const deleted = await reviewRepository.deleteByIdAndUserId(
+      first.id,
+      user.id,
+    );
+    expect(deleted).toBe(true);
+
+    const found = await repository.findByIdAndUserId(created.id, user.id);
+    expect(found).not.toBeNull();
+    expect(found!.items).toHaveLength(1);
+    expect(found!.items[0]).toMatchObject({
+      topic: first.topic,
+      angle: first.angle,
+      reviewItemId: null,
+      turns: [{ question: "How would you shard?", answer: "By tenant id" }],
+    });
+  });
+
+  it("omits sessions whose items were all removed", async () => {
+    const { user, first } = await seedReviewItems();
+
+    const created = await repository.create(
+      user.id,
+      [
+        {
+          reviewItemId: first.id,
+          topic: first.topic,
+          angle: first.angle,
+          description: first.description,
+          currentPriority: first.priority,
+        },
+      ],
+      "en",
+    );
+
+    await prisma.reviewSessionItem.deleteMany({
+      where: { reviewSessionId: created.id },
+    });
+
+    const rows = await repository.findManyByUserId({
+      userId: user.id,
+      statuses: ["in_progress"],
+      skip: 0,
+      take: 10,
+    });
+
+    expect(rows.map((row) => row.id)).not.toContain(created.id);
   });
 });

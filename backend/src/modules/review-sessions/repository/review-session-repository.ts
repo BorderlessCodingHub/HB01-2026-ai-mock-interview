@@ -26,6 +26,8 @@ export type CreateReviewSessionItemInput = {
 export type ReviewSessionSuggestion = {
   status: ReviewItemStatus;
   priority: ReviewPriority | null;
+  wentWell?: string[];
+  workOn?: string[];
 };
 
 export type ReviewSessionConfirmation = {
@@ -56,6 +58,8 @@ function toReviewSessionItemRecord(
     pendingQuestion: row.pendingQuestion,
     suggestedStatus: row.suggestedStatus,
     suggestedPriority: row.suggestedPriority as ReviewPriority | null,
+    wentWell: row.wentWell,
+    workOn: row.workOn,
     confirmedStatus: row.confirmedStatus,
     confirmedPriority: row.confirmedPriority as ReviewPriority | null,
     confirmedAt: row.confirmedAt,
@@ -136,6 +140,7 @@ export class ReviewSessionRepository {
       where: {
         userId: params.userId,
         status: { in: params.statuses },
+        items: { some: {} },
       },
       orderBy: [
         { completedAt: { sort: "desc", nulls: "last" } },
@@ -193,6 +198,8 @@ export class ReviewSessionRepository {
       data: {
         suggestedStatus: suggestion?.status ?? null,
         suggestedPriority: suggestion?.priority ?? null,
+        wentWell: suggestion?.wentWell ?? [],
+        workOn: suggestion?.workOn ?? [],
       },
     });
   }
