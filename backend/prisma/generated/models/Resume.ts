@@ -462,9 +462,9 @@ export type ResumeSumOrderByAggregateInput = {
   userId?: Prisma.SortOrder
 }
 
-export type ResumeScalarRelationFilter = {
-  is?: Prisma.ResumeWhereInput
-  isNot?: Prisma.ResumeWhereInput
+export type ResumeNullableScalarRelationFilter = {
+  is?: Prisma.ResumeWhereInput | null
+  isNot?: Prisma.ResumeWhereInput | null
 }
 
 export type ResumeListRelationFilter = {
@@ -511,10 +511,12 @@ export type ResumeCreateNestedOneWithoutSessionsInput = {
   connect?: Prisma.ResumeWhereUniqueInput
 }
 
-export type ResumeUpdateOneRequiredWithoutSessionsNestedInput = {
+export type ResumeUpdateOneWithoutSessionsNestedInput = {
   create?: Prisma.XOR<Prisma.ResumeCreateWithoutSessionsInput, Prisma.ResumeUncheckedCreateWithoutSessionsInput>
   connectOrCreate?: Prisma.ResumeCreateOrConnectWithoutSessionsInput
   upsert?: Prisma.ResumeUpsertWithoutSessionsInput
+  disconnect?: Prisma.ResumeWhereInput | boolean
+  delete?: Prisma.ResumeWhereInput | boolean
   connect?: Prisma.ResumeWhereUniqueInput
   update?: Prisma.XOR<Prisma.XOR<Prisma.ResumeUpdateToOneWithWhereWithoutSessionsInput, Prisma.ResumeUpdateWithoutSessionsInput>, Prisma.ResumeUncheckedUpdateWithoutSessionsInput>
 }

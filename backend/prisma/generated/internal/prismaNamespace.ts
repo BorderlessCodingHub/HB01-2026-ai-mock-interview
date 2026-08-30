@@ -1431,6 +1431,8 @@ export const ReviewSessionItemScalarFieldEnum = {
   pendingQuestion: 'pendingQuestion',
   suggestedStatus: 'suggestedStatus',
   suggestedPriority: 'suggestedPriority',
+  wentWell: 'wentWell',
+  workOn: 'workOn',
   confirmedStatus: 'confirmedStatus',
   confirmedPriority: 'confirmedPriority',
   confirmedAt: 'confirmedAt',
