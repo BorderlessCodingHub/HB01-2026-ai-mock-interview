@@ -4,6 +4,8 @@
 
 Candidates complete Review Sessions on `/study`, but once a session is `completed` it disappears from the UI. The parent Study Hub feature deferred **completed session history**; practice interviews already keep a durable sidebar of past conversations. Without a persisted history of review sessions, candidates cannot revisit what they practiced or prove continuity of study work.
 
+> **Superseded (2026-08-29):** read-only recap (Went well / Work on + applied outcome) above this transcript is owned by [review-session-recap](../../../.specs/features/review-session-recap/spec.md). Q&A transcript behavior in this spec is unchanged.
+
 ## Goals
 
 - [ ] Authenticated users see a **persisted** list of `completed` Review Sessions on `/study`, similar to `/practice` history.
@@ -15,7 +17,7 @@ Candidates complete Review Sessions on `/study`, but once a session is `complete
 
 | Item | Reason |
 |------|--------|
-| Applied outcomes / report replay for `completed` sessions | Grilling: transcript-only MVP |
+| Applied outcomes / report replay for `completed` sessions | **Superseded** — [review-session-recap](../../../.specs/features/review-session-recap/spec.md) |
 | Showing `in_progress` / `pending_review` inside the history sidebar | Open sessions stay on resume banner only |
 | Editable replay, re-apply, or restarting a completed session | History is read-only |
 | Deleting history entries | Not requested |
