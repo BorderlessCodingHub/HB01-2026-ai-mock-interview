@@ -234,6 +234,10 @@ No frontend: `fetch` com Bearer. **Não** use `<a href>` direto para a origem do
 | `404` | Id desconhecido **ou** de outro usuário (mesmo texto do GET detalhe; storage **não** é lido) | `Resume not found` |
 | `502` | Falha de storage após o lookup do dono (sem `storageKey` nem erros do provedor no corpo) | `Failed to fetch resume file` |
 
+### `DELETE /api/resumes/:id` — Remover currículo
+
+Remove **somente** a linha do currículo (e o arquivo no storage). Sessões de entrevista, tópicos de estudo, respostas fracas e cobertura **não** são apagados; `interview_sessions.resume_id` fica `null`.
+
 ---
 
 ## Entrevista (`/interview`)
@@ -314,6 +318,8 @@ O backend expõe `turnCount` e `maxTurns` na listagem de sessões e no evento SS
 ```
 
 Ordenação: mais recentes primeiro (`createdAt` desc).
+
+`resumeId` é o currículo usado na criação. Após `DELETE /api/resumes/:id`, a sessão **permanece** e `resumeId` passa a `null`.
 
 ---
 
@@ -586,6 +592,7 @@ Exemplos: `GET /api/review-items`, `GET /api/review-items?status=learned`, `GET 
 
 | Campo | Tipo | Notas |
 |-------|------|-------|
+| `sessionId` | UUID ou `null` | Sessão de practice que gerou o tópico; `null` se essa entrevista foi apagada |
 | `priority` | `low` \| `medium` \| `high` | Badge / cor na UI |
 | `status` | `active` \| `learned` | Estado de aprendizado |
 | `learnedAt` | ISO 8601 ou `null` | Preenchido quando `status === "learned"` |
@@ -672,7 +679,7 @@ sequenceDiagram
     API-->>UI: SSE tokens + meta (progresso)
   end
 
-  Note over UI,API: Último stream: meta com status pending_review + report
+  Note over UI,API: Último stream: meta evaluating, depois pending_review + interviewLocale + recap
   UI->>API: GET /api/review-sessions/:id
   API-->>UI: relatório com suggested*, confirmed* e turns
 
@@ -844,30 +851,45 @@ data: [DONE]
 | `questionsPerItem` | number | N (padrão 3) |
 | `status` | `"in_progress"` | Status da sessão |
 
-#### Eventos SSE — último turno (avaliação concluída)
+#### Eventos SSE — último turno (avaliação)
 
-Após o candidato responder a última pergunta do último item, o backend avalia todos os itens em paralelo e emite:
+Após o candidato responder a última pergunta do último item, o backend avalia todos os itens **em paralelo**. **Não há `token` neste stream.** Sequência após os headers:
+
+1. Primeiro evento: `event: meta` com `{ "status": "evaluating" }` (sinal de espera; sem `report` e sem campos de progresso).
+2. Opcional: `event: error` `{ "message": "string", "reviewSessionItemId": "uuid" }` por item cuja avaliação falhou.
+3. Depois: `event: meta` com `status: "pending_review"`, `interviewLocale` e `report[]`.
+4. `[DONE]`.
 
 ```
 event: meta
+data: {"status":"evaluating"}
+
+event: meta
 data: {
   "status": "pending_review",
+  "interviewLocale": "en",
   "report": [
     {
       "reviewSessionItemId": "880e8400-e29b-41d4-a716-446655440003",
       "reviewItemId": "550e8400-e29b-41d4-a716-446655440000",
       "topic": "system design",
+      "angle": "sharding strategies",
       "currentPriority": "high",
       "suggestedStatus": "active",
-      "suggestedPriority": "medium"
+      "suggestedPriority": "medium",
+      "wentWell": ["Cited sharding trade-offs"],
+      "workOn": ["Missed replication lag"]
     },
     {
       "reviewSessionItemId": "990e8400-e29b-41d4-a716-446655440004",
       "reviewItemId": "660e8400-e29b-41d4-a716-446655440001",
       "topic": "rest apis",
+      "angle": "http semantics",
       "currentPriority": "medium",
       "suggestedStatus": "learned",
-      "suggestedPriority": null
+      "suggestedPriority": null,
+      "wentWell": ["Covered REST caching"],
+      "workOn": ["Skipped idempotency"]
     }
   ]
 }
@@ -875,16 +897,29 @@ data: {
 data: [DONE]
 ```
 
+**`meta` último turno:**
+
+| Campo | Tipo | Descrição |
+|-------|------|-----------|
+| `status` | `"evaluating"` \| `"pending_review"` | Primeiro `meta`: só `evaluating`. Após persistir a avaliação: `pending_review` |
+| `interviewLocale` | `"en"` \| `"pt"` | Só em `pending_review`. Persistido na sessão na avaliação; use para títulos do recap |
+| `report` | array | Só em `pending_review` |
+
+> Discrimine `status` **antes** de ler o restante do `meta`. `evaluating` não inclui `reviewSessionItemId`, `itemIndex`, `report` nem `interviewLocale`. Não é status persistido da sessão.
+
 | Campo do `report[]` | Tipo | Descrição |
 |---------------------|------|-----------|
 | `reviewSessionItemId` | UUID | ID para `apply` |
 | `reviewItemId` | UUID | ID do `review_items` original |
 | `topic` | string | Snapshot do tópico |
+| `angle` | string | Snapshot do ângulo |
 | `currentPriority` | `low` \| `medium` \| `high` | Prioridade no momento da criação |
 | `suggestedStatus` | `active` \| `learned` \| `null` | Sugestão da IA (`null` se avaliação falhou) |
 | `suggestedPriority` | `low` \| `medium` \| `high` \| `null` | Nova prioridade sugerida (só quando `suggestedStatus === "active"`) |
+| `wentWell` | `string[]` | Pontos fortes demonstrados neste item (0–4 bullets) |
+| `workOn` | `string[]` | Lacunas acionáveis neste item (0–4 bullets) |
 
-> Itens com avaliação falha mantêm `suggestedStatus: null`; a UI deve permitir edição livre e enviar o estado editado no bulk `apply`.
+> Itens com avaliação falha entram no `report` com `suggestedStatus` / `suggestedPriority` `null` e `wentWell` / `workOn` `[]`. A UI deve permitir edição livre e enviar o estado editado no bulk `apply`. Recap vazio com sugestão preenchida **não** é falha.
 
 #### Guardas antes de abrir o stream
 
@@ -906,7 +941,7 @@ Se o cliente abortar no meio do stream:
 
 ### `GET /api/review-sessions/:id` — Relatório
 
-Retorna o estado atual da sessão e de cada item (sugestões, confirmações e turnos Q&A persistidos).
+Retorna o estado atual da sessão e de cada item (sugestões, recap, confirmações e turnos Q&A persistidos).
 
 **Resposta (200):**
 
@@ -914,11 +949,13 @@ Retorna o estado atual da sessão e de cada item (sugestões, confirmações e t
 {
   "id": "770e8400-e29b-41d4-a716-446655440002",
   "status": "pending_review",
+  "interviewLocale": "en",
   "items": [
     {
       "id": "880e8400-e29b-41d4-a716-446655440003",
       "reviewItemId": "550e8400-e29b-41d4-a716-446655440000",
       "topic": "system design",
+      "angle": "sharding strategies",
       "currentPriority": "high",
       "turns": [
         {
@@ -929,12 +966,15 @@ Retorna o estado atual da sessão e de cada item (sugestões, confirmações e t
       "suggestedStatus": "active",
       "suggestedPriority": "medium",
       "confirmedStatus": null,
-      "confirmedPriority": null
+      "confirmedPriority": null,
+      "wentWell": ["Cited sharding trade-offs"],
+      "workOn": ["Missed replication lag"]
     },
     {
       "id": "990e8400-e29b-41d4-a716-446655440004",
       "reviewItemId": "660e8400-e29b-41d4-a716-446655440001",
       "topic": "rest apis",
+      "angle": "http semantics",
       "currentPriority": "medium",
       "turns": [
         {
@@ -945,15 +985,25 @@ Retorna o estado atual da sessão e de cada item (sugestões, confirmações e t
       "suggestedStatus": "learned",
       "suggestedPriority": null,
       "confirmedStatus": "learned",
-      "confirmedPriority": null
+      "confirmedPriority": null,
+      "wentWell": ["Covered REST caching"],
+      "workOn": ["Skipped idempotency"]
     }
   ]
 }
 ```
 
+| Campo da sessão | Tipo | Descrição |
+|-----------------|------|-----------|
+| `status` | `in_progress` \| `pending_review` \| `completed` | Status persistido |
+| `interviewLocale` | `"en"` \| `"pt"` | Locale da avaliação (persistido no último stream); use para títulos do recap. Não usar a preferência atual do usuário. |
+
 | Campo do item | Tipo | Descrição |
 |---------------|------|-----------|
+| `angle` | string | Snapshot do ângulo |
 | `turns` | `{ question: string, answer: string }[]` | Q&A já persistidos neste item (vazio se ainda não houve respostas) |
+| `wentWell` | `string[]` | Pontos fortes persistidos (vazio se avaliação falhou, sessão antiga ou sem evidência) |
+| `workOn` | `string[]` | Lacunas persistidas (mesma regra de vazio) |
 | Demais campos | — | Inalterados (`suggested*` / `confirmed*`) |
 
 **`status` da sessão:** `in_progress` | `pending_review` | `completed`
@@ -993,7 +1043,7 @@ Aplica as decisões do usuário sobre **todos** os itens do relatório em uma ú
 | `status` | `active` \| `learned` |
 | `priority` | Obrigatório quando `status === "active"`; omitido/ignorado quando `learned` |
 
-**Resposta (200):** mesmo shape de `GET /api/review-sessions/:id`, com `status: "completed"` e `confirmedStatus` / `confirmedPriority` preenchidos em cada item.
+**Resposta (200):** mesmo shape de `GET /api/review-sessions/:id` (inclui `interviewLocale` e recap `wentWell` / `workOn` em cada item), com `status: "completed"` e `confirmedStatus` / `confirmedPriority` preenchidos. O body de `apply` não inclui recap.
 
 **Comportamento:**
 
@@ -1043,6 +1093,7 @@ Além dos tópicos agregados de `review-items`, o backend também analisa **cada
 ```
 
 - `evaluation`: `incorrect` | `incomplete` | `insufficient` (respostas `satisfactory` nunca aparecem aqui).
+- `sessionId`: UUID da entrevista de origem, ou `null` se essa sessão foi apagada (o registro permanece).
 - `priority`: `low` | `medium` | `high`, definida pela IA no momento da análise.
 - Ordenação: **prioridade** (`high` → `medium` → `low`), depois `createdAt` mais recente.
 - Um registro **por resposta fraca**, não agregado por tópico (diferente de `review-items`).
@@ -1135,6 +1186,7 @@ selecting_items → creating → in_progress (Q&A SSE)
 ```
 
 - Durante `in_progress`: habilitar input apenas quando não há stream ativo.
+- No último turno: o primeiro `meta` é `{ "status": "evaluating" }` (não é status persistido); em seguida `pending_review` com `interviewLocale` e recap.
 - Em `pending_review`: desabilitar stream; exibir relatório e botão **Apply** único.
 - Após `apply`, refetch `GET /review-sessions/:id` e/ou `GET /review-items`.
 - Itens com `suggestedStatus: null` no relatório: card totalmente editável; valores editados vão no bulk `apply`.
@@ -1148,6 +1200,7 @@ selecting_items → creating → in_progress (Q&A SSE)
 | `POST` | `/api/resumes` | Upload de currículo (PDF ou TeX) |
 | `GET` | `/api/resumes/:id` | Status + `structuredSummary` se `ready` |
 | `GET` | `/api/resumes/:id/file` | Arquivo original (bytes; PDF inline / TeX attachment) |
+| `DELETE` | `/api/resumes/:id` | Remove só o currículo; sessões e estudo permanecem |
 | `POST` | `/api/interview/sessions` | Criar sessão |
 | `GET` | `/api/interview/sessions` | Listar sessões |
 | `GET` | `/api/interview/sessions/:sessionId/messages` | Histórico |
