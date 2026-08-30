@@ -101,6 +101,7 @@ export const InterviewSessionScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
   resumeId: 'resumeId',
+  resumeName: 'resumeName',
   level: 'level',
   jobDescription: 'jobDescription',
   interviewLocale: 'interviewLocale',

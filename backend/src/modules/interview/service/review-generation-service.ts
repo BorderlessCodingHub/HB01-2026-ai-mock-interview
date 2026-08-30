@@ -41,6 +41,7 @@ function toSessionSummary(session: InterviewSession): SessionSummary {
   return {
     id: session.id,
     resumeId: session.resumeId,
+    resumeName: session.resumeName,
     level: session.level,
     turnCount: session.turnCount,
     maxTurns: session.maxTurns,

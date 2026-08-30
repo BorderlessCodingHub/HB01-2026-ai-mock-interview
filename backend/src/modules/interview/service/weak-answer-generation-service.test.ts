@@ -29,6 +29,7 @@ const baseSession = {
   id: "session-1",
   userId: 1,
   resumeId: "resume-1",
+  resumeName: "resume.pdf",
   level: "entry" as const,
   jobDescription: "Backend Engineer role",
   turnCount: 5,

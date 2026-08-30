@@ -55,7 +55,9 @@ import {
 } from "@/features/auth/session-storage";
 import {
   getStoredInterviewLevel,
+  getStoredInterviewTurns,
   setStoredInterviewLevel,
+  setStoredInterviewTurns,
 } from "@/features/interview/lib/interview-setup-storage";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 
@@ -78,19 +80,26 @@ function PracticeContent() {
   const [level, setLevel] = useState<InterviewLevel>(
     () => getStoredInterviewLevel() ?? "mid",
   );
-  const [turns, setTurns] = useState<number>(10);
+  const [turns, setTurns] = useState<number>(
+    () => getStoredInterviewTurns() ?? 10,
+  );
 
   function handleLevelChange(nextLevel: InterviewLevel) {
     setLevel(nextLevel);
     setStoredInterviewLevel(nextLevel);
   }
 
+  function handleTurnsChange(nextTurns: number) {
+    setTurns(nextTurns);
+    setStoredInterviewTurns(nextTurns);
+  }
+
   function handleIncreaseTurns() {
-    setTurns((t) => Math.min(MAX_INTERVIEW_TURNS, t + 1));
+    handleTurnsChange(Math.min(MAX_INTERVIEW_TURNS, turns + 1));
   }
 
   function handleDecreaseTurns() {
-    setTurns((t) => Math.max(MIN_INTERVIEW_TURNS, t - 1));
+    handleTurnsChange(Math.max(MIN_INTERVIEW_TURNS, turns - 1));
   }
   const [jobDescription, setJobDescription] = useState("");
   const [showJobDescription, setShowJobDescription] = useState(false);
@@ -474,10 +483,7 @@ function PracticeContent() {
             ) : (
               sessions.map((sess) => {
                 const isActive = resolvedSessionId === sess.id;
-                const resumeObj = resumes.find((r) => r.id === sess.resumeId);
-                const resumeName =
-                  resumeObj?.name ??
-                  (sess.resumeId ? "Resume" : "Deleted resume");
+                const resumeName = sess.resumeName;
                 const display = toDisplayTurns(sess.turnCount, sess.maxTurns);
 
                 return (

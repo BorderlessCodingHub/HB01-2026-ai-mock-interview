@@ -13,6 +13,7 @@ import type { InterviewSession } from "../../../../prisma/generated/client";
 export type SessionSummary = {
   id: string;
   resumeId: string | null;
+  resumeName: string;
   level: InterviewLevel;
   turnCount: number;
   maxTurns: number;
@@ -81,6 +82,7 @@ export class SessionService {
           {
             userId,
             resumeId: input.resumeId,
+            resumeName: resume.name,
             level: input.level,
             interviewLocale: input.interviewLocale,
             jobDescription: input.jobDescription
@@ -170,6 +172,7 @@ export class SessionService {
     return {
       id: session.id,
       resumeId: session.resumeId,
+      resumeName: session.resumeName,
       level: session.level,
       turnCount: session.turnCount,
       maxTurns: session.maxTurns,

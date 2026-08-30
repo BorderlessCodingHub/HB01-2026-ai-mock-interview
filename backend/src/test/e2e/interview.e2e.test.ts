@@ -335,6 +335,7 @@ describe("Interview API E2E", () => {
       expect(response.body.sessions[0]).toMatchObject({
         id: createResponse.body.id,
         resumeId: resume.id,
+        resumeName: resume.name,
         level: "mid",
         turnCount: 0,
         maxTurns: 6,
@@ -344,6 +345,42 @@ describe("Interview API E2E", () => {
         reviewGenerationError: null,
       });
       expect(response.body.sessions[0].createdAt).toEqual(expect.any(String));
+    });
+
+    it("keeps resumeName after the resume is deleted", async () => {
+      const { token, userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+      const resumeName = resume.name;
+
+      const createResponse = await request(app)
+        .post("/api/interview/sessions")
+        .set(authHeader(token))
+        .send(
+          buildCreateSessionPayload({
+            resumeId: resume.id,
+            level: "mid",
+          }),
+        );
+
+      expect(createResponse.status).toBe(201);
+
+      const deleteResponse = await request(app)
+        .delete(`/api/resumes/${resume.id}`)
+        .set(authHeader(token));
+
+      expect(deleteResponse.status).toBe(204);
+
+      const response = await request(app)
+        .get("/api/interview/sessions")
+        .set(authHeader(token));
+
+      expect(response.status).toBe(200);
+      expect(response.body.sessions).toHaveLength(1);
+      expect(response.body.sessions[0]).toMatchObject({
+        id: createResponse.body.id,
+        resumeId: null,
+        resumeName,
+      });
     });
   });
 
@@ -372,6 +409,7 @@ describe("Interview API E2E", () => {
       expect(response.body).toMatchObject({
         id: sessionId,
         resumeId: resume.id,
+        resumeName: resume.name,
         level: "entry",
         turnCount: 0,
         maxTurns: 6,
