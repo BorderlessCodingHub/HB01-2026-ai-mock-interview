@@ -47,6 +47,7 @@ const baseSession = {
   id: "session-1",
   userId: 1,
   resumeId: "resume-1",
+  resumeName: "resume.pdf",
   level: "entry" as const,
   jobDescription: "Backend Engineer role",
   interviewLocale: "en" as const,
@@ -443,6 +444,7 @@ describe("ReviewGenerationService", () => {
       expect(result).toEqual({
         id: baseSession.id,
         resumeId: baseSession.resumeId,
+        resumeName: baseSession.resumeName,
         level: baseSession.level,
         turnCount: baseSession.turnCount,
         maxTurns: baseSession.maxTurns,

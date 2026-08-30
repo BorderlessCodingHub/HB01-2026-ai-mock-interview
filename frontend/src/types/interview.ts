@@ -21,6 +21,7 @@ export type ReviewGenerationStatus = "idle" | "pending" | "ready" | "failed";
 export type SessionSummary = {
   id: string;
   resumeId: string | null;
+  resumeName: string;
   level: InterviewLevel;
   turnCount: number;
   maxTurns: number;

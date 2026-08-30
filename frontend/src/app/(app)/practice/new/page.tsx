@@ -11,7 +11,9 @@ import { getStoredResumeId } from "@/features/auth/session-storage";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import {
   getStoredInterviewLevel,
+  getStoredInterviewTurns,
   setStoredInterviewLevel,
+  setStoredInterviewTurns,
 } from "@/features/interview/lib/interview-setup-storage";
 import { SessionQuotaHint } from "@/features/session-quota/session-quota-hint";
 import { interviewApi } from "@/lib/api/interview";
@@ -54,7 +56,9 @@ function NewSessionContent() {
   const [level, setLevel] = useState<InterviewLevel>(
     () => getStoredInterviewLevel() ?? "mid",
   );
-  const [turns, setTurns] = useState<number>(MAX_INTERVIEW_TURNS);
+  const [turns, setTurns] = useState<number>(
+    () => getStoredInterviewTurns() ?? MAX_INTERVIEW_TURNS,
+  );
   const [jobDescription, setJobDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -71,6 +75,11 @@ function NewSessionContent() {
   function handleLevelChange(nextLevel: InterviewLevel) {
     setLevel(nextLevel);
     setStoredInterviewLevel(nextLevel);
+  }
+
+  function handleTurnsChange(nextTurns: number) {
+    setTurns(nextTurns);
+    setStoredInterviewTurns(nextTurns);
   }
 
   async function handleStart() {
@@ -198,7 +207,7 @@ function NewSessionContent() {
             <button
               key={option}
               type="button"
-              onClick={() => setTurns(option)}
+              onClick={() => handleTurnsChange(option)}
               aria-pressed={turns === option}
               className={cn(
                 "min-h-11 min-w-11 cursor-pointer rounded-full border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
