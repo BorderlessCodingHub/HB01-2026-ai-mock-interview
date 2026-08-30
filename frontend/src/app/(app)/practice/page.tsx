@@ -474,10 +474,7 @@ function PracticeContent() {
             ) : (
               sessions.map((sess) => {
                 const isActive = resolvedSessionId === sess.id;
-                const resumeObj = resumes.find((r) => r.id === sess.resumeId);
-                const resumeName =
-                  resumeObj?.name ??
-                  (sess.resumeId ? "Resume" : "Deleted resume");
+                const resumeName = sess.resumeName;
                 const display = toDisplayTurns(sess.turnCount, sess.maxTurns);
 
                 return (
