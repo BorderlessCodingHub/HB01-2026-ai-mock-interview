@@ -12,9 +12,8 @@ import {
 
 import { AppShell } from "@/features/dashboard/app-shell";
 import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
-import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { useSessions } from "@/lib/query/hooks/use-sessions";
-import { useResumes } from "@/lib/query/hooks/use-resumes";
+import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { useSessionMessages } from "@/lib/query/hooks/use-session-messages";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
 import { ReviewItemsGrid } from "@/features/dashboard/review-items-grid";
@@ -175,9 +174,6 @@ function FeedbackContent() {
   const resolvedSessionId =
     selectedSessionId ?? finishedSessions[0]?.id ?? null;
 
-  const { data: resumesData, error: resumesError } = useResumes();
-  const resumes = resumesData?.resumes ?? [];
-
   const deletingId = deleteSession.isPending
     ? (deleteSession.variables ?? null)
     : null;
@@ -209,14 +205,7 @@ function FeedbackContent() {
   const selectedSession = finishedSessions.find(
     (s) => s.id === resolvedSessionId,
   );
-  const selectedResume = selectedSession
-    ? resumes.find((r) => r.id === selectedSession.resumeId)
-    : null;
-  const selectedResumeName = selectedResume
-    ? selectedResume.name
-    : selectedSession?.resumeId
-      ? "Resume"
-      : "Deleted resume";
+  const selectedResumeName = selectedSession?.resumeName ?? "Resume";
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden md:flex-row">
@@ -228,16 +217,6 @@ function FeedbackContent() {
         </div>
 
         <div className="flex-1 divide-y divide-border-hairline overflow-y-auto">
-          {resumesError && !isLoadingSessions && !sessionsError && (
-            <p
-              className="px-4 py-3 text-xs text-(--status-critical-foreground)"
-              role="alert"
-            >
-              {resumesError instanceof Error
-                ? resumesError.message
-                : "Failed to load CV names"}
-            </p>
-          )}
           {isLoadingSessions ? (
             <div
               className="flex items-center justify-center gap-2 py-12 text-xs text-text-base"
@@ -274,10 +253,7 @@ function FeedbackContent() {
           ) : (
             finishedSessions.map((sess) => {
               const isActive = resolvedSessionId === sess.id;
-              const resumeObj = resumes.find((r) => r.id === sess.resumeId);
-              const resumeName =
-                resumeObj?.name ??
-                (sess.resumeId ? "Resume" : "Deleted resume");
+              const resumeName = sess.resumeName;
 
               return (
                 <div

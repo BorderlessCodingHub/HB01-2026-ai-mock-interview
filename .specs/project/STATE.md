@@ -1,11 +1,19 @@
 # State
 
-**Last Updated:** 2026-08-29  
-**Current Work:** Quick task 004 (SetNull owned FKs) — automated tests passed; local migration applied. Review session recap — automated validation complete (UAT pending). Resume file preview — Validate found UI regression (`87784e9` Download-only vs spec View/PDF-tab). Resume TeX upload — automated validation complete (commits deferred).
+**Last Updated:** 2026-08-30  
+**Current Work:** Quick task 005 (snapshot resume name on interview) — automated tests passed; local migration applied. Quick task 006 (404 → dashboard + persist practice turns) — done; commit deferred. Review session recap — automated validation complete (UAT pending). Resume file preview — Validate found UI regression (`87784e9` Download-only vs spec View/PDF-tab). Resume TeX upload — automated validation complete (commits deferred).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-024: Snapshot resume name on InterviewSession (2026-08-30)
+
+**Decision:** Copy `Resume.name` onto `InterviewSession.resumeName` at session create. Practice history and feedback labels read `resumeName`, not the live resume row. `resumeId` stays optional with SetNull (AD-023).
+**Reason:** After a CV delete, `/practice` and `/feedback` showed "Deleted resume" because they joined the resumes list by `resumeId`.
+**Trade-off:** Renaming a CV later does not update labels on past interviews. Orphan sessions whose CV was already gone backfill as `"Resume"`.
+**Impact:** Prisma migration `20260830140000_interview_session_resume_name`; session list/get JSON includes `resumeName`.
+**Spec:** `.specs/quick/005-snapshot-resume-name/TASK.md`
 
 ### AD-023: SetNull on resume/session FKs owned by the user (2026-08-29)
 
@@ -199,6 +207,8 @@ _None_
 
 | # | Description | Date | Commit | Status |
 | --- | ---------- | ---- | ------ | ------ |
+| 006 | 404 CTA → `/dashboard`; persist practice turn count in localStorage | 2026-08-30 | — | ✅ Done (commit deferred; `/practice` UAT login-blocked) |
+| 005 | Snapshot CV name on interview session so resume delete does not relabel history | 2026-08-30 | 4d7d285 / 1a8e26f | ✅ Done |
 | 004 | SetNull owned FKs: resume delete and practice delete keep study data | 2026-08-29 | — | ✅ Done (commit deferred; browser UAT login-blocked) |
 | 003 | Practice tester v1: resumes `Link` + send label + compact feedback | 2026-08-29 | — | ✅ Done (UAT login-blocked) |
 

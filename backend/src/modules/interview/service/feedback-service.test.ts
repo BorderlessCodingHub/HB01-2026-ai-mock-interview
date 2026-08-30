@@ -83,6 +83,7 @@ describe("FeedbackService", () => {
       id: sessionId,
       userId,
       resumeId: "resume-id",
+      resumeName: "resume.pdf",
       level: "entry",
       jobDescription: null,
       interviewLocale: "en",

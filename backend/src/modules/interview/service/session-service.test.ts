@@ -90,6 +90,7 @@ function createStubSessionRepository() {
         id: sessionId,
         userId: params.userId,
         resumeId: params.resumeId,
+        resumeName: params.resumeName,
         level: params.level,
         jobDescription: params.jobDescription ?? null,
         interviewLocale: params.interviewLocale,
@@ -107,6 +108,7 @@ function createStubSessionRepository() {
       id,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry" as const,
       jobDescription: null,
       interviewLocale: "en" as const,
@@ -121,6 +123,7 @@ function createStubSessionRepository() {
       id,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry" as const,
       jobDescription: null,
       interviewLocale,
@@ -330,6 +333,7 @@ describe("SessionService", () => {
       expect(sessionRepository.createCalls[0]).toEqual({
         userId,
         resumeId,
+        resumeName: "resume.pdf",
         level,
         interviewLocale: "pt",
         jobDescription: null,
@@ -369,11 +373,43 @@ describe("SessionService", () => {
     expect(sessionRepository.createCalls[0]).toEqual({
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "mid",
       interviewLocale: "en",
       jobDescription: null,
       maxTurns: 6,
     });
+  });
+
+  it("snapshots the resume name onto the created session", async () => {
+    resumeRepository = createStubResumeRepository({
+      id: resumeId,
+      userId,
+      name: "Guilherme CV.pdf",
+      sourceFormat: "pdf" as const,
+      storageKey: "resumes/1/file.pdf",
+      structuredSummary: validStructuredSummary,
+      rawText: "text",
+      status: "ready",
+      errorMessage: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+    service = new SessionService(
+      sessionRepository,
+      messageRepository,
+      resumeRepository,
+      quotaService as unknown as SessionQuotaService,
+    );
+
+    await service.createSession(userId, {
+      resumeId,
+      level: "entry",
+      interviewLocale: "en",
+      turns: 5,
+    });
+
+    expect(sessionRepository.createCalls[0]?.resumeName).toBe("Guilherme CV.pdf");
   });
 
   it("sanitizes and stores an optional job description", async () => {
@@ -418,6 +454,7 @@ describe("SessionService", () => {
         id: sessionId,
         userId,
         resumeId,
+        resumeName: "resume.pdf",
         level: "mid",
         jobDescription: "Backend role",
         interviewLocale: "en",
@@ -437,6 +474,7 @@ describe("SessionService", () => {
         {
           id: sessionId,
           resumeId,
+          resumeName: "resume.pdf",
           level: "mid",
           turnCount: 2,
           maxTurns: 7,
@@ -459,6 +497,7 @@ describe("SessionService", () => {
       id,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "mid" as const,
       jobDescription: null,
       interviewLocale: "en" as const,
@@ -489,6 +528,7 @@ describe("SessionService", () => {
       id: sessionId,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "mid",
       jobDescription: "Backend role",
       interviewLocale: "en",
@@ -505,6 +545,7 @@ describe("SessionService", () => {
     expect(result).toEqual({
       id: sessionId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "mid",
       turnCount: 2,
       maxTurns: 7,
@@ -530,6 +571,7 @@ describe("SessionService", () => {
       id: sessionId,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry",
       jobDescription: null,
       interviewLocale: "en",
@@ -585,6 +627,7 @@ describe("SessionService", () => {
       id: sessionId,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry",
       jobDescription: null,
       interviewLocale: "en",
@@ -736,6 +779,7 @@ describe("SessionService", () => {
     expect(sessionRepository.createCalls[0]).toEqual({
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry",
       interviewLocale: "en",
       jobDescription: null,
@@ -788,6 +832,7 @@ describe("SessionService", () => {
       id: sessionId,
       userId,
       resumeId,
+      resumeName: "resume.pdf",
       level: "entry",
       jobDescription: null,
       interviewLocale: "en",

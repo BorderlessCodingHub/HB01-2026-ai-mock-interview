@@ -86,6 +86,7 @@ model InterviewSession {
   id                     String                 @id @default(uuid())
   userId                 Int
   resumeId               String?                @map("resume_id")
+  resumeName             String                 @default("Resume") @map("resume_name")
   level                  InterviewLevel
   jobDescription         String?                @map("job_description") @db.Text
   interviewLocale        InterviewLocale        @default(en) @map("interview_locale")
