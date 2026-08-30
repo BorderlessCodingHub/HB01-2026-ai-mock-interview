@@ -30,12 +30,14 @@ const SSE_HEADERS = {
 
 type ReviewSessionStreamReportItem = {
   reviewSessionItemId: string;
-  reviewItemId: string;
+  reviewItemId: string | null;
   topic: string;
   angle: string;
   currentPriority: string;
   suggestedStatus: string | null;
   suggestedPriority: string | null;
+  wentWell: string[];
+  workOn: string[];
 };
 
 function findCurrentItem(
@@ -60,6 +62,8 @@ function toReportItem(item: ReviewSessionItemRecord): ReviewSessionStreamReportI
     currentPriority: item.currentPriority,
     suggestedStatus: item.suggestedStatus,
     suggestedPriority: item.suggestedPriority,
+    wentWell: item.wentWell ?? [],
+    workOn: item.workOn ?? [],
   };
 }
 
@@ -314,6 +318,11 @@ export class ReviewSessionStreamService {
       return;
     }
 
+    writeEvent(res, "meta", { status: "evaluating" });
+    if (isAborted()) {
+      return;
+    }
+
     const results = await Promise.allSettled(
       session.items.map(async (item) => {
         const usageCapture = createUsageCaptureCallback();
@@ -419,6 +428,7 @@ export class ReviewSessionStreamService {
 
     writeEvent(res, "meta", {
       status: "pending_review",
+      interviewLocale,
       report: updatedSession.items.map(toReportItem),
     });
     writeDone(res);
@@ -428,12 +438,19 @@ export class ReviewSessionStreamService {
 
 function toSuggestion(evaluation: ReviewSessionEvaluationOutput) {
   if (evaluation.status === "learned") {
-    return { status: evaluation.status, priority: null };
+    return {
+      status: evaluation.status,
+      priority: null,
+      wentWell: evaluation.wentWell ?? [],
+      workOn: evaluation.workOn ?? [],
+    };
   }
 
   return {
     status: evaluation.status,
     priority: evaluation.priority,
+    wentWell: evaluation.wentWell ?? [],
+    workOn: evaluation.workOn ?? [],
   };
 }
 
