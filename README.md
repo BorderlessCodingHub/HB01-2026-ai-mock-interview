@@ -4,7 +4,7 @@ Hone is an AI-powered mock interview platform that helps software engineers prep
 
 ## Live 
 
-**[Hone AI](https://hone-navy.vercel.app/)**
+**[Hone AI](https://labs.borderlesscoding.com/ai-mock-interview)**
 
 ## Problem
 
