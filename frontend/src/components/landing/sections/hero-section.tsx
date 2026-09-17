@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 
+import BackedByBadge from "@/components/landing/backed-by-badge";
 import LandingCta from "@/components/landing/get-started-button";
 
 function ScoreArtifact({ className }: { className?: string }) {
@@ -259,6 +260,10 @@ export default function HeroSection() {
 
         {/* Center editorial copy */}
         <div className="relative z-10 mx-auto flex min-h-[calc(100svh-10rem)] max-w-[720px] flex-col items-center justify-center text-center">
+          <div data-hero-copy>
+            <BackedByBadge className="mb-5" />
+          </div>
+
           <p
             data-hero-copy
             className="instrument-serif mb-5 text-[44px] font-normal leading-[1.1] tracking-[-0.66px] text-ink-black md:text-[64px] md:tracking-[-0.96px]"
