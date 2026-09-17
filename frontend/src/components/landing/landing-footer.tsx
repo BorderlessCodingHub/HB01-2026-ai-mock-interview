@@ -4,7 +4,6 @@ import { Github, Twitter, Linkedin } from "lucide-react";
 const LINKS = {
   Product: [
     { label: "Features", href: "/#features" },
-    { label: "Pricing", href: "/#pricing" },
     { label: "Demo", href: "/#demo" },
   ],
   Company: [

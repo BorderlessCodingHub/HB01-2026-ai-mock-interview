@@ -8,7 +8,6 @@ import LandingCta from "@/components/landing/get-started-button";
 
 const NAV_LINKS = [
   { label: "Product", href: "/#features" },
-  { label: "Pricing", href: "/#pricing" },
   { label: "How it works", href: "/#demo" },
 ];
 
