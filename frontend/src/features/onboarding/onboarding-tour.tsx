@@ -3,6 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { EVENTS, Joyride, STATUS, type EventData, type Step } from "react-joyride";
 
+import { trackEvent } from "@/lib/analytics";
+
 import { useOnboardingTutorial } from "./use-onboarding-tutorial";
 
 const STEPS: Step[] = [
@@ -77,6 +79,12 @@ export function OnboardingTour({ ready }: { ready: boolean }) {
       data.type === EVENTS.TOUR_END &&
       (data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED)
     ) {
+      trackEvent({
+        name: "onboarding_completed",
+        properties: {
+          status: data.status === STATUS.FINISHED ? "finished" : "skipped",
+        },
+      });
       complete();
       if (manualTrigger) {
         router.replace("/dashboard", { scroll: false });

@@ -38,6 +38,7 @@ import { useSessionQuota } from "@/lib/query/hooks/use-session-quota";
 import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { interviewApi } from "@/lib/api/interview";
 import { ApiError } from "@/lib/api/client";
+import { trackEvent } from "@/lib/analytics";
 import { InterviewChat } from "@/features/interview/interview-chat";
 import { SessionQuotaHint } from "@/features/session-quota/session-quota-hint";
 import { toDisplayTurns } from "@/features/interview/lib/display-turns";
@@ -201,6 +202,7 @@ function PracticeContent() {
 
       const { id } = await interviewApi.createSession(body, token);
 
+      trackEvent({ name: "practice_session_started", properties: { level, turns } });
       toast.success("New interview session created!");
 
       // Invalidate query to refresh list

@@ -8,6 +8,7 @@ import { AuthSessionProvider } from "@/features/auth/session-provider";
 import { queryClient } from "@/lib/query-client";
 
 import { ConfirmDialogProvider } from "./confirm-dialog-provider";
+import { PostHogProvider } from "./posthog-provider";
 import { ThemeProvider } from "./theme-provider";
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -25,10 +26,12 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <AuthSessionProvider>
-          <ConfirmDialogProvider>
-            {children}
-            <ReactQueryDevtools />
-          </ConfirmDialogProvider>
+          <PostHogProvider>
+            <ConfirmDialogProvider>
+              {children}
+              <ReactQueryDevtools />
+            </ConfirmDialogProvider>
+          </PostHogProvider>
         </AuthSessionProvider>
       </QueryClientProvider>
       <Toaster richColors />
