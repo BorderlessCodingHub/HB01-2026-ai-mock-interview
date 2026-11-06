@@ -2,6 +2,11 @@
 
 | Priority | Feature | Status | Spec |
 |----------|---------|--------|------|
+| P0 | Signed Hone access tokens (AD-025) | PR #5 open — deploy needs `HONE_JWT_SECRET` | [ANALYSIS §3.1](./ANALYSIS-2026-11-06.md) |
+| P0 | Level-up: gates, deploy, observability, docs (streams A + C) | Planned (2026-11-06) | [LEVEL-UP-PLAN.md](./LEVEL-UP-PLAN.md) |
+| P1 | Progressive Web App v1 (install + offline history) | Specified (2026-11-06) | [spec.md](../features/pwa/spec.md) · [design.md](../features/pwa/design.md) · [tasks.md](../features/pwa/tasks.md) |
+| P1 | Interview UI — answering experience | Planned (2026-11-06) | [LEVEL-UP-PLAN.md](./LEVEL-UP-PLAN.md) · LABS01-194…198 |
+| P3 | Web Push notifications (PWA v2) | Not planned for Q4 | — |
 | P1 | Borderless Auth via better-auth | Implemented (E2E needs Docker + real Borderless JWT secret) | [spec.md](../features/borderless-better-auth/spec.md) · [context.md](../features/borderless-better-auth/context.md) · [design.md](../features/borderless-better-auth/design.md) · [tasks.md](../features/borderless-better-auth/tasks.md) |
 | P1 | AI Mock Interview (backend) | Specified | [spec.md](../features/ai-mock-interview/spec.md) |
 | P1 | Interview Locale (EN \| PT) | Done | [spec.md](../features/interview-locale/spec.md) · [design.md](../features/interview-locale/design.md) · [tasks.md](../features/interview-locale/tasks.md) |
@@ -18,24 +23,33 @@
 
 ## Milestones
 
+> Checkboxes refreshed 2026-11-06 against production (`labs.borderlesscoding.com/ai-mock-interview`). Resume preview UI remains open.
+
+### M5 — Level-up & PWA (Q4 2026)
+- [ ] Signed Hone tokens in production (AD-025)
+- [ ] Every PR gated: FE + BE CI, integration/E2E, Playwright smoke
+- [ ] Sentry in production
+- [ ] PWA v1 acceptance passes on Android + iPhone
+- [ ] Interview UI: question-first layout, room to answer, voice answers shipped
+
 ### M1 — Backend Foundation
-- [ ] Data model (resumes, interview_sessions, interview_messages, review_items)
-- [ ] R2 + BullMQ + Redis infrastructure
-- [ ] Resume upload & async processing (PDF + TeX — see resume-tex-upload)
+- [x] Data model (resumes, interview_sessions, interview_messages, review_items)
+- [x] R2 + BullMQ + Redis infrastructure
+- [x] Resume upload & async processing (PDF + TeX — see resume-tex-upload)
 
 ### M2 — Interview Core
-- [ ] LangGraph agent with PostgresSaver
-- [ ] SSE streaming endpoint
-- [ ] Turn control & session finalization
+- [x] LangGraph agent with PostgresSaver
+- [x] SSE streaming endpoint
+- [x] Turn control & session finalization
 
 ### M3 — Feedback Loop
-- [ ] Review generator node
-- [ ] Review items API (read/list)
-- [ ] Conversation history endpoints
-- [ ] Async review-items generation via BullMQ (decouple from final SSE turn)
+- [x] Review generator node
+- [x] Review items API (read/list)
+- [x] Conversation history endpoints
+- [x] Async review-items generation via BullMQ (decouple from final SSE turn)
 
 ### M4 — Frontend Integration
-- [ ] Resume upload UI
+- [x] Resume upload UI
 - [ ] Resume original-file preview (`GET /api/resumes/:id/file` + View on `/resumes`) — API done; UI Needs Fix (Download-only)
-- [ ] Interview chat with SSE
-- [ ] Review list display
+- [x] Interview chat with SSE
+- [x] Review list display
