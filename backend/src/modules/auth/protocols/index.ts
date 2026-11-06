@@ -13,3 +13,4 @@ export type {
   SignTokenOptions,
   TokenPayload,
 } from "./token-service";
+export type { ITokenRevocationStore } from "./token-revocation-store";

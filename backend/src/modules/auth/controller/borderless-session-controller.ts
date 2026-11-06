@@ -1,5 +1,12 @@
 import type { IBorderlessSessionStore } from "@/modules/auth/protocols/borderless-session-store";
+import { createHash, timingSafeEqual } from "node:crypto";
 import type { Request, Response } from "express";
+
+function secretsMatch(provided: string, expected: string): boolean {
+  const a = createHash("sha256").update(provided).digest();
+  const b = createHash("sha256").update(expected).digest();
+  return timingSafeEqual(a, b);
+}
 
 const DEFAULT_TTL_SECONDS = 60 * 60 * 24; // 24h
 
@@ -22,11 +29,15 @@ export class BorderlessSessionController {
   constructor(
     private readonly sessionStore: IBorderlessSessionStore,
     private readonly internalSecret: string,
+    /** Revokes a Hone JWT (jti) or deletes an opaque session. */
+    private readonly invalidateToken: (token: string) => Promise<void> = (
+      token,
+    ) => sessionStore.delete(token),
   ) {}
 
   register = async (req: Request, res: Response): Promise<void> => {
     const secret = req.headers["x-internal-auth-secret"];
-    if (typeof secret !== "string" || secret !== this.internalSecret) {
+    if (typeof secret !== "string" || !secretsMatch(secret, this.internalSecret)) {
       res.status(401).json({ message: "Unauthorized" });
       return;
     }
@@ -86,7 +97,7 @@ export class BorderlessSessionController {
       return;
     }
 
-    await this.sessionStore.delete(token);
+    await this.invalidateToken(token);
     res.status(204).send();
   };
 }
