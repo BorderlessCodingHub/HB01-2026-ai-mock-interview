@@ -7,6 +7,14 @@
 
 ## Recent Decisions (Last 60 days)
 
+### AD-025: Hone signs its own access token; the API verifies every JWT (2026-11-06)
+
+**Decision:** After Borderless accepts the email and password, the Next.js server mints a Hone access token: HS256, `iss=hone-web`, `aud=hone-api`, `sub`=Borderless user id, `jti`, `exp` ≤ 24h, signed with `HONE_JWT_SECRET`. The Borderless token stays on the server. Express verifies signature, algorithm, issuer, audience and `exp`; logout revokes the `jti` in Redis until expiry. The unsigned `jwt.decode` parser is deleted. Legacy opaque tokens still resolve through Redis.
+**Reason:** The API decoded JWT claims without checking the signature. Anyone could forge a token for any user id and read their resumes, or invent ids to bypass token caps and session quotas.
+**Trade-off:** `HONE_JWT_SECRET` must be set to the same value on Railway (API + worker) and Cloudflare (frontend) before deploy. Every signed-in user is logged out once (old Bearer → 401 → `/login`). No per-user revoke-all.
+**Impact:** Backend `HoneAccessTokenVerifier`, `RedisTokenRevocationStore`, env schema; frontend `auth.ts` mints with `jose`; `SERVER_INTERNAL_URL` / `INTERNAL_AUTH_SYNC_SECRET` no longer used by the frontend.
+**Analysis:** `.specs/project/ANALYSIS-2026-11-06.md` §3.1
+
 ### AD-024: Snapshot resume name on InterviewSession (2026-08-30)
 
 **Decision:** Copy `Resume.name` onto `InterviewSession.resumeName` at session create. Practice history and feedback labels read `resumeName`, not the live resume row. `resumeId` stays optional with SetNull (AD-023).
