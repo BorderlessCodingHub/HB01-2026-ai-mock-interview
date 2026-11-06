@@ -57,6 +57,9 @@ export const serverEnv = {
   // Server-to-server sync of Borderless opaque access tokens (Next.js → Express)
   INTERNAL_AUTH_SYNC_SECRET: z.string().min(32),
 
+  // HS256 key for Hone access tokens; the Next.js server signs with the same value
+  HONE_JWT_SECRET: z.string().min(32),
+
   // Résumé uploads
   RESUME_MAX_BYTES: z.coerce.number().default(5_242_880), // 5 MB
 

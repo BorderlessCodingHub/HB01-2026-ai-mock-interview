@@ -4,7 +4,7 @@ import type {
   IBorderlessTokenVerifier,
 } from "@/modules/auth/protocols/borderless-token-verifier";
 
-import { BorderlessAccessTokenParser } from "./borderless-access-token-parser";
+import type { HoneAccessTokenVerifier } from "./hone-access-token-verifier";
 
 /** JWT = three base64url segments separated by dots. */
 function looksLikeJwt(token: string): boolean {
@@ -13,17 +13,18 @@ function looksLikeJwt(token: string): boolean {
 }
 
 /**
- * Resolves Borderless Bearer tokens that are either JWTs (decode claims)
- * or opaque session tokens registered in Redis at login.
+ * Resolves Bearer tokens that are either Hone-signed JWTs (signature verified)
+ * or legacy opaque session tokens registered in Redis at login.
  */
 export class BorderlessTokenResolver implements IBorderlessTokenVerifier {
-  private readonly jwtParser = new BorderlessAccessTokenParser();
-
-  constructor(private readonly sessionStore: IBorderlessSessionStore) {}
+  constructor(
+    private readonly sessionStore: IBorderlessSessionStore,
+    private readonly jwtVerifier: HoneAccessTokenVerifier,
+  ) {}
 
   async verify(token: string): Promise<BorderlessTokenClaims> {
     if (looksLikeJwt(token)) {
-      return this.jwtParser.verify(token);
+      return this.jwtVerifier.verify(token);
     }
 
     const session = await this.sessionStore.get(token);
@@ -36,5 +37,14 @@ export class BorderlessTokenResolver implements IBorderlessTokenVerifier {
       email: session.email,
       name: session.name,
     };
+  }
+
+  async invalidate(token: string): Promise<void> {
+    if (looksLikeJwt(token)) {
+      await this.jwtVerifier.revoke(token);
+      return;
+    }
+
+    await this.sessionStore.delete(token);
   }
 }

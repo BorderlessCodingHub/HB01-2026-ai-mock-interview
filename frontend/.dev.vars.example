@@ -7,5 +7,4 @@ NEXTJS_ENV=development
 # BORDERLESS_API_BASE=https://api.borderlesscoding.com
 # NEXT_PUBLIC_BORDERLESS_SIGNUP_URL=https://platform.borderlesscoding.com/sign-up
 # NEXT_PUBLIC_SERVER_URL=https://hone-ai-mock-interview-borderless-production.up.railway.app
-# SERVER_INTERNAL_URL=https://hone-ai-mock-interview-borderless-production.up.railway.app
-# INTERNAL_AUTH_SYNC_SECRET=<secret, must match backend>
+# HONE_JWT_SECRET=<secret, min 32 chars, must match backend>
