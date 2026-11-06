@@ -56,7 +56,7 @@ Local infra: Postgres + Redis via `bun run db:start` (Docker) or Homebrew servic
 - Linear issue first. Branch `LABS01-XX-slug`. One issue = one branch = one PR, 200–500 LOC, squash to `main`.
 - Commit/PR titles carry the issue key. PR body has **Why / What / Deploy / Verification**.
 - **No deferred commits.** Done = merged + `STATE.md` updated (last merge, new AD if any) + ROADMAP status.
-- Gates: A review (scope, structure) · B UI check for frontend changes (Playwright once A3 lands) · C `scripts/agent-verify.sh` once A7 lands. Docs-only: A only.
+- Gates: code review + a UI check for frontend changes (Playwright once A3 lands). Docs-only: review only.
 - New env var → `.env.example` + PR **Deploy** section. Frontend server vars must be set in Cloudflare **build** variables *and* runtime (t3-env validates during `next build`).
 
 ### Specs

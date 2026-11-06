@@ -38,7 +38,6 @@ Key consequence of the shared origin: Cache Storage, IndexedDB and localStorage 
 | `src/lib/query-client.ts` | edit | `persistQueryClient` with `idb-keyval` storage, allow-list, `maxAge`, `buster` |
 | `src/features/auth/session-provider.tsx` | edit | Logout / 401 → `clearHoneOfflineData()` |
 | `src/features/interview/interview-chat.tsx`, `src/features/study/review-session-chat.tsx` | edit | Disabled-offline states; "Connection lost → Resume"; stream-activity marks |
-| `src/components/providers/posthog-provider.tsx` | edit | `display_mode` super property |
 
 ## 3. Service worker (`public/sw.js`)
 
@@ -73,7 +72,7 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   const url = new URL(req.url);
   if (req.method !== "GET") return;                                   // PWA-14
-  if (url.origin !== self.location.origin) return;                    // Railway API, PostHog, fonts CDN
+  if (url.origin !== self.location.origin) return;                    // Railway API and any third-party origin
   if (!url.pathname.startsWith(SCOPE)) return;
   if (url.pathname.startsWith(`${SCOPE}api/`)) return;                // better-auth
   if (req.headers.get("accept")?.includes("text/event-stream")) return;
