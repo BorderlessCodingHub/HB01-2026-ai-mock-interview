@@ -13,8 +13,8 @@ import { Mic } from "lucide-react";
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
 
 const basePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
-const SRC = `${basePath}/landing/videos/online-interview.mp4`;
-const POSTER = `${basePath}/landing/videos/online-interview.webp`;
+const SRC = `${basePath}/landing/videos/ai-listening.mp4`;
+const POSTER = `${basePath}/landing/videos/ai-listening.webp`;
 
 const COPY = {
   en: {
@@ -30,7 +30,7 @@ const COPY = {
     transcript:
       "I'd start by splitting the read path behind a cache, then…",
     label:
-      "A software engineer answering a mock interview question out loud on a video call",
+      "A software engineer answering out loud while the Hone AI interviewer listens on his laptop",
   },
   pt: {
     eyebrow: "Speech to text",
@@ -45,7 +45,7 @@ const COPY = {
     transcript:
       "Eu começaria separando a leitura atrás de um cache, depois…",
     label:
-      "Um engenheiro de software respondendo em voz alta uma entrevista simulada por chamada de vídeo",
+      "Um engenheiro de software respondendo em voz alta enquanto a IA do Hone escuta no notebook",
   },
 } as const;
 
@@ -102,8 +102,8 @@ export default function VoiceAnswerSection() {
   const scale = useTransform(progress, [0, 1], [0.86, 1]);
   const radius = useTransform(progress, [0, 1], [48, 28]);
   const y = useTransform(progress, [0, 1], [70, 0]);
-  const textY = useTransform(progress, [0.35, 1], [28, 0]);
-  const textOpacity = useTransform(progress, [0.35, 0.9], [0, 1]);
+  const textY = useTransform(progress, [0, 0.6], [28, 0]);
+  const textOpacity = useTransform(progress, [0, 0.5], [0, 1]);
   const cardY = useTransform(progress, [0.55, 1], [24, 0]);
   const cardOpacity = useTransform(progress, [0.55, 1], [0, 1]);
 
@@ -127,13 +127,26 @@ export default function VoiceAnswerSection() {
   }, [prefersReducedMotion]);
 
   const media =
-    "block aspect-[4/5] h-auto w-full object-cover object-[72%_center] sm:aspect-video";
+    "block aspect-[4/5] h-auto w-full object-cover object-[62%_center] sm:aspect-video";
 
   return (
     <section
       id="speech-to-text"
       className="scroll-mt-24 overflow-x-clip bg-paper-white px-4 pb-[var(--section-gap)] md:px-10"
     >
+      <motion.div
+        className="mx-auto mb-10 grid max-w-[1280px] gap-4 px-2 md:mb-14 md:grid-cols-[1fr_1fr] md:items-end md:gap-12"
+        style={
+          prefersReducedMotion ? undefined : { y: textY, opacity: textOpacity }
+        }
+      >
+        <div>
+          <p className="landing-eyebrow">{copy.eyebrow}</p>
+          <h2 className="landing-heading mt-3">{copy.title}</h2>
+        </div>
+        <p className="landing-body max-w-xl">{copy.body}</p>
+      </motion.div>
+
       <motion.div
         ref={frameRef}
         className="relative mx-auto max-w-[1280px] overflow-hidden bg-mist-gray shadow-[0_30px_80px_-40px_rgba(10,92,74,0.35)] will-change-transform"
@@ -169,27 +182,9 @@ export default function VoiceAnswerSection() {
           />
         )}
 
-        <div
-          className="pointer-events-none absolute inset-y-0 left-0 hidden w-[58%] bg-gradient-to-r from-white/85 via-white/50 to-transparent sm:block"
-          aria-hidden
-        />
-
-        <motion.div
-          className="absolute inset-y-0 left-0 hidden max-w-[46%] flex-col justify-center p-10 sm:flex lg:p-16"
-          style={
-            prefersReducedMotion ? undefined : { y: textY, opacity: textOpacity }
-          }
-        >
-          <p className="landing-eyebrow">{copy.eyebrow}</p>
-          <h2 className="landing-heading mt-3">{copy.title}</h2>
-          <p className="landing-body mt-4 hidden max-w-md lg:block">
-            {copy.body}
-          </p>
-        </motion.div>
-
         {/* Live transcript card over the clip */}
         <motion.div
-          className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-auto sm:right-6"
+          className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto"
           style={
             prefersReducedMotion
               ? undefined
@@ -203,24 +198,17 @@ export default function VoiceAnswerSection() {
         </motion.div>
       </motion.div>
 
-      <div className="mx-auto mt-8 max-w-[1280px] px-2 md:mt-10">
-        <div className="sm:hidden">
-          <p className="landing-eyebrow">{copy.eyebrow}</p>
-          <h2 className="landing-heading mt-3">{copy.title}</h2>
-        </div>
-        <p className="landing-body mt-4 sm:mt-0 lg:hidden">{copy.body}</p>
-        <ul className="manrope mt-6 grid gap-3 text-[15px] text-ink-black sm:grid-cols-3 lg:mt-0">
-          {copy.points.map((point) => (
-            <li key={point} className="flex items-start gap-2.5">
-              <span
-                className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-jade"
-                aria-hidden
-              />
-              {point}
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ul className="manrope mx-auto mt-8 grid max-w-[1280px] gap-3 px-2 text-[15px] text-ink-black sm:grid-cols-3 md:mt-10">
+        {copy.points.map((point) => (
+          <li key={point} className="flex items-start gap-2.5">
+            <span
+              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-jade"
+              aria-hidden
+            />
+            {point}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
