@@ -23,7 +23,7 @@ export class MessageRepository {
   async listBySessionId(sessionId: string): Promise<InterviewMessage[]> {
     return prisma.interviewMessage.findMany({
       where: { sessionId },
-      orderBy: { createdAt: "asc" },
+      orderBy: [{ createdAt: "asc" }, { id: "asc" }],
     });
   }
 
@@ -33,22 +33,28 @@ export class MessageRepository {
     options: { limit: number; beforeMessageId?: string },
   ): Promise<InterviewMessage[]> {
     const { limit, beforeMessageId } = options;
-    let cursorCreatedAt: Date | undefined;
+    const cursor = beforeMessageId
+      ? await prisma.interviewMessage.findFirst({
+          where: { id: beforeMessageId, sessionId },
+          select: { id: true, createdAt: true },
+        })
+      : null;
 
-    if (beforeMessageId) {
-      const cursorMessage = await prisma.interviewMessage.findFirst({
-        where: { id: beforeMessageId, sessionId },
-        select: { createdAt: true },
-      });
-      cursorCreatedAt = cursorMessage?.createdAt;
-    }
-
+    // Keyset on (createdAt, id): messages written in the same millisecond
+    // share createdAt, so id breaks the tie instead of dropping them.
     return prisma.interviewMessage.findMany({
       where: {
         sessionId,
-        ...(cursorCreatedAt ? { createdAt: { lt: cursorCreatedAt } } : {}),
+        ...(cursor
+          ? {
+              OR: [
+                { createdAt: { lt: cursor.createdAt } },
+                { createdAt: cursor.createdAt, id: { lt: cursor.id } },
+              ],
+            }
+          : {}),
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit,
     });
   }

@@ -34,6 +34,17 @@ async function seedSession() {
   return { user, resume, session };
 }
 
+/** Spreads createdAt one second apart so ordering never depends on clock resolution. */
+async function stampInOrder(ids: string[]) {
+  const base = Date.now() - ids.length * 1000;
+  for (const [index, id] of ids.entries()) {
+    await prisma.interviewMessage.update({
+      where: { id },
+      data: { createdAt: new Date(base + index * 1000) },
+    });
+  }
+}
+
 describe("MessageRepository (integration)", () => {
   const repository = new MessageRepository();
 
@@ -82,16 +93,17 @@ describe("MessageRepository (integration)", () => {
       },
     });
 
-    await repository.createHuman({
+    const first = await repository.createHuman({
       sessionId: session.id,
       userId: user.id,
       content: "First",
     });
-    await repository.createAi({
+    const second = await repository.createAi({
       sessionId: session.id,
       userId: user.id,
       content: "Second",
     });
+    await stampInOrder([first.id, second.id]);
     await repository.createHuman({
       sessionId: otherSession.id,
       userId: user.id,
@@ -119,7 +131,7 @@ describe("MessageRepository (integration)", () => {
   it("listPageBySessionId returns the most recent messages, newest first", async () => {
     const { user, session } = await seedSession();
 
-    await repository.createHuman({
+    const first = await repository.createHuman({
       sessionId: session.id,
       userId: user.id,
       content: "First",
@@ -134,6 +146,7 @@ describe("MessageRepository (integration)", () => {
       userId: user.id,
       content: "Third",
     });
+    await stampInOrder([first.id, second.id, third.id]);
 
     const page = await repository.listPageBySessionId(session.id, {
       limit: 2,
@@ -174,6 +187,7 @@ describe("MessageRepository (integration)", () => {
       userId: user.id,
       content: "Other session",
     });
+    await stampInOrder([first.id, second.id, third.id]);
 
     const page = await repository.listPageBySessionId(session.id, {
       limit: 10,
@@ -182,6 +196,32 @@ describe("MessageRepository (integration)", () => {
 
     expect(page.map((m) => m.id)).toEqual([second.id, first.id]);
     expect(page.some((m) => m.id === otherSessionMessage.id)).toBe(false);
+  });
+
+  it("listPageBySessionId keeps older messages that share the cursor createdAt", async () => {
+    const { user, session } = await seedSession();
+    const createdAt = new Date("2026-01-01T00:00:00.000Z");
+    const messages = await Promise.all(
+      ["A", "B", "C"].map((content) =>
+        prisma.interviewMessage.create({
+          data: {
+            sessionId: session.id,
+            userId: user.id,
+            role: MessageRole.human,
+            content,
+            createdAt,
+          },
+        }),
+      ),
+    );
+    const [lowest, middle, highest] = messages.map((m) => m.id).sort();
+
+    const page = await repository.listPageBySessionId(session.id, {
+      limit: 10,
+      beforeMessageId: highest!,
+    });
+
+    expect(page.map((m) => m.id)).toEqual([middle, lowest]);
   });
 
   it("listPageBySessionId returns an empty array once every older message has been paged through", async () => {
