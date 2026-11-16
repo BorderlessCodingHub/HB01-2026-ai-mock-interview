@@ -4,7 +4,6 @@ import HeroSection from "@/components/landing/sections/hero-section";
 import FeaturesSection from "@/components/landing/sections/features-section";
 import ChatDemoSection from "@/components/landing/sections/chat-demo-section";
 import DashboardSection from "@/components/landing/sections/dashboard-section";
-import QuoteSection from "@/components/landing/sections/quote-section";
 import InstallAppSection from "@/components/landing/sections/install-app-section";
 import StoryVideoSection from "@/components/landing/sections/story-video-section";
 import VoiceAnswerSection from "@/components/landing/sections/voice-answer-section";
@@ -15,14 +14,13 @@ export default function LandingSections() {
   return (
     <>
       <HeroSection />
-      <DashboardSection />
       {/* Disabled for now: "Trusted by engineers at" logos strip. */}
       {/* <SocialProofSection /> */}
       <StoryVideoSection />
       <FeaturesSection />
-      <VoiceAnswerSection />
       <ChatDemoSection />
-      <QuoteSection />
+      <VoiceAnswerSection />
+      <DashboardSection />
       <InstallAppSection />
       <LandingCtaSection />
       <LandingFooter />
