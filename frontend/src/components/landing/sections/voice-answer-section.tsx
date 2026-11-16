@@ -126,89 +126,84 @@ export default function VoiceAnswerSection() {
     return () => observer.disconnect();
   }, [prefersReducedMotion]);
 
-  const media =
-    "block aspect-[4/5] h-auto w-full object-cover object-[62%_center] sm:aspect-video";
+  const textStyle = prefersReducedMotion
+    ? undefined
+    : { y: textY, opacity: textOpacity };
+  const frameStyle = prefersReducedMotion
+    ? { borderRadius: 24 }
+    : { scale, y, borderRadius: radius };
+  const cardStyle = prefersReducedMotion
+    ? undefined
+    : { y: cardY, opacity: cardOpacity };
+
+  const renderFrame = (aspect: string, cardClass: string) => (
+    <motion.div
+      ref={frameRef}
+      className="relative overflow-hidden bg-mist-gray shadow-[0_30px_80px_-40px_rgba(10,92,74,0.35)] will-change-transform"
+      style={frameStyle}
+    >
+      {prefersReducedMotion ? (
+        // eslint-disable-next-line @next/next/no-img-element -- static poster from /public
+        <img
+          src={POSTER}
+          alt={copy.label}
+          width={1280}
+          height={720}
+          className={`block h-auto w-full object-cover object-[62%_center] ${aspect}`}
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          src={isNear ? SRC : undefined}
+          poster={POSTER}
+          width={1280}
+          height={720}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-label={copy.label}
+          className={`block h-auto w-full object-cover object-[62%_center] ${aspect}`}
+        />
+      )}
+      <motion.div className={`absolute ${cardClass}`} style={cardStyle}>
+        <TranscriptCard
+          listening={copy.listening}
+          transcript={copy.transcript}
+        />
+      </motion.div>
+    </motion.div>
+  );
+
+  const bullets = (className: string) => (
+    <ul className={`manrope grid gap-3 text-[15px] text-ink-black ${className}`}>
+      {copy.points.map((point) => (
+        <li key={point} className="flex items-start gap-2.5">
+          <span
+            className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-jade"
+            aria-hidden
+          />
+          {point}
+        </li>
+      ))}
+    </ul>
+  );
+
+  const sectionClass =
+    "scroll-mt-24 overflow-x-clip bg-paper-white px-4 pb-[var(--section-gap)] md:px-10";
 
   return (
-    <section
-      id="speech-to-text"
-      className="scroll-mt-24 overflow-x-clip bg-paper-white px-4 pb-[var(--section-gap)] md:px-10"
-    >
-      <motion.div
-        className="mx-auto mb-10 grid max-w-[1280px] gap-4 px-2 md:mb-14 md:grid-cols-[1fr_1fr] md:items-end md:gap-12"
-        style={
-          prefersReducedMotion ? undefined : { y: textY, opacity: textOpacity }
-        }
-      >
-        <div>
+    <section id="speech-to-text" className={sectionClass}>
+      <div className="mx-auto grid max-w-[1200px] items-center gap-10 px-2 md:grid-cols-[1fr_1.15fr] md:gap-14 lg:gap-20">
+        <motion.div style={textStyle}>
           <p className="landing-eyebrow">{copy.eyebrow}</p>
           <h2 className="landing-heading mt-3">{copy.title}</h2>
-        </div>
-        <p className="landing-body max-w-xl">{copy.body}</p>
-      </motion.div>
-
-      <motion.div
-        ref={frameRef}
-        className="relative mx-auto max-w-[1280px] overflow-hidden bg-mist-gray shadow-[0_30px_80px_-40px_rgba(10,92,74,0.35)] will-change-transform"
-        style={
-          prefersReducedMotion
-            ? { borderRadius: 28 }
-            : { scale, y, borderRadius: radius }
-        }
-      >
-        {prefersReducedMotion ? (
-          // eslint-disable-next-line @next/next/no-img-element -- static poster from /public
-          <img
-            src={POSTER}
-            alt={copy.label}
-            width={1280}
-            height={720}
-            className={media}
-          />
-        ) : (
-          <video
-            ref={videoRef}
-            src={isNear ? SRC : undefined}
-            poster={POSTER}
-            width={1280}
-            height={720}
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            aria-label={copy.label}
-            className={media}
-          />
-        )}
-
-        {/* Live transcript card over the clip */}
-        <motion.div
-          className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-auto"
-          style={
-            prefersReducedMotion
-              ? undefined
-              : { y: cardY, opacity: cardOpacity }
-          }
-        >
-          <TranscriptCard
-            listening={copy.listening}
-            transcript={copy.transcript}
-          />
+          <p className="landing-body mt-4">{copy.body}</p>
+          {bullets("mt-6")}
         </motion.div>
-      </motion.div>
-
-      <ul className="manrope mx-auto mt-8 grid max-w-[1280px] gap-3 px-2 text-[15px] text-ink-black sm:grid-cols-3 md:mt-10">
-        {copy.points.map((point) => (
-          <li key={point} className="flex items-start gap-2.5">
-            <span
-              className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-jade"
-              aria-hidden
-            />
-            {point}
-          </li>
-        ))}
-      </ul>
+        {renderFrame("aspect-[4/3]", "bottom-4 left-4 right-4 sm:right-auto")}
+      </div>
     </section>
   );
 }
