@@ -191,7 +191,7 @@ export default function VoiceAnswerSection() {
   );
 
   const sectionClass =
-    "scroll-mt-24 overflow-x-clip bg-paper-white px-4 pb-[var(--section-gap)] md:px-10";
+    "scroll-mt-24 overflow-x-clip bg-paper-white px-4 py-[var(--section-gap)] md:px-10";
 
   return (
     <section id="speech-to-text" className={sectionClass}>
