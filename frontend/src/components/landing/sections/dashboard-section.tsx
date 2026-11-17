@@ -15,6 +15,7 @@ import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
 
 const basePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
 const IMAGE_SRC = `${basePath}/landing/images/dashboard-lifestyle.webp`;
+const SCREEN_SRC = `${basePath}/landing/images/dashboard-screen.webp`;
 
 const ICONS = [CircleCheck, ListChecks, Award, History] as const;
 
@@ -43,6 +44,9 @@ const COPY = {
     ],
     cta: "Open your dashboard",
     alt: "A software engineer smiling next to a laptop showing the Hone dashboard",
+    screenTag: "Inside your dashboard",
+    screenAlt:
+      "The Hone dashboard with completed sessions, active sessions, review items, highest level reached and a review backlog sorted by priority",
   },
   pt: {
     eyebrow: "Seu dashboard",
@@ -68,6 +72,9 @@ const COPY = {
     ],
     cta: "Abrir meu dashboard",
     alt: "Uma engenheira de software sorrindo ao lado de um notebook com o dashboard do Hone",
+    screenTag: "Por dentro do dashboard",
+    screenAlt:
+      "O dashboard do Hone com sessões concluídas, sessões ativas, itens de revisão, maior nível alcançado e um backlog de revisão por prioridade",
   },
 } as const;
 
@@ -91,6 +98,21 @@ export default function DashboardSection() {
   const y = useTransform(progress, [0, 1], [60, 0]);
   const textY = useTransform(progress, [0, 0.6], [28, 0]);
   const textOpacity = useTransform(progress, [0, 0.5], [0, 1]);
+
+  // The real screenshot tilts up into place, like the demo clip.
+  const screenRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: screenScroll } = useScroll({
+    target: screenRef,
+    offset: ["start end", "center center"],
+  });
+  const screenProgress = useSpring(screenScroll, {
+    stiffness: 120,
+    damping: 24,
+    mass: 0.4,
+  });
+  const screenScale = useTransform(screenProgress, [0, 1], [0.84, 1]);
+  const screenRotateX = useTransform(screenProgress, [0, 1], [18, 0]);
+  const screenY = useTransform(screenProgress, [0, 1], [70, 0]);
 
   return (
     <section
@@ -158,6 +180,45 @@ export default function DashboardSection() {
             <LandingCta label={copy.cta} variant="solid" href="/login" />
           </div>
         </div>
+      </div>
+
+      <div
+        ref={screenRef}
+        className="mx-auto mt-16 max-w-[1200px] [perspective:1600px] md:mt-24"
+      >
+        <p className="landing-tag mb-3 text-center">{copy.screenTag}</p>
+        <motion.div
+          className="overflow-hidden rounded-[20px] border border-black/5 bg-paper-white shadow-[0_40px_100px_-50px_rgba(10,92,74,0.45)] will-change-transform"
+          style={
+            prefersReducedMotion
+              ? undefined
+              : {
+                  scale: screenScale,
+                  rotateX: screenRotateX,
+                  y: screenY,
+                  transformOrigin: "50% 100%",
+                }
+          }
+        >
+          <div
+            className="flex items-center gap-1.5 border-b border-black/5 bg-mist-gray px-4 py-3"
+            aria-hidden
+          >
+            <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+            <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+            <span className="h-2.5 w-2.5 rounded-full bg-black/15" />
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element -- static image from /public */}
+          <img
+            src={SCREEN_SRC}
+            alt={copy.screenAlt}
+            width={2400}
+            height={1367}
+            loading="lazy"
+            decoding="async"
+            className="block h-auto w-full"
+          />
+        </motion.div>
       </div>
     </section>
   );

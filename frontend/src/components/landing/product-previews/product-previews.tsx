@@ -1,6 +1,5 @@
 "use client";
 
-import { DashboardPreview } from "@/components/product-previews/dashboard-preview";
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
 
 function FeedbackPreview() {
@@ -72,18 +71,10 @@ export default function ProductPreviews() {
         </h3>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:gap-10">
-        <div>
-          <p className="landing-tag mb-3">{t.previews.dashboardTag}</p>
-          <DashboardPreview
-            className="!p-6 md:!p-8"
-            rowTextClassName="text-sm md:text-[15px]"
-          />
-        </div>
-        <div>
-          <p className="landing-tag mb-3">{t.previews.feedbackTag}</p>
-          <FeedbackPreview />
-        </div>
+      {/* The progress dashboard lives in its own landing section; the demo only shows the per-session report. */}
+      <div className="mx-auto max-w-[680px]">
+        <p className="landing-tag mb-3">{t.previews.feedbackTag}</p>
+        <FeedbackPreview />
       </div>
     </div>
   );
