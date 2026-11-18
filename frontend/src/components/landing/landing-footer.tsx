@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { Github, Twitter, Linkedin } from "lucide-react";
 
+import { BORDERLESS_SOCIALS } from "@/components/info/borderless-socials";
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
 
 const LINKS = {
@@ -13,7 +13,7 @@ const LINKS = {
   company: [
     { key: "about", href: "/about" },
     { key: "blog", href: "/blog" },
-    { key: "contact", href: "mailto:hello@honeyourcraft.com" },
+    { key: "contact", href: "/contact" },
   ],
   legal: [
     { key: "terms", href: "/terms" },
@@ -23,11 +23,6 @@ const LINKS = {
 
 type LinkGroup = keyof typeof LINKS;
 
-const SOCIALS = [
-  { label: "GitHub", href: "https://github.com", Icon: Github },
-  { label: "Twitter / X", href: "https://x.com", Icon: Twitter },
-  { label: "LinkedIn", href: "https://linkedin.com", Icon: Linkedin },
-];
 
 export default function LandingFooter() {
   const year = new Date().getFullYear();
@@ -49,13 +44,13 @@ export default function LandingFooter() {
               {t.footer.tagline}
             </p>
             <div className="mt-6 flex items-center gap-5">
-              {SOCIALS.map(({ label, href, Icon }) => (
+              {BORDERLESS_SOCIALS.map(({ label, href, Icon }) => (
                 <a
                   key={label}
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label={label}
+                  aria-label={`${label} — Borderless Coding`}
                   className="text-[var(--color-ash-gray)] transition-colors hover:text-[var(--color-ink-black)]"
                 >
                   <Icon size={20} strokeWidth={1.5} />
