@@ -1,6 +1,14 @@
 ﻿import { HumanMessage } from "@langchain/core/messages";
 import { RunnableLambda } from "@langchain/core/runnables";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+  type MockInstance,
+} from "vitest";
 import { RESUME_STATUS } from "@/modules/resumes/types/resume-record";
 import type { IObjectStorage } from "@/modules/resumes/protocols/object-storage";
 import type { IResumeQueue } from "@/modules/resumes/protocols/resume-queue";
@@ -18,6 +26,7 @@ import type { TokenUsageService } from "@/modules/token-usage/service/token-usag
 import {
   BadGatewayError,
   BadRequestError,
+  logger,
   NotFoundError,
   ServiceUnavailableError,
   TokenLimitExceededError,
@@ -104,9 +113,15 @@ describe("ResumeService", () => {
   let texToMarkdown: ReturnType<typeof vi.fn>;
   let tokenUsageService: TokenUsageService;
   let service: ResumeService;
+  let loggerErrorSpy: MockInstance<typeof logger.error>;
+
+  afterEach(() => {
+    loggerErrorSpy.mockRestore();
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
+    loggerErrorSpy = vi.spyOn(logger, "error").mockImplementation(() => {});
     mockRandomUUID.mockReturnValue("resume-uuid");
 
     resumeRepository = {
@@ -229,6 +244,7 @@ describe("ResumeService", () => {
 
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "storage_failed",
         "Failed to upload resume to storage",
       );
       expect(resumeQueue.add).not.toHaveBeenCalled();
@@ -246,8 +262,131 @@ describe("ResumeService", () => {
 
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "queue_unavailable",
         "Failed to enqueue resume processing",
       );
+    });
+
+    it("rejects with a 429 before creating anything when the user is over quota", async () => {
+      vi.mocked(tokenUsageService.assertWithinLimit).mockRejectedValue(
+        new TokenLimitExceededError(),
+      );
+
+      const error = await service
+        .upload(42, createPdfFile())
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(TokenLimitExceededError);
+      expect((error as TokenLimitExceededError).statusCode).toBe(429);
+      expect(tokenUsageService.assertWithinLimit).toHaveBeenCalledWith(42);
+      expect(resumeRepository.createProcessing).not.toHaveBeenCalled();
+      expect(objectStorage.put).not.toHaveBeenCalled();
+      expect(resumeQueue.add).not.toHaveBeenCalled();
+      expect(resumeRepository.updateFailed).not.toHaveBeenCalled();
+    });
+
+    it("checks the quota after validation and before creating the resume", async () => {
+      vi.mocked(resumeRepository.createProcessing).mockResolvedValue(
+        sampleResume,
+      );
+
+      await service.upload(42, createPdfFile());
+
+      const assertOrder = vi.mocked(tokenUsageService.assertWithinLimit).mock
+        .invocationCallOrder[0];
+      const createOrder = vi.mocked(resumeRepository.createProcessing).mock
+        .invocationCallOrder[0];
+      expect(assertOrder).toBeDefined();
+      expect(assertOrder).toBeLessThan(createOrder ?? 0);
+    });
+
+    it("validates the file before checking the quota", async () => {
+      vi.mocked(tokenUsageService.assertWithinLimit).mockRejectedValue(
+        new TokenLimitExceededError(),
+      );
+
+      const error = await service
+        .upload(
+          42,
+          createPdfFile({ mimetype: "text/plain", originalname: "notes.txt" }),
+        )
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(BadRequestError);
+      expect((error as BadRequestError).statusCode).toBe(400);
+      expect(tokenUsageService.assertWithinLimit).not.toHaveBeenCalled();
+      expect(resumeRepository.createProcessing).not.toHaveBeenCalled();
+    });
+
+    it("logs the original storage error before marking the resume failed", async () => {
+      vi.mocked(resumeRepository.createProcessing).mockResolvedValue(
+        sampleResume,
+      );
+      const storageError = new Error("R2 down: AccessDenied");
+      vi.mocked(objectStorage.put).mockRejectedValue(storageError);
+
+      const error = await service
+        .upload(42, createPdfFile())
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(BadGatewayError);
+      expect((error as BadGatewayError).statusCode).toBe(502);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.any(String), {
+        resumeId: "resume-uuid",
+        storageKey: "users/42/resumes/resume-uuid.pdf",
+        message: "R2 down: AccessDenied",
+        stack: storageError.stack,
+      });
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "storage_failed",
+        "Failed to upload resume to storage",
+      );
+      expect(loggerErrorSpy.mock.invocationCallOrder[0]).toBeLessThan(
+        vi.mocked(resumeRepository.updateFailed).mock.invocationCallOrder[0] ??
+          0,
+      );
+    });
+
+    it("logs the original queue error before marking the resume failed", async () => {
+      vi.mocked(resumeRepository.createProcessing).mockResolvedValue(
+        sampleResume,
+      );
+      const queueError = new Error("connect ECONNREFUSED 127.0.0.1:6379");
+      vi.mocked(resumeQueue.add).mockRejectedValue(queueError);
+
+      const error = await service
+        .upload(42, createPdfFile())
+        .catch((e: unknown) => e);
+
+      expect(error).toBeInstanceOf(ServiceUnavailableError);
+      expect((error as ServiceUnavailableError).statusCode).toBe(503);
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.any(String), {
+        resumeId: "resume-uuid",
+        message: "connect ECONNREFUSED 127.0.0.1:6379",
+        stack: queueError.stack,
+      });
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "queue_unavailable",
+        "Failed to enqueue resume processing",
+      );
+    });
+
+    it("logs a non-Error queue rejection as a string message", async () => {
+      vi.mocked(resumeRepository.createProcessing).mockResolvedValue(
+        sampleResume,
+      );
+      vi.mocked(resumeQueue.add).mockRejectedValue("redis gone");
+
+      await expect(service.upload(42, createPdfFile())).rejects.toThrow(
+        ServiceUnavailableError,
+      );
+
+      expect(loggerErrorSpy).toHaveBeenCalledWith(expect.any(String), {
+        resumeId: "resume-uuid",
+        message: "redis gone",
+      });
     });
 
     it("accepts .tex by extension even when MIME is application/pdf", async () => {
@@ -364,6 +503,42 @@ describe("ResumeService", () => {
       expect(result).not.toHaveProperty("structuredSummary");
     });
 
+    it("exposes only the failure reason for a failed resume", async () => {
+      vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+        ...sampleResume,
+        status: RESUME_STATUS.failed,
+        errorMessage: "[extraction_failed] 404 model gpt-x does not exist",
+      });
+
+      const result = await service.getResume(42, "resume-uuid");
+
+      expect(result).toEqual({
+        id: "resume-uuid",
+        name: "Jane Doe CV.pdf",
+        status: RESUME_STATUS.failed,
+        createdAt: sampleResume.createdAt,
+        failureReason: "extraction_failed",
+      });
+      expect(result).not.toHaveProperty("errorMessage");
+      expect(JSON.stringify(result)).not.toContain("gpt-x");
+    });
+
+    it.each([RESUME_STATUS.processing, RESUME_STATUS.ready] as const)(
+      "omits failureReason when status is %s",
+      async (status) => {
+        vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue({
+          ...sampleResume,
+          status,
+          errorMessage: "[storage_failed] stale message",
+        });
+
+        const result = await service.getResume(42, "resume-uuid");
+
+        expect(result).not.toHaveProperty("failureReason");
+        expect(result).not.toHaveProperty("errorMessage");
+      },
+    );
+
     it("throws NotFoundError when resume is missing or not owned", async () => {
       vi.mocked(resumeRepository.findByIdAndUserId).mockResolvedValue(null);
 
@@ -456,6 +631,51 @@ describe("ResumeService", () => {
           createdAt: sampleResume.createdAt,
         },
       ]);
+    });
+  });
+
+  describe("listResumes failure reasons", () => {
+    it("adds failureReason to failed resumes only, without leaking the raw message", async () => {
+      vi.mocked(resumeRepository.findAllByUserId).mockResolvedValue([
+        {
+          ...sampleResume,
+          id: "failed-prefixed",
+          status: RESUME_STATUS.failed,
+          errorMessage: "[extraction_failed] 429 Rate limit exceeded",
+        },
+        {
+          ...sampleResume,
+          id: "failed-legacy",
+          status: RESUME_STATUS.failed,
+          errorMessage: "Failed to convert TeX resume",
+        },
+        {
+          ...sampleResume,
+          id: "failed-null",
+          status: RESUME_STATUS.failed,
+          errorMessage: null,
+        },
+        { ...sampleResume, id: "ready", status: RESUME_STATUS.ready },
+        { ...sampleResume, id: "processing" },
+      ]);
+
+      const result = await service.listResumes(42);
+
+      expect(result.map((r) => [r.id, r.failureReason])).toEqual([
+        ["failed-prefixed", "extraction_failed"],
+        ["failed-legacy", "unreadable_file"],
+        ["failed-null", "unknown"],
+        ["ready", undefined],
+        ["processing", undefined],
+      ]);
+      expect(result[3]).not.toHaveProperty("failureReason");
+      expect(result[4]).not.toHaveProperty("failureReason");
+      for (const preview of result) {
+        expect(preview).not.toHaveProperty("errorMessage");
+      }
+      const serialized = JSON.stringify(result);
+      expect(serialized).not.toContain("429 Rate limit exceeded");
+      expect(serialized).not.toContain("Failed to convert TeX resume");
     });
   });
 
@@ -563,6 +783,7 @@ describe("ResumeService", () => {
       expect(objectStorage.get).not.toHaveBeenCalled();
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "quota_exceeded",
         "Monthly token usage limit reached. Your quota resets at the start of next month.",
       );
     });
@@ -582,6 +803,7 @@ describe("ResumeService", () => {
       expect(extractionModel.withStructuredOutput).not.toHaveBeenCalled();
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "unreadable_file",
         "Resume contains no extractable text",
       );
       expect(resumeRepository.updateReady).not.toHaveBeenCalled();
@@ -664,10 +886,11 @@ describe("ResumeService", () => {
       expect(extractionModel.withStructuredOutput).not.toHaveBeenCalled();
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "unreadable_file",
         "Failed to convert TeX resume",
       );
       const storedErrorMessage = vi.mocked(resumeRepository.updateFailed).mock
-        .calls[0]?.[1];
+        .calls[0]?.[2];
       expect(storedErrorMessage).not.toContain("at texToMarkdown");
       expect(storedErrorMessage).not.toContain("\n");
       expect(resumeRepository.updateReady).not.toHaveBeenCalled();
@@ -687,6 +910,7 @@ describe("ResumeService", () => {
       });
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "unreadable_file",
         "PDF parse error",
       );
       expect(resumeRepository.updateReady).not.toHaveBeenCalled();
@@ -709,13 +933,140 @@ describe("ResumeService", () => {
       });
       expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
         "resume-uuid",
+        "extraction_failed",
         "429 Rate limit exceeded",
       );
       const storedErrorMessage = vi.mocked(resumeRepository.updateFailed).mock
-        .calls[0]?.[1];
+        .calls[0]?.[2];
       expect(storedErrorMessage).not.toContain("at OpenAI.makeRequest");
       expect(storedErrorMessage).not.toContain("\n");
       expect(resumeRepository.updateReady).not.toHaveBeenCalled();
+    });
+
+    it("marks resume failed with storage_failed when the file download fails", async () => {
+      vi.mocked(resumeRepository.findById).mockResolvedValue(sampleResume);
+      vi.mocked(objectStorage.get).mockRejectedValue(
+        new Error("NoSuchKey: The specified key does not exist."),
+      );
+
+      const result = await service.process("resume-uuid");
+
+      expect(result).toMatchObject({
+        status: "failed",
+        resumeId: "resume-uuid",
+      });
+      expect(extractText).not.toHaveBeenCalled();
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "storage_failed",
+        "NoSuchKey: The specified key does not exist.",
+      );
+    });
+
+    it.each([
+      [
+        "a 404 model-not-found API error",
+        Object.assign(new Error("404 The model `gpt-x` does not exist"), {
+          status: 404,
+          code: "model_not_found",
+        }),
+        "404 The model `gpt-x` does not exist",
+      ],
+      [
+        "a 429 quota API error",
+        Object.assign(new Error("429 You exceeded your current quota"), {
+          status: 429,
+          code: "insufficient_quota",
+        }),
+        "429 You exceeded your current quota",
+      ],
+      [
+        "a non-Error rejection",
+        { status: 500, error: "upstream" },
+        "Resume processing failed",
+      ],
+    ])(
+      "marks resume failed with extraction_failed when the model rejects with %s",
+      async (_label, modelError, storedMessage) => {
+        vi.mocked(resumeRepository.findById).mockResolvedValue(sampleResume);
+        structuredModelInvoke.mockRejectedValue(modelError);
+
+        const result = await service.process("resume-uuid");
+
+        expect(result).toMatchObject({
+          status: "failed",
+          resumeId: "resume-uuid",
+          error: storedMessage,
+        });
+        expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+          "resume-uuid",
+          "extraction_failed",
+          storedMessage,
+        );
+        expect(tokenUsageService.recordUsage).not.toHaveBeenCalled();
+        expect(resumeRepository.updateReady).not.toHaveBeenCalled();
+      },
+    );
+
+    it("marks resume failed with extraction_failed when structured output fails schema validation", async () => {
+      vi.mocked(resumeRepository.findById).mockResolvedValue(sampleResume);
+      structuredModelInvoke.mockImplementation(async () =>
+        structuredSummarySchema.parse({
+          ...structuredSummary,
+          personal_info: { name: "Jane Doe", title: "", about: "" },
+          skills: [""],
+        }),
+      );
+
+      const result = await service.process("resume-uuid");
+
+      expect(result).toMatchObject({
+        status: "failed",
+        resumeId: "resume-uuid",
+      });
+      expect(vi.mocked(resumeRepository.updateFailed).mock.calls[0]?.[1]).toBe(
+        "extraction_failed",
+      );
+      expect(resumeRepository.updateReady).not.toHaveBeenCalled();
+    });
+
+    it("marks resume failed with unknown when recording usage throws", async () => {
+      vi.mocked(resumeRepository.findById).mockResolvedValue(sampleResume);
+      vi.mocked(tokenUsageService.recordUsage).mockRejectedValue(
+        new Error("usage table locked"),
+      );
+
+      const result = await service.process("resume-uuid");
+
+      expect(result).toMatchObject({
+        status: "failed",
+        error: "usage table locked",
+      });
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "unknown",
+        "usage table locked",
+      );
+      expect(resumeRepository.updateReady).not.toHaveBeenCalled();
+    });
+
+    it("marks resume failed with unknown when saving the ready resume throws", async () => {
+      vi.mocked(resumeRepository.findById).mockResolvedValue(sampleResume);
+      vi.mocked(resumeRepository.updateReady).mockRejectedValue(
+        new Error("connection terminated"),
+      );
+
+      const result = await service.process("resume-uuid");
+
+      expect(result).toMatchObject({
+        status: "failed",
+        error: "connection terminated",
+      });
+      expect(resumeRepository.updateFailed).toHaveBeenCalledWith(
+        "resume-uuid",
+        "unknown",
+        "connection terminated",
+      );
     });
 
     it("skips processing when resume is not found", async () => {

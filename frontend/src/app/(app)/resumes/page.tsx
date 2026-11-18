@@ -21,6 +21,7 @@ import { useAuth } from "@/features/auth/session-provider";
 import { downloadResumeFile } from "@/features/resumes/download-resume-file";
 import { getResumeFile, uploadResume } from "@/lib/api/resumes";
 import { isAllowedResumeFile } from "@/lib/resumes/is-allowed-resume-file";
+import { getResumeFailureMessage } from "@/lib/resumes/resume-failure-message";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { queryKeys } from "@/lib/query/keys";
@@ -328,6 +329,11 @@ export default function ResumesPage() {
                             {isFailed && <XCircle className="h-2.5 w-2.5" />}
                             {resume.status}
                           </span>
+                          {isFailed && (
+                            <span className="text-(--status-critical-foreground)">
+                              {getResumeFailureMessage(resume.failureReason)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>

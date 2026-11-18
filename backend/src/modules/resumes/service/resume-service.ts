@@ -12,6 +12,10 @@ import {
   type ResumeRecord,
   type ResumeStatus,
 } from "@/modules/resumes/types/resume-record";
+import {
+  resolveResumeFailureReason,
+  type ResumeFailureReason,
+} from "@/modules/resumes/failure-reason";
 import { env } from "@/config/env";
 import type { TexToMarkdown } from "@/infrastructure/document-parsing/tex-to-markdown";
 import { createUsageCaptureCallback } from "@/modules/token-usage/callbacks/token-usage-callback";
@@ -51,6 +55,7 @@ export type ResumePreview = {
   name: string;
   status: ResumeStatus;
   createdAt: Date;
+  failureReason?: ResumeFailureReason;
 };
 
 export type ResumeDetail = ResumePreview & {
@@ -75,6 +80,9 @@ export class ResumeService {
   ): Promise<ResumePreview> {
     const format = this.validateResumeFile(file);
 
+    // Fail fast with a 429 instead of queueing a job that cannot be processed.
+    await this.tokenUsageService.assertWithinLimit(userId);
+
     const resumeId = randomUUID();
     const storageKey = resumeStorageKey(userId, resumeId, format);
 
@@ -92,9 +100,15 @@ export class ResumeService {
         file.buffer,
         resumeContentType(format),
       );
-    } catch {
+    } catch (error) {
+      logger.error(`Failed to upload resume ${resume.id} to storage`, {
+        resumeId: resume.id,
+        storageKey,
+        ...toErrorMeta(error),
+      });
       await this.resumeRepository.updateFailed(
         resume.id,
+        "storage_failed",
         "Failed to upload resume to storage",
       );
       throw new BadGatewayError("Failed to upload resume");
@@ -102,9 +116,14 @@ export class ResumeService {
 
     try {
       await this.resumeQueue.add({ resumeId: resume.id });
-    } catch {
+    } catch (error) {
+      logger.error(`Failed to enqueue processing for resume ${resume.id}`, {
+        resumeId: resume.id,
+        ...toErrorMeta(error),
+      });
       await this.resumeRepository.updateFailed(
         resume.id,
+        "queue_unavailable",
         "Failed to enqueue resume processing",
       );
       throw new ServiceUnavailableError("Resume processing is unavailable");
@@ -186,10 +205,16 @@ export class ResumeService {
       return { status: "skipped", resumeId, reason: "not_found" };
     }
 
+    // Tracks the pipeline stage so a failure maps to a user-facing reason.
+    let failureReason: ResumeFailureReason = "unknown";
+
     try {
       await this.tokenUsageService.assertWithinLimit(resume.userId);
 
+      failureReason = "storage_failed";
       const buffer = await this.objectStorage.get(resume.storageKey);
+
+      failureReason = "unreadable_file";
       const rawText =
         resume.sourceFormat === "tex"
           ? await this.texToMarkdown(buffer)
@@ -199,6 +224,7 @@ export class ResumeService {
         throw new Error("Resume contains no extractable text");
       }
 
+      failureReason = "extraction_failed";
       const promptText = buildResumeExtractionPrompt(rawText);
       const usageCapture = createUsageCaptureCallback();
       const chain = ChatPromptTemplate.fromMessages([
@@ -211,6 +237,7 @@ export class ResumeService {
         { callbacks: [usageCapture.callback] },
       );
 
+      failureReason = "unknown";
       await this.tokenUsageService.recordUsage(
         resume.userId,
         usageCapture.getUsage(),
@@ -224,15 +251,17 @@ export class ResumeService {
       return { status: "ready", resumeId };
     } catch (error) {
       if (error instanceof TokenLimitExceededError) {
-        const message = error.message;
-        await this.resumeRepository.updateFailed(resumeId, message);
-        return { status: "failed", resumeId, error: message, cause: error };
+        failureReason = "quota_exceeded";
       }
 
       const message =
         error instanceof Error ? error.message : "Resume processing failed";
 
-      await this.resumeRepository.updateFailed(resumeId, message);
+      await this.resumeRepository.updateFailed(
+        resumeId,
+        failureReason,
+        message,
+      );
       return { status: "failed", resumeId, error: message, cause: error };
     }
   }
@@ -258,13 +287,28 @@ export class ResumeService {
   }
 }
 
+function toErrorMeta(error: unknown): { message: string; stack?: string } {
+  if (error instanceof Error) {
+    return { message: error.message, stack: error.stack };
+  }
+
+  return { message: String(error) };
+}
+
 function toResumePreview(resume: ResumeRecord): ResumePreview {
-  return {
+  const preview: ResumePreview = {
     id: resume.id,
     name: resume.name,
     status: resume.status,
     createdAt: resume.createdAt,
   };
+
+  if (resume.status === RESUME_STATUS.failed) {
+    // Only the coarse reason is exposed; the raw errorMessage stays server-side.
+    preview.failureReason = resolveResumeFailureReason(resume.errorMessage);
+  }
+
+  return preview;
 }
 
 function toResumeDetail(resume: ResumeRecord): ResumeDetail {

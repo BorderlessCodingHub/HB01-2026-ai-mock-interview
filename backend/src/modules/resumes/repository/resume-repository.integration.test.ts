@@ -215,7 +215,7 @@ describe("ResumeRepository (integration)", () => {
     expect(reloaded?.status).toBe("ready");
   });
 
-  it("updateFailed sets failed status and error message", async () => {
+  it("updateFailed sets failed status and reason-prefixed error message", async () => {
     const user = await createTestUser();
     const resumeId = crypto.randomUUID();
     await repository.createProcessing(
@@ -227,12 +227,16 @@ describe("ResumeRepository (integration)", () => {
     );
     const errorMessage = "PDF extraction failed";
 
-    const updated = await repository.updateFailed(resumeId, errorMessage);
+    const updated = await repository.updateFailed(
+      resumeId,
+      "unreadable_file",
+      errorMessage,
+    );
 
     expect(updated).toMatchObject({
       id: resumeId,
       status: "failed",
-      errorMessage,
+      errorMessage: `[unreadable_file] ${errorMessage}`,
     });
   });
 

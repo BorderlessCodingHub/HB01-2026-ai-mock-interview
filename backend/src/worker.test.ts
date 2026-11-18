@@ -112,6 +112,113 @@ describe("logResumeJobResult", () => {
     );
   });
 
+  it("adds no cause keys when the failure has no nested cause", () => {
+    const errorSpy = vi.spyOn(logger, "error");
+    const cause = new Error("parse failed");
+
+    logResumeJobResult("job-2", {
+      status: "failed",
+      resumeId: "resume-2",
+      error: "parse failed",
+      cause,
+    });
+
+    const meta = errorSpy.mock.calls[0]?.[1];
+    expect(Object.keys(meta ?? {}).sort()).toEqual([
+      "error",
+      "resumeId",
+      "stack",
+    ]);
+  });
+
+  it("logs the cause chain and root cause stack for a wrapped error", () => {
+    const errorSpy = vi.spyOn(logger, "error");
+    const root = new Error("pandoc exited with code 64");
+    const inner = new Error("wasm conversion failed", { cause: root });
+    const wrapped = new Error("Failed to convert TeX resume", {
+      cause: inner,
+    });
+
+    logResumeJobResult("job-4", {
+      status: "failed",
+      resumeId: "resume-4",
+      error: wrapped.message,
+      cause: wrapped,
+    });
+
+    expect(errorSpy).toHaveBeenCalledWith(
+      "Resume job job-4 failed (resume resume-4): Failed to convert TeX resume",
+      {
+        resumeId: "resume-4",
+        error: "Failed to convert TeX resume",
+        stack: wrapped.stack,
+        causeChain: "wasm conversion failed <- pandoc exited with code 64",
+        rootCauseStack: root.stack,
+      },
+    );
+  });
+
+  it("describes a string cause without a root cause stack", () => {
+    const errorSpy = vi.spyOn(logger, "error");
+    const wrapped = new Error("Failed to convert TeX resume", {
+      cause: "pandoc not found",
+    });
+
+    logResumeJobResult("job-5", {
+      status: "failed",
+      resumeId: "resume-5",
+      error: wrapped.message,
+      cause: wrapped,
+    });
+
+    const meta = errorSpy.mock.calls[0]?.[1];
+    expect(meta).toMatchObject({ causeChain: "pandoc not found" });
+    expect(meta).not.toHaveProperty("rootCauseStack");
+  });
+
+  it("serialises an object cause and keeps the last Error stack", () => {
+    const errorSpy = vi.spyOn(logger, "error");
+    const inner = new Error("request failed", {
+      cause: { status: 404, code: "model_not_found" },
+    });
+    const wrapped = new Error("Extraction failed", { cause: inner });
+
+    logResumeJobResult("job-6", {
+      status: "failed",
+      resumeId: "resume-6",
+      error: wrapped.message,
+      cause: wrapped,
+    });
+
+    expect(errorSpy.mock.calls[0]?.[1]).toMatchObject({
+      causeChain: 'request failed <- {"status":404,"code":"model_not_found"}',
+      rootCauseStack: inner.stack,
+    });
+  });
+
+  it("stops walking the cause chain after five levels", () => {
+    const errorSpy = vi.spyOn(logger, "error");
+    const errors: Error[] = [];
+    let cause: Error | undefined;
+    for (let level = 7; level >= 1; level -= 1) {
+      cause = new Error(`level-${level}`, { cause });
+      errors.unshift(cause);
+    }
+    const wrapped = new Error("top", { cause });
+
+    logResumeJobResult("job-7", {
+      status: "failed",
+      resumeId: "resume-7",
+      error: "top",
+      cause: wrapped,
+    });
+
+    expect(errorSpy.mock.calls[0]?.[1]).toMatchObject({
+      causeChain: "level-1 <- level-2 <- level-3 <- level-4 <- level-5",
+      rootCauseStack: errors[4]?.stack,
+    });
+  });
+
   it("logs warn when resume was skipped (not found)", () => {
     const warnSpy = vi.spyOn(logger, "warn");
 
