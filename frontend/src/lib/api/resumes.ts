@@ -3,11 +3,21 @@ import { ApiError } from "./client";
 
 export type ResumeStatus = "processing" | "ready" | "failed";
 
+export type ResumeFailureReason =
+  | "quota_exceeded"
+  | "storage_failed"
+  | "queue_unavailable"
+  | "unreadable_file"
+  | "extraction_failed"
+  | "unknown";
+
 export type ResumePreview = {
   id: string;
   name: string;
   status: ResumeStatus;
   createdAt: string;
+  /** Present only when status is "failed". */
+  failureReason?: ResumeFailureReason;
 };
 
 export type StructuredSummary = {

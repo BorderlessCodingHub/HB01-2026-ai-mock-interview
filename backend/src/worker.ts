@@ -55,6 +55,59 @@ export async function processCoverageExtractionJob(
   return coverageExtractionService.process(sessionId);
 }
 
+const MAX_CAUSE_DEPTH = 5;
+
+function describeCauseValue(value: unknown): string {
+  if (value instanceof Error) {
+    return value.message;
+  }
+
+  if (typeof value === "object" && value !== null) {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+// Wrapped errors (e.g. "Failed to convert TeX resume") hide the real failure in
+// `error.cause`; walk the chain so it reaches the logs.
+function describeNestedCauses(error: unknown): {
+  causeChain?: string;
+  rootCauseStack?: string;
+} {
+  const messages: string[] = [];
+  let rootCauseStack: string | undefined;
+  let current: unknown = error instanceof Error ? error.cause : undefined;
+
+  while (
+    current !== undefined &&
+    current !== null &&
+    messages.length < MAX_CAUSE_DEPTH
+  ) {
+    messages.push(describeCauseValue(current));
+
+    if (current instanceof Error) {
+      rootCauseStack = current.stack ?? rootCauseStack;
+      current = current.cause;
+    } else {
+      current = undefined;
+    }
+  }
+
+  if (messages.length === 0) {
+    return {};
+  }
+
+  return {
+    causeChain: messages.join(" <- "),
+    ...(rootCauseStack ? { rootCauseStack } : {}),
+  };
+}
+
 export function logResumeJobResult(
   jobId: string | number | undefined,
   result: ResumeProcessResult,
@@ -76,6 +129,8 @@ export function logResumeJobResult(
       if (result.cause instanceof Error && result.cause.stack) {
         meta.stack = result.cause.stack;
       }
+
+      Object.assign(meta, describeNestedCauses(result.cause));
 
       logger.error(
         `Resume job ${jobLabel} failed (resume ${result.resumeId}): ${result.error}`,

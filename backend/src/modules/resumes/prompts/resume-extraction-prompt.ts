@@ -29,7 +29,12 @@ Return a structured object with:
 - projects: name, description, technologies[], highlights[]
 - certifications: array of certification names
 
-For fields not present in the résumé, use "" for missing text and [] for missing arrays (they are stripped after extraction).`;
+Required values must never be empty:
+- personal_info.name and personal_info.title are required; if no title is stated, use the role of the most recent experience.
+- Each experience needs a company and a role, and each project needs a name; omit entries that lack them.
+- Array items must be non-empty strings; never include "" in an array.
+
+Only personal_info.about and project description may be "" when not present in the résumé. Use [] for missing arrays.`;
 }
 
 function buildResumeTextBlock(rawText: string): string {

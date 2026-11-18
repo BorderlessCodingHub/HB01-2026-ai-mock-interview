@@ -1,6 +1,10 @@
 import type { Resume as PrismaResume } from "../../../../prisma/generated/client";
 import { ResumeStatus as PrismaResumeStatus } from "../../../../prisma/generated/client";
 import prisma from "@/infrastructure/database";
+import {
+  formatResumeFailure,
+  type ResumeFailureReason,
+} from "@/modules/resumes/failure-reason";
 import type {
   ResumeRecord,
   ResumeSourceFormat,
@@ -74,12 +78,16 @@ export class ResumeRepository {
     return toResumeRecord(row);
   }
 
-  async updateFailed(id: string, errorMessage: string): Promise<ResumeRecord> {
+  async updateFailed(
+    id: string,
+    reason: ResumeFailureReason,
+    errorMessage: string,
+  ): Promise<ResumeRecord> {
     const row = await prisma.resume.update({
       where: { id },
       data: {
         status: PrismaResumeStatus.failed,
-        errorMessage,
+        errorMessage: formatResumeFailure(reason, errorMessage),
       },
     });
     return toResumeRecord(row);
