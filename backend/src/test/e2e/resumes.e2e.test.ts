@@ -241,7 +241,9 @@ describe("Resumes API E2E", () => {
         orderBy: { createdAt: "desc" },
       });
       expect(resume?.status).toBe(ResumeStatus.failed);
-      expect(resume?.errorMessage).toBe("Failed to upload resume to storage");
+      expect(resume?.errorMessage).toBe(
+        "[storage_failed] Failed to upload resume to storage",
+      );
     });
 
     it("returns 503 when resume queue is unavailable", async () => {
@@ -267,7 +269,9 @@ describe("Resumes API E2E", () => {
         orderBy: { createdAt: "desc" },
       });
       expect(resume?.status).toBe(ResumeStatus.failed);
-      expect(resume?.errorMessage).toBe("Failed to enqueue resume processing");
+      expect(resume?.errorMessage).toBe(
+        "[queue_unavailable] Failed to enqueue resume processing",
+      );
     });
   });
 
