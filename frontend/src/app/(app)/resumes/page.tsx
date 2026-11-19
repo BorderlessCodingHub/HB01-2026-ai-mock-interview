@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -19,6 +19,10 @@ import { AppShell } from "@/features/dashboard/app-shell";
 import { useConfirmDialog } from "@/components/providers/confirm-dialog-provider";
 import { useAuth } from "@/features/auth/session-provider";
 import { downloadResumeFile } from "@/features/resumes/download-resume-file";
+import {
+  ResumeProcessingPanel,
+  type ResumeProcessingPhase,
+} from "@/features/resumes/resume-processing-panel";
 import { getResumeFile, uploadResume } from "@/lib/api/resumes";
 import { isAllowedResumeFile } from "@/lib/resumes/is-allowed-resume-file";
 import { getResumeFailureMessage } from "@/lib/resumes/resume-failure-message";
@@ -37,6 +41,9 @@ import { AppPageHeader } from "@/components/app/app-page-header";
 
 type UploadState = "idle" | "uploading";
 
+/** How long the "ready" confirmation stays before the upload form returns. */
+const READY_CONFIRMATION_MS = 2500;
+
 export default function ResumesPage() {
   const { getAccessToken } = useAuth();
   const queryClient = useQueryClient();
@@ -46,6 +53,11 @@ export default function ResumesPage() {
   const [file, setFile] = useState<File | null>(null);
   const [uploadState, setUploadState] = useState<UploadState>("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadingName, setUploadingName] = useState<string | null>(null);
+  const [trackedUpload, setTrackedUpload] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [activeResumeId, setActiveResumeId] = useState<string | null>(() =>
     getStoredResumeId(),
   );
@@ -57,6 +69,29 @@ export default function ResumesPage() {
   const deletingId = deleteResumeMutation.isPending
     ? (deleteResumeMutation.variables ?? null)
     : null;
+
+  const trackedStatus = trackedUpload
+    ? (resumes.find((r) => r.id === trackedUpload.id)?.status ?? "processing")
+    : null;
+
+  useEffect(() => {
+    if (trackedStatus !== "ready") return;
+    const timer = setTimeout(
+      () => setTrackedUpload(null),
+      READY_CONFIRMATION_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [trackedStatus]);
+
+  let panel: { name: string; phase: ResumeProcessingPhase } | null = null;
+  if (uploadState === "uploading" && uploadingName) {
+    panel = { name: uploadingName, phase: "uploading" };
+  } else if (trackedUpload && trackedStatus !== "failed") {
+    panel = {
+      name: trackedUpload.name,
+      phase: trackedStatus === "ready" ? "ready" : "processing",
+    };
+  }
 
   // Automatically make the first ready resume active if none is set
   const readyResumes = resumes.filter((r) => r.status === "ready");
@@ -82,11 +117,12 @@ export default function ResumesPage() {
     }
 
     setUploadError(null);
+    setUploadingName(file.name);
     setUploadState("uploading");
 
     try {
       const preview = await uploadResume(file, token);
-      toast.success("Resume uploaded successfully! Processing started.");
+      setTrackedUpload({ id: preview.id, name: preview.name });
 
       // Invalidate query to trigger refresh
       void queryClient.invalidateQueries({ queryKey: queryKeys.resumes });
@@ -105,6 +141,7 @@ export default function ResumesPage() {
       toast.error(message);
     } finally {
       setUploadState("idle");
+      setUploadingName(null);
     }
   }
 
@@ -189,59 +226,68 @@ export default function ResumesPage() {
               }}
             />
 
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                "flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-smoke-gray bg-paper-white p-8 transition-colors hover:border-jade focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
-                file && "border-jade bg-jade-pale",
-              )}
-            >
-              {file ? (
-                <>
-                  <FileText className="h-10 w-10 text-jade-deep" />
-                  <span className="text-sm font-medium text-ink-black">
-                    {file.name}
-                  </span>
-                  <span className="text-xs text-text-base">
-                    {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Upload className="h-10 w-10 text-text-base" />
-                  <span className="text-sm font-medium text-ink-black">
-                    Click to select a resume
-                  </span>
-                  <span className="text-xs text-text-base">
-                    PDF and LaTeX (.tex) files are supported
-                  </span>
-                </>
-              )}
-            </button>
+            {panel ? (
+              <ResumeProcessingPanel
+                fileName={panel.name}
+                phase={panel.phase}
+              />
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    "flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-smoke-gray bg-paper-white p-8 transition-colors hover:border-jade focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2",
+                    file && "border-jade bg-jade-pale",
+                  )}
+                >
+                  {file ? (
+                    <>
+                      <FileText className="h-10 w-10 text-jade-deep" />
+                      <span className="text-sm font-medium text-ink-black">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-text-base">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="h-10 w-10 text-text-base" />
+                      <span className="text-sm font-medium text-ink-black">
+                        Click to select a resume
+                      </span>
+                      <span className="text-xs text-text-base">
+                        PDF and LaTeX (.tex) files are supported
+                      </span>
+                    </>
+                  )}
+                </button>
 
-            {uploadError && (
-              <p
-                className="text-sm font-medium text-(--status-critical-foreground)"
-                role="alert"
-                aria-live="assertive"
-              >
-                {uploadError}
-              </p>
+                {uploadError && (
+                  <p
+                    className="text-sm font-medium text-(--status-critical-foreground)"
+                    role="alert"
+                    aria-live="assertive"
+                  >
+                    {uploadError}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!file || uploadState === "uploading"}
+                  className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-jade-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
+                >
+                  {uploadState === "uploading" && (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  )}
+                  {uploadState === "uploading"
+                    ? "Uploading & Enqueuing…"
+                    : "Upload resume"}
+                </button>
+              </>
             )}
-
-            <button
-              type="submit"
-              disabled={!file || uploadState === "uploading"}
-              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-full bg-jade-deep px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-ink-black disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-            >
-              {uploadState === "uploading" && (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              )}
-              {uploadState === "uploading"
-                ? "Uploading & Enqueuing…"
-                : "Upload resume"}
-            </button>
           </form>
         </AppCard>
 
