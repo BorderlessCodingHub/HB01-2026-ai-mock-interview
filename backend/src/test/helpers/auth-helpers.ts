@@ -1,8 +1,10 @@
 import jwt, { type SignOptions } from "jsonwebtoken";
+import { env } from "@/config/env";
 import prisma from "@/infrastructure/database";
-
-/** Test-only signing key — parser ignores signature and only decodes claims. */
-const AUTH_TEST_SIGNING_KEY = "test-only-signing-key-not-for-production";
+import {
+  HONE_JWT_AUDIENCE,
+  HONE_JWT_ISSUER,
+} from "@/modules/auth/adapters/hone-access-token-verifier";
 
 export type SeededAuthUser = {
   userId: number;
@@ -46,7 +48,7 @@ export async function seedAuthenticatedUser(overrides?: {
   };
 }
 
-/** Sign a Borderless-shaped JWT without persisting a user (middleware will upsert). */
+/** Sign a Hone access token without persisting a user (middleware will upsert). */
 export function signBorderlessAccessToken(claims: {
   externalId: string;
   email: string;
@@ -59,8 +61,14 @@ export function signBorderlessAccessToken(claims: {
       email: claims.email,
       name: claims.name ?? "Test User",
     },
-    AUTH_TEST_SIGNING_KEY,
-    { expiresIn: claims.expiresIn ?? "1h" },
+    env.HONE_JWT_SECRET,
+    {
+      algorithm: "HS256",
+      issuer: HONE_JWT_ISSUER,
+      audience: HONE_JWT_AUDIENCE,
+      jwtid: crypto.randomUUID(),
+      expiresIn: claims.expiresIn ?? "1h",
+    },
   );
 }
 
