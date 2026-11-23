@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AppErrorState } from "@/components/app/app-error-state";
 import { ApiError } from "@/lib/api/client";
 import { useReviewSession } from "@/lib/query/hooks/use-review-session";
 
@@ -69,16 +70,19 @@ export function StudyHubShell() {
   const isRedirecting =
     session?.status === "in_progress" || session?.status === "pending_review";
 
+  // The error is rendered here, not inside the transcript: mounting the
+  // transcript re-subscribes to the failed query, which resets it to pending
+  // and unmounts the transcript again, looping forever.
+  const showSessionError =
+    Boolean(sessionId) && !isNotFound && !session && sessionQuery.isError;
+
   const showTranscript =
-    Boolean(sessionId) &&
-    !isNotFound &&
-    !isRedirecting &&
-    (session?.status === "completed" ||
-      (Boolean(sessionQuery.error) && !sessionQuery.isLoading));
+    Boolean(sessionId) && !isRedirecting && session?.status === "completed";
 
   const showSessionLoading =
     Boolean(sessionId) &&
     !isNotFound &&
+    !showSessionError &&
     !showTranscript &&
     (sessionQuery.isLoading || isRedirecting || !sessionQuery.isFetched);
 
@@ -92,7 +96,18 @@ export function StudyHubShell() {
       </aside>
 
       <section className="relative flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-paper-white">
-        {showSessionLoading ? (
+        {showSessionError ? (
+          <AppErrorState
+            title="We couldn't load this session"
+            error={sessionQuery.error}
+            onRetry={() => void sessionQuery.refetch()}
+            isRetrying={sessionQuery.isFetching}
+            backHref="/study"
+            backLabel="Back to Study"
+            headingLevel={1}
+            className="m-3 flex-1 sm:m-6"
+          />
+        ) : showSessionLoading ? (
           <MainPanelLoading
             label={isRedirecting ? "Opening session…" : "Loading session…"}
           />

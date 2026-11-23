@@ -7,7 +7,6 @@ import {
   MessageSquare,
   Loader2,
   AlertCircle,
-  BookOpen,
 } from "lucide-react";
 
 import { AppShell } from "@/features/dashboard/app-shell";
@@ -17,13 +16,13 @@ import { useDeleteSession } from "@/lib/query/hooks/use-delete-session";
 import { useSessionMessages } from "@/lib/query/hooks/use-session-messages";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
 import { ReviewItemsGrid } from "@/features/dashboard/review-items-grid";
-import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import type { SessionMessage } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 import { MobilePanelToggle } from "@/components/app/mobile-panel-toggle";
+import { AppErrorState } from "@/components/app/app-error-state";
 
 function getClosingFeedback(messages: SessionMessage[]): string | null {
   for (let i = messages.length - 1; i >= 0; i -= 1) {
@@ -67,13 +66,6 @@ function SessionFeedbackDetail({
   }
 
   if (messagesQuery.error) {
-    const message =
-      messagesQuery.error instanceof ApiError
-        ? messagesQuery.error.message
-        : messagesQuery.error instanceof Error
-          ? messagesQuery.error.message
-          : "Failed to load feedback details";
-
     return (
       <div className="h-full space-y-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
         <AppPageHeader
@@ -81,14 +73,13 @@ function SessionFeedbackDetail({
           title="Feedback details"
           description={`Source CV: ${resumeName}`}
         />
-        <AppCard variant="mist" className="p-6">
-          <p
-            className="text-sm text-(--status-critical-foreground)"
-            role="alert"
-          >
-            {message}
-          </p>
-        </AppCard>
+        <AppErrorState
+          title="We couldn't load this feedback"
+          error={messagesQuery.error}
+          fallbackMessage="Failed to load feedback details"
+          onRetry={() => void messagesQuery.refetch()}
+          isRetrying={messagesQuery.isFetching}
+        />
       </div>
     );
   }
@@ -131,14 +122,14 @@ function SessionFeedbackDetail({
           </p>
         )}
         {!reviewQuery.isLoading && reviewQuery.error && (
-          <p
-            className="text-sm text-(--status-critical-foreground)"
-            role="alert"
-          >
-            {reviewQuery.error instanceof Error
-              ? reviewQuery.error.message
-              : "Failed to load study topics"}
-          </p>
+          <AppErrorState
+            variant="inline"
+            title="Study topics didn't load"
+            error={reviewQuery.error}
+            fallbackMessage="Failed to load study topics"
+            onRetry={() => void reviewQuery.refetch()}
+            isRetrying={reviewQuery.isFetching}
+          />
         )}
         {!reviewQuery.isLoading &&
           !reviewQuery.error &&
@@ -169,6 +160,8 @@ function FeedbackContent() {
     data: sessionsData,
     isLoading: isLoadingSessions,
     error: sessionsError,
+    refetch: refetchSessions,
+    isFetching: isFetchingSessions,
   } = useSessions();
   const sessions = sessionsData?.sessions ?? [];
   const finishedSessions = sessions.filter((s) => s.isFinished);
@@ -218,7 +211,7 @@ function FeedbackContent() {
       {/* Sidebar List */}
       <aside className="flex max-h-[60%] w-full shrink-0 flex-col overflow-hidden border-b border-border-hairline bg-fog-white lg:h-full lg:max-h-none lg:w-80 lg:border-r lg:border-b-0">
         <div className="flex items-center gap-2 border-b border-border-hairline p-4 text-ink-black">
-          <BookOpen className="h-5 w-5" />
+          <MessageSquare className="h-5 w-5" aria-hidden />
           <h1 className="text-sm font-semibold">Feedback</h1>
           <MobilePanelToggle
             open={isMobileListOpen}
@@ -244,14 +237,15 @@ function FeedbackContent() {
               Loading feedbacks…
             </div>
           ) : sessionsError ? (
-            <p
-              className="px-4 py-8 text-center text-sm text-(--status-critical-foreground)"
-              role="alert"
-            >
-              {sessionsError instanceof Error
-                ? sessionsError.message
-                : "Failed to load feedback reports"}
-            </p>
+            <AppErrorState
+              variant="inline"
+              title="Reports didn't load"
+              error={sessionsError}
+              fallbackMessage="Failed to load feedback reports"
+              onRetry={() => void refetchSessions()}
+              isRetrying={isFetchingSessions}
+              className="m-3"
+            />
           ) : finishedSessions.length === 0 ? (
             <AppEmptyState
               compact

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { useQueryClient, type InfiniteData } from "@tanstack/react-query";
 import { toast } from "sonner";
 
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 import { useAuth } from "@/features/auth/session-provider";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import { interviewApi } from "@/lib/api/interview";
@@ -73,10 +73,6 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
   const reviewGenerationStatus =
     sessionDetailQuery.data?.reviewGenerationStatus ??
     session?.reviewGenerationStatus;
-  const reviewGenerationError =
-    sessionDetailQuery.data?.reviewGenerationError ??
-    session?.reviewGenerationError ??
-    null;
   // Server-backed "already rated" state: prefer the detail query, fall back
   // to the list row (both are updated in place when the user rates).
   const sessionFeedback = sessionDetailQuery.data
@@ -235,7 +231,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
         },
       );
     } catch (err) {
-      toast.error(err instanceof ApiError ? err.message : "Failed to retry");
+      toast.error(getErrorMessage(err, "Failed to retry"));
     } finally {
       setIsRetrying(false);
     }
@@ -291,7 +287,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
         invalidateAfterTurn();
         return;
       }
-      toast.error(err instanceof ApiError ? err.message : "Stream failed");
+      toast.error(getErrorMessage(err, "Stream failed"));
       invalidateAfterTurn();
     } finally {
       setIsStreaming(false);
@@ -343,27 +339,25 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
     );
   }
 
-  if (messagesQuery.error) {
-    const message =
+  if (messagesQuery.error && !messagesQuery.data) {
+    const isNotFound =
       messagesQuery.error instanceof ApiError &&
-      messagesQuery.error.status === 404
-        ? "Interview session not found."
-        : messagesQuery.error instanceof Error
-          ? messagesQuery.error.message
-          : "Failed to load messages";
+      messagesQuery.error.status === 404;
 
     return (
-      <div className="mx-auto max-w-3xl space-y-2">
-        <p className="text-sm text-red-700" role="alert">
-          {message}
-        </p>
-        <Link
-          href="/dashboard"
-          className="cursor-pointer rounded-sm text-sm text-jade-deep underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-        >
-          Back to dashboard
-        </Link>
-      </div>
+      <AppErrorState
+        title={
+          isNotFound
+            ? "Interview session not found"
+            : "We couldn't load this interview"
+        }
+        error={messagesQuery.error}
+        fallbackMessage="Please try again."
+        onRetry={isNotFound ? undefined : () => void messagesQuery.refetch()}
+        isRetrying={messagesQuery.isFetching}
+        backHref="/dashboard"
+        backLabel="Back to dashboard"
+      />
     );
   }
 
@@ -473,7 +467,6 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
             sessionId={sessionId}
             messages={serverMessages}
             reviewGenerationStatus={reviewGenerationStatus}
-            reviewGenerationError={reviewGenerationError}
             onRetryReviewGeneration={handleRetryReviewGeneration}
             isRetrying={isRetrying}
           />

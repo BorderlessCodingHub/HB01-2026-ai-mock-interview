@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
-import { ApiError } from "@/lib/api/client";
 import { deleteResume, type ResumePreview } from "@/lib/api/resumes";
 
 import { queryKeys } from "../keys";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 type ListResumesResponse = { resumes: ResumePreview[] };
 
@@ -36,7 +36,7 @@ export function useDeleteResume() {
         queryClient.setQueryData(queryKeys.resumes, context.previous);
       }
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete resume",
+        getErrorMessage(err, "Failed to delete resume"),
       );
     },
     onSuccess: () => {

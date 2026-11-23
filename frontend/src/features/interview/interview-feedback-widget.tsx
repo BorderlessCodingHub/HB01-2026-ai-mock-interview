@@ -6,7 +6,6 @@ import { Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
-import { ApiError } from "@/lib/api/client";
 import { interviewApi } from "@/lib/api/interview";
 import { queryKeys } from "@/lib/query/keys";
 import { cn } from "@/lib/utils";
@@ -23,6 +22,7 @@ import {
   isFeedbackPromptDismissed,
   subscribeFeedbackPromptDismissal,
 } from "./lib/feedback-prompt";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 const MAX_COMMENT_LENGTH = 1000;
 
@@ -115,7 +115,7 @@ export function InterviewFeedbackWidget({
       });
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to submit feedback",
+        getErrorMessage(err, "Failed to submit feedback"),
       );
     } finally {
       setIsSubmitting(false);

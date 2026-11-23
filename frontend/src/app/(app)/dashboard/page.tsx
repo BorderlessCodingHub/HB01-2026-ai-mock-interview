@@ -3,6 +3,7 @@
 import { Suspense, useState, type KeyboardEvent } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { AppErrorState } from "@/components/app/app-error-state";
 
 import { useAuth } from "@/features/auth/session-provider";
 import { AppShell } from "@/features/dashboard/app-shell";
@@ -35,6 +36,12 @@ export default function DashboardPage() {
 
   const isLoading = sessionsQuery.isLoading || reviewQuery.isLoading;
   const error = sessionsQuery.error ?? reviewQuery.error;
+  const isRetrying = sessionsQuery.isFetching || reviewQuery.isFetching;
+
+  function retryFailedQueries() {
+    if (sessionsQuery.isError) void sessionsQuery.refetch();
+    if (reviewQuery.isError) void reviewQuery.refetch();
+  }
 
   function handleTabKeyDown(
     event: KeyboardEvent<HTMLButtonElement>,
@@ -103,13 +110,15 @@ export default function DashboardPage() {
         className="space-y-7 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-jade-deep"
       >
         {isLoading && <DashboardOverviewSkeleton />}
-        {error && (
-          <p
-            role="alert"
-            className="manrope text-sm text-(--status-critical-foreground)"
-          >
-            {error instanceof Error ? error.message : "Failed to load data"}
-          </p>
+        {error && !isLoading && (
+          <AppErrorState
+            title="We couldn't load your dashboard"
+            error={error}
+            onRetry={retryFailedQueries}
+            isRetrying={isRetrying}
+            headingLevel={1}
+            className="min-h-[55vh]"
+          />
         )}
 
         {!isLoading && !error && (
@@ -200,13 +209,15 @@ export default function DashboardPage() {
         className="space-y-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-jade-deep"
       >
         {isLoading && <DashboardFeedbackSkeleton />}
-        {error && (
-          <p
-            role="alert"
-            className="manrope text-sm text-(--status-critical-foreground)"
-          >
-            {error instanceof Error ? error.message : "Failed to load data"}
-          </p>
+        {error && !isLoading && (
+          <AppErrorState
+            title="We couldn't load your dashboard"
+            error={error}
+            onRetry={retryFailedQueries}
+            isRetrying={isRetrying}
+            headingLevel={2}
+            className="min-h-[55vh]"
+          />
         )}
 
         {!isLoading && !error && (

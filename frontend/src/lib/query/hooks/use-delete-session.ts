@@ -4,11 +4,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
-import { ApiError } from "@/lib/api/client";
 import { interviewApi } from "@/lib/api/interview";
 import type { ListSessionsResponse } from "@/types/interview";
 
 import { queryKeys } from "../keys";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 export function useDeleteSession() {
   const queryClient = useQueryClient();
@@ -38,7 +38,7 @@ export function useDeleteSession() {
         queryClient.setQueryData(queryKeys.sessions, context.previous);
       }
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete session",
+        getErrorMessage(err, "Failed to delete session"),
       );
     },
     onSuccess: () => {

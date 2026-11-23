@@ -31,6 +31,7 @@ import {
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 
 const LEVELS: { value: InterviewLevel; label: string }[] = [
   { value: "entry", label: "Entry" },
@@ -120,7 +121,7 @@ function NewSessionContent() {
       router.push(`/interview/${id}`);
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to create session",
+        getErrorMessage(err, "Failed to create session"),
       );
       if (err instanceof ApiError && err.status === 429) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
@@ -164,14 +165,14 @@ function NewSessionContent() {
       />
 
       {resumeQuery.error && (
-        <p
-          className="rounded-2xl bg-(--status-critical-surface) px-4 py-3 text-sm text-text-base"
-          role="alert"
-        >
-          {resumeQuery.error instanceof Error
-            ? resumeQuery.error.message
-            : "Failed to load the selected resume"}
-        </p>
+        <AppErrorState
+          variant="inline"
+          title="Your resume didn't load"
+          error={resumeQuery.error}
+          fallbackMessage="Failed to load the selected resume"
+          onRetry={() => void resumeQuery.refetch()}
+          isRetrying={resumeQuery.isFetching}
+        />
       )}
 
       <fieldset>

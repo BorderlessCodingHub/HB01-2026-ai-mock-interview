@@ -18,8 +18,10 @@ export function StudySelectionBar({
 }: StudySelectionBarProps) {
   const isDisabled = selectedCount === 0 || isStarting || quotaExhausted;
 
+  // The scroll container has py-6 / md:py-8, and sticky offsets are measured
+  // inside that padding; the negative bottom pins the bar to the real edge.
   return (
-    <div className="sticky bottom-0 z-10 -mx-4 border-t border-border-hairline bg-paper-white/95 px-4 py-3 backdrop-blur-sm md:-mx-6 md:px-6">
+    <div className="sticky -bottom-6 z-10 -mx-4 border-t border-border-hairline bg-paper-white px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:-mx-6 sm:px-6 md:-bottom-8 md:-mx-10 md:px-10">
       <div className="flex items-end justify-between gap-4">
         <p className="text-sm text-text-base">{selectedCount} selected</p>
         <div className="flex flex-col items-end gap-1.5">

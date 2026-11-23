@@ -15,6 +15,7 @@ import { deriveReviewResultsSummary } from "./lib/derive-review-results-summary"
 import type { ReviewDisplayMessage } from "./lib/review-display-messages";
 import { turnsToDisplayMessages } from "./lib/turns-to-display-messages";
 import { ReviewHistoryResultCard } from "./review-history-result-card";
+import { AppErrorState } from "@/components/app/app-error-state";
 
 type StudySessionTranscriptProps = {
   sessionId: string;
@@ -109,24 +110,15 @@ export function StudySessionTranscript({
       )}
 
       {sessionQuery.error && (
-        <div className="space-y-3 py-6">
-          <p className="text-sm text-red-700" role="alert">
-            {sessionQuery.error instanceof Error
-              ? sessionQuery.error.message
-              : "Failed to load transcript"}
-          </p>
-          <button
-            type="button"
-            onClick={() => void sessionQuery.refetch()}
-            disabled={sessionQuery.isFetching}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-jade-deep px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {sessionQuery.isFetching && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
-            )}
-            {sessionQuery.isFetching ? "Retrying…" : "Retry"}
-          </button>
-        </div>
+        <AppErrorState
+          variant="inline"
+          title="The transcript didn't load"
+          error={sessionQuery.error}
+          fallbackMessage="Failed to load transcript"
+          onRetry={() => void sessionQuery.refetch()}
+          isRetrying={sessionQuery.isFetching}
+          className="my-6"
+        />
       )}
 
       {!sessionQuery.isLoading && !sessionQuery.error && session && resultsSummary && (

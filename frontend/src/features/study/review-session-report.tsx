@@ -20,6 +20,7 @@ import { useReviewSession } from "@/lib/query/hooks/use-review-session";
 import { queryKeys } from "@/lib/query/keys";
 import type { InterviewLocale } from "@/types/interview";
 import type { ReviewSessionItemReport } from "@/types/review-sessions";
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
 
 import {
@@ -176,9 +177,7 @@ function ReportCardsForm({ sessionId, items, locale }: ReportCardsFormProps) {
       }
 
       toast.error(
-        error instanceof ApiError
-          ? error.message
-          : "Failed to apply review suggestions",
+        getErrorMessage(error, "Failed to apply review suggestions"),
       );
     } finally {
       applyingRef.current = false;
@@ -268,6 +267,25 @@ export function ReviewSessionReport({ sessionId }: ReviewSessionReportProps) {
       router.replace("/study");
     }
   }, [router, sessionQuery.error]);
+
+  const isNotFound =
+    sessionQuery.error instanceof ApiError &&
+    sessionQuery.error.status === 404;
+
+  if (!session && sessionQuery.isError && !isNotFound) {
+    return (
+      <AppErrorState
+        title="We couldn't load this review report"
+        error={sessionQuery.error}
+        onRetry={() => void sessionQuery.refetch()}
+        isRetrying={sessionQuery.isFetching}
+        backHref="/study"
+        backLabel="Back to Study"
+        headingLevel={1}
+        className="min-h-[40vh]"
+      />
+    );
+  }
 
   if (sessionQuery.isLoading || session?.status !== "pending_review") {
     return (

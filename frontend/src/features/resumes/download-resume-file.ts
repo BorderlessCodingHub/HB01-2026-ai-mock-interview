@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-import { ApiError } from "@/lib/api/client";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 export type DownloadResumeFileParams = {
   id: string;
@@ -37,7 +37,7 @@ export async function downloadResumeFile({
     triggerDownload(blob, name);
   } catch (err) {
     const message =
-      err instanceof ApiError ? err.message : "Failed to download resume";
+      getErrorMessage(err, "Failed to download resume");
     toast.error(message);
   }
 }

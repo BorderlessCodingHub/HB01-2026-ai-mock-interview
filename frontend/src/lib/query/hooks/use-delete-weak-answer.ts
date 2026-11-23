@@ -4,10 +4,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { useAuth } from "@/features/auth/session-provider";
-import { ApiError } from "@/lib/api/client";
 import { weakAnswersApi } from "@/lib/api/weak-answers";
 
 import { queryKeys } from "../keys";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 export function useDeleteWeakAnswer() {
   const queryClient = useQueryClient();
@@ -18,7 +18,7 @@ export function useDeleteWeakAnswer() {
       fetchWithAuth((token) => weakAnswersApi.delete(token, id)),
     onError: (err) => {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to delete answer",
+        getErrorMessage(err, "Failed to delete answer"),
       );
     },
     onSuccess: () => {

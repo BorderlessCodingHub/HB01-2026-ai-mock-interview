@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import { AppErrorState } from "@/components/app/app-error-state";
 
 type TabType =
   | "personal"
@@ -36,6 +37,8 @@ export default function ProfilePage() {
     data: resumesData,
     isLoading: isLoadingList,
     error: listError,
+    refetch: refetchList,
+    isFetching: isFetchingList,
   } = useResumes();
   const resumes = resumesData?.resumes ?? [];
   const readyResumes = resumes.filter((r) => r.status === "ready");
@@ -61,6 +64,8 @@ export default function ProfilePage() {
     data: resume,
     isLoading: isLoadingResume,
     error: resumeError,
+    refetch: refetchResume,
+    isFetching: isFetchingResume,
   } = useResume(resolvedResumeId);
 
   const parsed = resume?.structuredSummary;
@@ -140,14 +145,14 @@ export default function ProfilePage() {
         )}
 
         {!isLoadingList && listError && (
-          <p
-            className="py-12 text-center text-sm text-(--status-critical-foreground)"
-            role="alert"
-          >
-            {listError instanceof Error
-              ? listError.message
-              : "Failed to load resume profiles"}
-          </p>
+          <AppErrorState
+            variant="inline"
+            title="Your profiles didn't load"
+            error={listError}
+            fallbackMessage="Failed to load resume profiles"
+            onRetry={() => void refetchList()}
+            isRetrying={isFetchingList}
+          />
         )}
 
         {!isLoadingList && !listError && readyResumes.length === 0 && (
@@ -226,14 +231,15 @@ export default function ProfilePage() {
                     </div>
                   )}
                   {!isLoadingResume && resumeError && (
-                    <p
-                      className="py-12 text-center text-sm text-(--status-critical-foreground)"
-                      role="alert"
-                    >
-                      {resumeError instanceof Error
-                        ? resumeError.message
-                        : "Failed to load profile details"}
-                    </p>
+                    <AppErrorState
+                      variant="inline"
+                      title="Profile details didn't load"
+                      error={resumeError}
+                      fallbackMessage="Failed to load profile details"
+                      onRetry={() => void refetchResume()}
+                      isRetrying={isFetchingResume}
+                      className="my-6"
+                    />
                   )}
                   {!isLoadingResume && !resumeError && !parsed && (
                     <p className="py-12 text-center text-sm text-text-base">

@@ -62,6 +62,7 @@ import {
 } from "@/features/interview/lib/interview-setup-storage";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { MobilePanelToggle } from "@/components/app/mobile-panel-toggle";
+import { getErrorMessage } from "@/components/app/app-error-state";
 
 const LEVELS: { value: InterviewLevel; label: string }[] = [
   { value: "entry", label: "Entry Level" },
@@ -221,7 +222,7 @@ function PracticeContent() {
       router.push(`/practice?sessionId=${id}`);
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to create interview session",
+        getErrorMessage(err, "Failed to create interview session"),
       );
       if (err instanceof ApiError && err.status === 429) {
         void queryClient.invalidateQueries({ queryKey: queryKeys.sessionQuota });
@@ -242,9 +243,7 @@ function PracticeContent() {
     const result = await fetchNextPage();
     if (result.isError) {
       toast.error(
-        result.error instanceof Error
-          ? result.error.message
-          : "Failed to load more sessions",
+        getErrorMessage(result.error, "Failed to load more sessions"),
       );
     }
   }
@@ -307,9 +306,7 @@ function PracticeContent() {
                   className="rounded-2xl bg-(--status-critical-surface) p-3 text-xs text-text-base"
                   role="alert"
                 >
-                  {resumesError instanceof Error
-                    ? resumesError.message
-                    : "Failed to load CVs"}
+                  {getErrorMessage(resumesError, "Failed to load CVs")}
                 </p>
               ) : readyResumes.length === 0 ? (
                 <div className="flex items-start gap-2 rounded-2xl bg-jade-pale p-3">
@@ -501,9 +498,7 @@ function PracticeContent() {
                 className="px-4 py-8 text-center text-xs text-(--status-critical-foreground)"
                 role="alert"
               >
-                {sessionsError instanceof Error
-                  ? sessionsError.message
-                  : "Failed to load previous sessions"}
+                {getErrorMessage(sessionsError, "Failed to load previous sessions")}
               </p>
             ) : sessions.length === 0 ? (
               <AppEmptyState

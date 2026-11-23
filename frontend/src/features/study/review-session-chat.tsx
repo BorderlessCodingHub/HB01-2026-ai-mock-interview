@@ -8,12 +8,12 @@ import {
   useRef,
   useState,
 } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 import { useAuth } from "@/features/auth/session-provider";
 import { useInterviewLocale } from "@/features/interview-locale/use-interview-locale";
 import { InterviewChatInput } from "@/features/interview/interview-chat-input";
@@ -257,7 +257,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
       redirectForSession(nextSession);
     } catch (err) {
       toast.error(
-        err instanceof ApiError ? err.message : "Failed to load review session",
+        getErrorMessage(err, "Failed to load review session"),
       );
     }
   }, [fetchWithAuth, redirectForSession, sessionId]);
@@ -378,7 +378,7 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
         return;
       }
 
-      toast.error(err instanceof ApiError ? err.message : "Stream failed");
+      toast.error(getErrorMessage(err, "Stream failed"));
     } finally {
       setIsStreaming(false);
       setStreamingContent("");
@@ -458,21 +458,21 @@ function ReviewSessionChatContent({ sessionId }: ReviewSessionChatProps) {
     );
   }
 
-  if (sessionQuery.error && !(sessionQuery.error instanceof ApiError)) {
+  // 404 redirects to /study (effect above); any other failure gets a retry.
+  const isNotFound =
+    sessionQuery.error instanceof ApiError &&
+    sessionQuery.error.status === 404;
+  if (!session && sessionQuery.isError && !isNotFound) {
     return (
-      <div className="mx-auto max-w-3xl space-y-2">
-        <p className="text-sm text-red-700" role="alert">
-          {sessionQuery.error instanceof Error
-            ? sessionQuery.error.message
-            : "Failed to load review session"}
-        </p>
-        <Link
-          href="/study"
-          className="cursor-pointer rounded-sm text-sm text-jade-deep underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-        >
-          Back to Study
-        </Link>
-      </div>
+      <AppErrorState
+        title="We couldn't load this review session"
+        error={sessionQuery.error}
+        onRetry={() => void sessionQuery.refetch()}
+        isRetrying={sessionQuery.isFetching}
+        backHref="/study"
+        backLabel="Back to Study"
+        headingLevel={1}
+      />
     );
   }
 

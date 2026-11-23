@@ -2,18 +2,18 @@
 
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 import { ReviewItemsGrid } from "@/features/dashboard/review-items-grid";
 import { useReviewItems } from "@/lib/query/hooks/use-review-items";
 import type { ReviewGenerationStatus, SessionMessage } from "@/types/interview";
 import { AppCard } from "@/components/app/app-card";
+import { AppErrorState } from "@/components/app/app-error-state";
 
 type InterviewReviewPanelProps = {
   sessionId: string;
   messages: SessionMessage[];
   reviewGenerationStatus?: ReviewGenerationStatus;
-  reviewGenerationError?: string | null;
   onRetryReviewGeneration?: () => void | Promise<void>;
   isRetrying?: boolean;
 };
@@ -31,11 +31,10 @@ export function InterviewReviewPanel({
   sessionId,
   messages,
   reviewGenerationStatus,
-  reviewGenerationError,
   onRetryReviewGeneration,
   isRetrying = false,
 }: InterviewReviewPanelProps) {
-  const { data, isLoading, error } = useReviewItems();
+  const { data, isLoading, error, refetch, isFetching } = useReviewItems();
   const sessionItems =
     data?.reviewItems.filter((item) => item.sessionId === sessionId) ?? [];
   const closingFeedback = getClosingFeedback(messages);
@@ -86,23 +85,20 @@ export function InterviewReviewPanel({
           </p>
         )}
         {showFailed && (
-          <div className="space-y-3">
-            <p className="text-sm text-red-700" role="alert">
-              {reviewGenerationError?.trim() ||
-                "Failed to generate review topics. You can retry."}
-            </p>
-            {onRetryReviewGeneration && (
-              <button
-                type="button"
-                onClick={() => void onRetryReviewGeneration()}
-                disabled={isRetrying}
-                className="inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-full border border-border-hairline bg-paper-white px-3 py-1.5 text-xs font-medium text-ink-black transition-colors hover:bg-mist-gray disabled:pointer-events-none disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
-              >
-                {isRetrying && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                {isRetrying ? "Retrying…" : "Retry"}
-              </button>
-            )}
-          </div>
+          // The raw generation error is internal (queue/LLM text), so the
+          // user gets a friendly message and a retry instead.
+          <AppErrorState
+            variant="inline"
+            title="Your study topics weren't generated"
+            error={null}
+            fallbackMessage="Something went wrong while preparing them. Try again in a moment."
+            onRetry={
+              onRetryReviewGeneration
+                ? () => void onRetryReviewGeneration()
+                : undefined
+            }
+            isRetrying={isRetrying}
+          />
         )}
         {showGrid && isLoading && (
           <p className="text-sm text-text-base" role="status">
@@ -110,9 +106,14 @@ export function InterviewReviewPanel({
           </p>
         )}
         {showGrid && error && (
-          <p className="text-sm text-red-700" role="alert">
-            {error instanceof Error ? error.message : "Failed to load topics"}
-          </p>
+          <AppErrorState
+            variant="inline"
+            title="Topics didn't load"
+            error={error}
+            fallbackMessage="Failed to load topics"
+            onRetry={() => void refetch()}
+            isRetrying={isFetching}
+          />
         )}
         {showGrid && !isLoading && !error && (
           <ReviewItemsGrid items={sessionItems} />

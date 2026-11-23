@@ -33,6 +33,7 @@ import { useWeakAnswers } from "@/lib/query/hooks/use-weak-answers";
 import { queryKeys } from "@/lib/query/keys";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 
 const ALL_TABS: StudyTab[] = ["active", "learned", "insufficient"];
 
@@ -151,9 +152,7 @@ export function StudyHubContent() {
       router.push(`/review-session/${response.id}`);
     } catch (err) {
       toast.error(
-        err instanceof ApiError
-          ? err.message
-          : "Failed to start review session",
+        getErrorMessage(err, "Failed to start review session"),
       );
       if (err instanceof ApiError && err.status === 404) {
         setSelectedIds(new Set());
@@ -209,11 +208,14 @@ export function StudyHubContent() {
         )}
 
         {activeTab !== "insufficient" && reviewQuery.error && (
-          <p className="text-sm text-red-700" role="alert">
-            {reviewQuery.error instanceof Error
-              ? reviewQuery.error.message
-              : "Failed to load study topics"}
-          </p>
+          <AppErrorState
+            variant="inline"
+            title="Study topics didn't load"
+            error={reviewQuery.error}
+            fallbackMessage="Failed to load study topics"
+            onRetry={() => void reviewQuery.refetch()}
+            isRetrying={reviewQuery.isFetching}
+          />
         )}
 
         {activeTab !== "insufficient" &&
@@ -308,11 +310,14 @@ export function StudyHubContent() {
         )}
 
         {activeTab === "insufficient" && weakAnswersQuery.error && (
-          <p className="text-sm text-red-700" role="alert">
-            {weakAnswersQuery.error instanceof Error
-              ? weakAnswersQuery.error.message
-              : "Failed to load insufficient answers"}
-          </p>
+          <AppErrorState
+            variant="inline"
+            title="Insufficient answers didn't load"
+            error={weakAnswersQuery.error}
+            fallbackMessage="Failed to load insufficient answers"
+            onRetry={() => void weakAnswersQuery.refetch()}
+            isRetrying={weakAnswersQuery.isFetching}
+          />
         )}
 
         {activeTab === "insufficient" &&

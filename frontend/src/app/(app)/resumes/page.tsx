@@ -29,7 +29,6 @@ import { getResumeFailureMessage } from "@/lib/resumes/resume-failure-message";
 import { useDeleteResume } from "@/lib/query/hooks/use-delete-resume";
 import { useResumes } from "@/lib/query/hooks/use-resumes";
 import { queryKeys } from "@/lib/query/keys";
-import { ApiError } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 import {
   getStoredResumeId,
@@ -38,6 +37,7 @@ import {
 import { AppCard } from "@/components/app/app-card";
 import { AppEmptyState } from "@/components/app/app-empty-state";
 import { AppPageHeader } from "@/components/app/app-page-header";
+import { AppErrorState, getErrorMessage } from "@/components/app/app-error-state";
 
 type UploadState = "idle" | "uploading";
 
@@ -64,7 +64,7 @@ export default function ResumesPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const downloadingIdRef = useRef<string | null>(null);
 
-  const { data, isLoading, error } = useResumes();
+  const { data, isLoading, error, refetch, isFetching } = useResumes();
   const resumes = data?.resumes ?? [];
   const deletingId = deleteResumeMutation.isPending
     ? (deleteResumeMutation.variables ?? null)
@@ -136,7 +136,7 @@ export default function ResumesPage() {
         setActiveResumeId(preview.id);
       }
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Upload failed";
+      const message = getErrorMessage(err, "Upload failed");
       setUploadError(message);
       toast.error(message);
     } finally {
@@ -308,11 +308,14 @@ export default function ResumesPage() {
           )}
 
           {error && (
-            <p className="py-8 text-center text-sm text-red-700" role="alert">
-              {error instanceof Error
-                ? error.message
-                : "Failed to load resumes"}
-            </p>
+            <AppErrorState
+              variant="inline"
+              title="Your resumes didn't load"
+              error={error}
+              fallbackMessage="Failed to load resumes"
+              onRetry={() => void refetch()}
+              isRetrying={isFetching}
+            />
           )}
 
           {!isLoading && !error && resumes.length === 0 && (

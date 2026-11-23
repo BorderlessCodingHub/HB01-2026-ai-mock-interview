@@ -11,6 +11,10 @@ import { useDeleteReviewSession } from "@/lib/query/hooks/use-delete-review-sess
 import { useReviewSessionsInfinite } from "@/lib/query/hooks/use-review-sessions-list";
 
 import { StudyHistoryRow } from "./study-history-row";
+import {
+  AppErrorState,
+  getErrorMessage,
+} from "@/components/app/app-error-state";
 
 type StudyHistorySidebarProps = {
   activeSessionId?: string | null;
@@ -26,6 +30,8 @@ export function StudyHistorySidebar({
     isLoading,
     isError,
     error,
+    refetch,
+    isFetching,
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
@@ -39,9 +45,7 @@ export function StudyHistorySidebar({
     const result = await fetchNextPage();
     if (result.isError) {
       toast.error(
-        result.error instanceof Error
-          ? result.error.message
-          : "Failed to load more sessions",
+        getErrorMessage(result.error, "Failed to load more sessions"),
       );
     }
   }
@@ -77,14 +81,15 @@ export function StudyHistorySidebar({
               Loading sessions…
             </div>
           ) : showListError ? (
-            <p
-              className="px-4 py-8 text-center text-xs text-(--status-critical-foreground)"
-              role="alert"
-            >
-              {error instanceof Error
-                ? error.message
-                : "Failed to load previous sessions"}
-            </p>
+            <AppErrorState
+              variant="inline"
+              title="Sessions didn't load"
+              error={error}
+              fallbackMessage="Failed to load previous sessions"
+              onRetry={() => void refetch()}
+              isRetrying={isFetching && !isFetchingNextPage}
+              className="m-3"
+            />
           ) : sessions.length === 0 ? (
             <AppEmptyState
               compact
