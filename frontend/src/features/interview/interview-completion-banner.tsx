@@ -1,14 +1,19 @@
 import { CheckCircle2 } from "lucide-react";
 
+import type { SessionFeedbackSummary } from "@/types/interview";
+
 import { InterviewFeedbackWidget } from "./interview-feedback-widget";
 
 type InterviewCompletionBannerProps = {
   sessionId: string;
+  /** The user's saved rating; `null` when not rated yet. */
+  feedback: SessionFeedbackSummary | null | undefined;
   onViewReview?: () => void;
 };
 
 export function InterviewCompletionBanner({
   sessionId,
+  feedback,
   onViewReview,
 }: InterviewCompletionBannerProps) {
   return (
@@ -32,7 +37,11 @@ export function InterviewCompletionBanner({
         <p className="mt-0.5 hidden text-xs leading-4 text-text-base sm:block">
           Closing feedback is below. Study topics appear in Review when ready.
         </p>
-        <InterviewFeedbackWidget sessionId={sessionId} />
+        <InterviewFeedbackWidget
+          key={feedback?.updatedAt ?? "unrated"}
+          sessionId={sessionId}
+          feedback={feedback}
+        />
       </div>
     </div>
   );

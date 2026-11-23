@@ -57,7 +57,7 @@ export function InterviewReviewPanel({
           </p>
         </div>
         <Link
-          href="/feedback"
+          href="/study"
           className="flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-jade-deep hover:bg-jade-pale focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade focus-visible:ring-offset-2"
         >
           Full backlog
@@ -82,7 +82,7 @@ export function InterviewReviewPanel({
         </h3>
         {showPreparing && (
           <p className="text-sm text-text-base" role="status">
-            Seus itens estão sendo gerados, estarão disponíveis em breve
+            Your study items are being generated. They’ll be ready in a moment.
           </p>
         )}
         {showFailed && (

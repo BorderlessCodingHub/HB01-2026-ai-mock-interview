@@ -56,7 +56,11 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
   const [viewMode, setViewMode] = useState<"chat" | "review">("chat");
   const [isRetrying, setIsRetrying] = useState(false);
 
-  const session = sessionsQuery.data?.sessions.find((s) => s.id === sessionId);
+  // The list only holds the 50 most recent sessions; older ones come from the
+  // detail query so they still open as finished.
+  const session =
+    sessionsQuery.data?.sessions.find((s) => s.id === sessionId) ??
+    sessionDetailQuery.data;
   const displayTurns =
     session != null
       ? toDisplayTurns(session.turnCount, session.maxTurns)
@@ -73,6 +77,11 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
     sessionDetailQuery.data?.reviewGenerationError ??
     session?.reviewGenerationError ??
     null;
+  // Server-backed "already rated" state: prefer the detail query, fall back
+  // to the list row (both are updated in place when the user rates).
+  const sessionFeedback = sessionDetailQuery.data
+    ? sessionDetailQuery.data.feedback
+    : session?.feedback;
 
   const serverMessages = messagesQuery.data
     ? [...messagesQuery.data.pages].reverse().flatMap((page) => page.messages)
@@ -437,6 +446,7 @@ export function InterviewChat({ sessionId }: { sessionId: string }) {
             <div className="mt-3 max-h-[45%] shrink-0 overflow-y-auto overscroll-contain sm:mt-4 md:max-h-none md:overflow-visible">
               <InterviewCompletionBanner
                 sessionId={sessionId}
+                feedback={sessionFeedback}
                 onViewReview={() => setViewMode("review")}
               />
             </div>

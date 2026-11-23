@@ -30,6 +30,17 @@ export type SessionSummary = {
   createdAt: string;
   reviewGenerationStatus: ReviewGenerationStatus;
   reviewGenerationError: string | null;
+  /**
+   * The user's own rating of this session; `null` until they rate it. Optional
+   * so a response from a backend that predates the field still type-checks.
+   */
+  feedback?: SessionFeedbackSummary | null;
+};
+
+export type SessionFeedbackSummary = {
+  rating: FeedbackRating;
+  comment: string | null;
+  updatedAt: string;
 };
 
 export type SessionMessage = {
