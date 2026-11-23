@@ -173,8 +173,12 @@ export function AppSidebar({ isOpen, onClose }: AppSidebarProps) {
             className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg border border-border-hairline px-3 py-2.5 text-sm text-text-base transition-colors hover:bg-mist-gray hover:text-ink-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-jade-deep focus-visible:ring-offset-2 md:min-h-0"
           >
             <Smartphone className="h-4 w-4 shrink-0 text-jade-deep" aria-hidden="true" />
-            Install the app
-            <ComingSoonBadge className="ml-auto" />
+            {/* The 240px sidebar can't fit the label and badge on one row, so
+                stack them instead of squeezing the label into one word per line. */}
+            <span className="flex min-w-0 flex-col items-start gap-1">
+              <span className="whitespace-nowrap">Install the app</span>
+              <ComingSoonBadge />
+            </span>
           </Link>
         )}
         <Link
