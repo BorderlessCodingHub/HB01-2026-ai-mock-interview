@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { APIError } from "better-auth/api";
 import { credentials } from "better-auth-credentials-plugin";
+import { SignJWT } from "jose";
 
 import { serverEnv } from "@/config/server-env";
 
@@ -81,16 +82,6 @@ function mapBorderlessErrorStatus(status: number, message: string): never {
   });
 }
 
-function internalApiBaseUrl(): string {
-  const url = new URL(serverEnv.SERVER_INTERNAL_URL);
-  // Windows resolves `localhost` to IPv6 (::1), which can hit Docker's
-  // published port instead of the local `bun run dev` on IPv4.
-  if (url.hostname === "localhost") {
-    url.hostname = "127.0.0.1";
-  }
-  return url.origin;
-}
-
 /** Public app URL (cookies, trusted origins). */
 function authAppOrigin(): string {
   return new URL(serverEnv.BETTER_AUTH_URL).origin;
@@ -105,62 +96,31 @@ function betterAuthHandlerBaseURL(): string {
   return `${authAppOrigin()}/api/auth`;
 }
 
-/** JWT = three base64url segments. Express decodes these without Redis. */
-function looksLikeJwt(token: string): boolean {
-  const parts = token.split(".");
-  return parts.length === 3 && parts.every((part) => part.length > 0);
-}
+/** Must match HONE_JWT_ISSUER / HONE_JWT_AUDIENCE in the Express API. */
+const HONE_JWT_ISSUER = "hone-web";
+const HONE_JWT_AUDIENCE = "hone-api";
+const MAX_TOKEN_TTL_SECONDS = 60 * 60 * 24;
 
-async function registerOpaqueSession(params: {
-  accessToken: string;
+/**
+ * Mints the Hone access token after Borderless accepted the credentials.
+ * The Borderless token itself never leaves this server.
+ */
+async function mintHoneAccessToken(params: {
   externalId: string;
   email: string;
   name: string;
   expiresIn: number;
-}): Promise<void> {
-  const sessionUrl = `${internalApiBaseUrl()}/internal/borderless-sessions`;
-  let response: Response;
-  try {
-    response = await fetch(
-      sessionUrl,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "hone-ai-mock-interview/auth-sync",
-          "X-Internal-Auth-Secret": serverEnv.INTERNAL_AUTH_SYNC_SECRET,
-        },
-        body: JSON.stringify(params),
-        signal: AbortSignal.timeout(15_000),
-      },
-    );
-  } catch (error) {
-    console.error("[auth] borderless session register fetch failed", error);
-    throw new APIError("INTERNAL_SERVER_ERROR", {
-      message:
-        error instanceof Error && error.name === "TimeoutError"
-          ? "API session sync timed out. Try again."
-          : "Could not reach API to establish session. Try again.",
-    });
-  }
-
-  if (!response.ok) {
-    const detail = await response.text().catch(() => "");
-    console.error("[auth] borderless session register failed", {
-      status: response.status,
-      detail: detail.slice(0, 300),
-      url: sessionUrl,
-    });
-    const hint =
-      response.status === 401
-        ? "INTERNAL_AUTH_SYNC_SECRET does not match the backend."
-        : response.status === 403
-          ? "Check SERVER_INTERNAL_URL (Railway public URL) and that nothing blocks /internal/* (e.g. Cloudflare Access)."
-          : "Verify SERVER_INTERNAL_URL and backend health.";
-    throw new APIError("INTERNAL_SERVER_ERROR", {
-      message: `Failed to establish API session (${response.status}). ${hint}`,
-    });
-  }
+}): Promise<string> {
+  const ttl = Math.min(Math.floor(params.expiresIn), MAX_TOKEN_TTL_SECONDS);
+  return new SignJWT({ email: params.email, name: params.name })
+    .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+    .setSubject(params.externalId)
+    .setIssuer(HONE_JWT_ISSUER)
+    .setAudience(HONE_JWT_AUDIENCE)
+    .setJti(crypto.randomUUID())
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + ttl)
+    .sign(new TextEncoder().encode(serverEnv.HONE_JWT_SECRET));
 }
 
 export const auth = betterAuth({
@@ -255,9 +215,6 @@ export const auth = betterAuth({
         }
 
         const borderlessUser = payload.data.user;
-        const accessToken = asNonEmptyString(
-          payload.data.token.accessToken,
-        ) as string;
         const externalId = asNonEmptyString(borderlessUser.id) as string;
         const email = asNonEmptyString(borderlessUser.email) as string;
         const expiresIn =
@@ -270,17 +227,12 @@ export const auth = betterAuth({
           asNonEmptyString(borderlessUser.username) ||
           "User";
 
-        // Opaque tokens need Redis registration. JWTs are decoded by Express
-        // directly — skip the Worker→Railway hop that currently returns 403.
-        if (!looksLikeJwt(accessToken)) {
-          await registerOpaqueSession({
-            accessToken,
-            externalId,
-            email,
-            name,
-            expiresIn,
-          });
-        }
+        const accessToken = await mintHoneAccessToken({
+          externalId,
+          email,
+          name,
+          expiresIn,
+        });
 
         return {
           email,

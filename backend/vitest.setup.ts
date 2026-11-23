@@ -17,6 +17,7 @@ const testEnvDefaults: Record<string, string> = {
   REDIS_URL: "redis://localhost:6379",
   RESUME_MAX_BYTES: "5242880",
   INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
+  HONE_JWT_SECRET: "test-hone-jwt-secret-min-32-characters-long",
 };
 
 for (const [key, value] of Object.entries(testEnvDefaults)) {

@@ -15,6 +15,7 @@ const validEnv = {
   R2_SECRET_ACCESS_KEY: "test-secret-key",
   R2_BUCKET_NAME: "test-bucket",
   INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
+  HONE_JWT_SECRET: "test-hone-jwt-secret-min-32-characters-long",
 };
 
 describe("serverEnvSchema", () => {
