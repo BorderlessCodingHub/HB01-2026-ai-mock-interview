@@ -19,6 +19,45 @@ const testEnvDefaults: Record<string, string> = {
   INTERNAL_AUTH_SYNC_SECRET: "test-internal-auth-sync-secret-min-32-chars",
 };
 
+// Bun auto-loads backend/.env, which holds real credentials and a production
+// DATABASE_URL. Tests must never reach those, so secrets are always replaced
+// and DB/Redis URLs are only kept when they point at this machine (the
+// testcontainers URLs injected for integration/e2e runs).
+const FORCED_TEST_SECRETS = [
+  "OPENAI_API_KEY",
+  "ASSEMBLYAI_API_KEY",
+  "R2_ACCOUNT_ID",
+  "R2_ACCESS_KEY_ID",
+  "R2_SECRET_ACCESS_KEY",
+  "R2_BUCKET_NAME",
+  "INTERNAL_AUTH_SYNC_SECRET",
+] as const;
+
+for (const key of FORCED_TEST_SECRETS) {
+  process.env[key] = testEnvDefaults[key];
+}
+delete process.env.R2_ENDPOINT;
+delete process.env.LANGSMITH_API_KEY;
+delete process.env.LANGCHAIN_API_KEY;
+process.env.LANGSMITH_TRACING = "false";
+process.env.LANGCHAIN_TRACING_V2 = "false";
+
+function isLocalUrl(value: string | undefined): boolean {
+  if (!value) return false;
+  try {
+    const { hostname } = new URL(value);
+    return ["localhost", "127.0.0.1", "::1", "[::1]"].includes(hostname);
+  } catch {
+    return false;
+  }
+}
+
+for (const key of ["DATABASE_URL", "REDIS_URL"] as const) {
+  if (!isLocalUrl(process.env[key])) {
+    process.env[key] = testEnvDefaults[key];
+  }
+}
+
 for (const [key, value] of Object.entries(testEnvDefaults)) {
   if (process.env[key] === undefined) {
     process.env[key] = value;

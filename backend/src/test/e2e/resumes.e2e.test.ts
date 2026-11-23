@@ -133,6 +133,21 @@ describe("Resumes API E2E", () => {
       });
     });
 
+    it("keeps accented UTF-8 filenames intact", async () => {
+      const { token } = await authenticate();
+
+      const response = await request(app)
+        .post("/api/resumes/")
+        .set(authHeader(token))
+        .attach("file", minimalPdfBuffer, {
+          filename: "Currículo João.pdf",
+          contentType: "application/pdf",
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.name).toBe("Currículo João.pdf");
+    });
+
     it("returns 201 and uploads TeX classified by extension, ignoring MIME", async () => {
       const { token, userId } = await authenticate();
 

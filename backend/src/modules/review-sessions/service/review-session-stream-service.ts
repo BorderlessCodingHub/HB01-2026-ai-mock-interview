@@ -47,12 +47,6 @@ function findCurrentItem(
   return items.find((item) => item.turns.length < questionCount);
 }
 
-function isSessionStart(session: ReviewSessionRecord): boolean {
-  return session.items.every(
-    (item) => item.turns.length === 0 && !item.pendingQuestion,
-  );
-}
-
 function toReportItem(item: ReviewSessionItemRecord): ReviewSessionStreamReportItem {
   return {
     reviewSessionItemId: item.id,
@@ -100,13 +94,14 @@ export class ReviewSessionStreamService {
       throw new ConflictError("Review session is not accepting answers");
     }
 
-    const sessionStart = isSessionStart(session);
+    // Checked before anything is persisted, so a quota error never leaves a
+    // saved answer without a follow-up question.
+    await this.tokenUsageService.assertWithinLimit(userId);
 
-    if (!answer) {
-      if (!sessionStart) {
-        throw new BadRequestError("Answer is required");
-      }
-    } else {
+    // A call without an answer starts or resumes the session: it replays the
+    // pending question, generates a missing one (a previous stream failed or
+    // was cut off) or re-runs an evaluation that never finished.
+    if (answer) {
       const currentItem = findCurrentItem(session.items, questionCount);
       if (!currentItem?.pendingQuestion) {
         throw new BadRequestError("No pending question to answer");
@@ -137,8 +132,6 @@ export class ReviewSessionStreamService {
     const allItemsComplete = session.items.every(
       (item) => item.turns.length >= questionCount,
     );
-
-    await this.tokenUsageService.assertWithinLimit(userId);
 
     res.writeHead(200, SSE_HEADERS);
     res.flushHeaders();
@@ -198,6 +191,29 @@ export class ReviewSessionStreamService {
         return;
       }
 
+      const itemIndex = session.items.findIndex(
+        (item) => item.id === currentItem.id,
+      );
+      const writeProgressMeta = (): void => {
+        writeEvent(res, "meta", {
+          reviewSessionItemId: currentItem.id,
+          itemIndex,
+          totalItems: session.items.length,
+          turnsCompleted: currentItem.turns.length,
+          questionsPerItem: questionCount,
+          status: session.status,
+        });
+        writeDone(res);
+        res.end();
+      };
+
+      if (currentItem.pendingQuestion) {
+        // Resume after a reload: resend the stored question, no LLM call.
+        writeEvent(res, "token", { content: currentItem.pendingQuestion });
+        writeProgressMeta();
+        return;
+      }
+
       const streamed = await this.streamQuestion(
         userId,
         currentItem,
@@ -220,20 +236,7 @@ export class ReviewSessionStreamService {
         streamed.content,
       );
 
-      const itemIndex = session.items.findIndex(
-        (item) => item.id === currentItem.id,
-      );
-
-      writeEvent(res, "meta", {
-        reviewSessionItemId: currentItem.id,
-        itemIndex,
-        totalItems: session.items.length,
-        turnsCompleted: currentItem.turns.length,
-        questionsPerItem: questionCount,
-        status: session.status,
-      });
-      writeDone(res);
-      res.end();
+      writeProgressMeta();
     } catch (err) {
       if (aborted) {
         logAborted();
@@ -347,17 +350,11 @@ export class ReviewSessionStreamService {
       }),
     );
 
-    if (isAborted()) {
-      return;
-    }
-
+    // The evaluations are paid for by now: persist them even if the client
+    // went away, and only skip writing to the closed stream.
     let failureCount = 0;
 
     for (let index = 0; index < results.length; index++) {
-      if (isAborted()) {
-        return;
-      }
-
       const result = results[index]!;
       const item = session.items[index]!;
 
@@ -387,10 +384,12 @@ export class ReviewSessionStreamService {
           ? result.reason.message
           : "Evaluation failed";
 
-      writeEvent(res, "error", {
-        message,
-        reviewSessionItemId: item.id,
-      });
+      if (!isAborted()) {
+        writeEvent(res, "error", {
+          message,
+          reviewSessionItemId: item.id,
+        });
+      }
     }
 
     if (failureCount > 0) {
@@ -403,14 +402,14 @@ export class ReviewSessionStreamService {
       });
     }
 
-    if (isAborted()) {
-      return;
-    }
-
     await this.reviewSessionRepository.markPendingReview(
       sessionId,
       interviewLocale,
     );
+
+    if (isAborted()) {
+      return;
+    }
 
     const updatedSession =
       await this.reviewSessionRepository.findByIdAndUserId(sessionId, userId);

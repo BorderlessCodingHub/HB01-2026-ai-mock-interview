@@ -75,6 +75,7 @@ describe("ReviewGenerationService", () => {
     sessionRepository = {
       findById: vi.fn(),
       findByIdAndUserId: vi.fn(),
+      findWithFeedbackByIdAndUserId: vi.fn(),
       markReviewGenerationFailed: vi.fn(),
       markReviewGenerationReady: vi.fn(),
       markReviewGenerationPending: vi.fn(),
@@ -426,9 +427,17 @@ describe("ReviewGenerationService", () => {
         reviewGenerationError: null,
       };
 
-      vi.mocked(sessionRepository.findByIdAndUserId)
-        .mockResolvedValueOnce(failedSession)
-        .mockResolvedValueOnce(pendingSession);
+      const ratedAt = new Date("2026-01-02T00:30:00.000Z");
+
+      vi.mocked(sessionRepository.findByIdAndUserId).mockResolvedValueOnce(
+        failedSession,
+      );
+      vi.mocked(
+        sessionRepository.findWithFeedbackByIdAndUserId,
+      ).mockResolvedValueOnce({
+        ...pendingSession,
+        interviewFeedbacks: [{ rating: "up", comment: null, updatedAt: ratedAt }],
+      });
       vi.mocked(sessionRepository.markReviewGenerationPending).mockResolvedValue(
         pendingSession,
       );
@@ -454,6 +463,7 @@ describe("ReviewGenerationService", () => {
         createdAt: baseSession.createdAt,
         reviewGenerationStatus: "pending",
         reviewGenerationError: null,
+        feedback: { rating: "up", comment: null, updatedAt: ratedAt },
       });
     });
 

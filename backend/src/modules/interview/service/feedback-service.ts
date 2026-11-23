@@ -28,7 +28,9 @@ export class FeedbackService {
       sessionId,
       userId,
       rating: input.rating,
-      comment: input.comment,
+      // A submission replaces the previous rating as a whole: when an edit
+      // drops the comment, clear it instead of keeping the stale one.
+      comment: input.comment ?? null,
     });
   }
 }

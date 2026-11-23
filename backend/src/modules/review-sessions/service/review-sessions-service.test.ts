@@ -688,16 +688,66 @@ describe("ReviewSessionsService", () => {
       ).rejects.toBeInstanceOf(ConflictError);
     });
 
-    it("throws ConflictError when any item is already confirmed", async () => {
+    it("resumes a half-applied session by skipping items that are already confirmed", async () => {
+      const confirmedItem = mockPendingSessionItem({
+        id: "session-item-1",
+        confirmedStatus: "active",
+        confirmedPriority: "high",
+        confirmedAt: baseDate,
+      });
+      const pendingItem = mockPendingSessionItem({
+        id: "session-item-2",
+        order: 1,
+      });
+
+      vi.mocked(reviewSessionRepository.findByIdAndUserId)
+        .mockResolvedValueOnce(
+          createReviewSessionRecord({
+            status: "pending_review",
+            items: [confirmedItem, pendingItem],
+          }),
+        )
+        .mockResolvedValueOnce(
+          createReviewSessionRecord({
+            status: "completed",
+            items: [
+              confirmedItem,
+              {
+                ...pendingItem,
+                confirmedStatus: "learned",
+                confirmedAt: baseDate,
+              },
+            ],
+          }),
+        );
+      vi.mocked(
+        reviewSessionRepository.markCompletedIfAllConfirmed,
+      ).mockResolvedValue(true);
+
+      const result = await service.apply(1, "review-session-id", [
+        {
+          reviewSessionItemId: "session-item-1",
+          status: "active",
+          priority: "high",
+        },
+        { reviewSessionItemId: "session-item-2", status: "learned" },
+      ]);
+
+      expect(reviewSessionRepository.confirmItem).toHaveBeenCalledTimes(1);
+      expect(reviewSessionRepository.confirmItem).toHaveBeenCalledWith(
+        "session-item-2",
+        expect.objectContaining({ status: "learned" }),
+      );
+      expect(result.status).toBe("completed");
+    });
+
+    it("rejects the whole payload before writing when one item id is unknown", async () => {
       vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
         createReviewSessionRecord({
           status: "pending_review",
           items: [
-            mockPendingSessionItem({
-              confirmedStatus: "active",
-              confirmedPriority: "high",
-              confirmedAt: baseDate,
-            }),
+            mockPendingSessionItem({ id: "session-item-1" }),
+            mockPendingSessionItem({ id: "session-item-2", order: 1 }),
           ],
         }),
       );
@@ -709,12 +759,35 @@ describe("ReviewSessionsService", () => {
             status: "active",
             priority: "high",
           },
+          { reviewSessionItemId: "unknown-item", status: "learned" },
         ]),
-      ).rejects.toBeInstanceOf(ConflictError);
+      ).rejects.toBeInstanceOf(NotFoundError);
 
       expect(
         reviewMergeService.applyReviewSessionConfirmation,
       ).not.toHaveBeenCalled();
+      expect(reviewSessionRepository.confirmItem).not.toHaveBeenCalled();
+    });
+
+    it("rejects duplicated item ids before writing", async () => {
+      vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+        createReviewSessionRecord({
+          status: "pending_review",
+          items: [
+            mockPendingSessionItem({ id: "session-item-1" }),
+            mockPendingSessionItem({ id: "session-item-2", order: 1 }),
+          ],
+        }),
+      );
+
+      await expect(
+        service.apply(1, "review-session-id", [
+          { reviewSessionItemId: "session-item-1", status: "learned" },
+          { reviewSessionItemId: "session-item-1", status: "learned" },
+        ]),
+      ).rejects.toBeInstanceOf(BadRequestError);
+
+      expect(reviewSessionRepository.confirmItem).not.toHaveBeenCalled();
     });
 
     it("throws NotFoundError when the session or item is missing", async () => {

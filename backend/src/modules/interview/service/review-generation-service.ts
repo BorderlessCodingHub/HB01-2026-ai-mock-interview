@@ -5,7 +5,10 @@ import type { IReviewItemsGenerator } from "@/modules/interview/protocols/review
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
 import type { ReviewMergeService } from "@/modules/interview/service/review-merge-service";
-import type { SessionSummary } from "@/modules/interview/service/session-service";
+import {
+  toSessionSummary,
+  type SessionSummary,
+} from "@/modules/interview/service/session-summary";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { StructuredSummary } from "@/modules/resumes/validations/resume-schemas";
 import {
@@ -13,7 +16,6 @@ import {
   NotFoundError,
   TokenLimitExceededError,
 } from "@/shared";
-import type { InterviewSession } from "../../../../prisma/generated/client";
 
 export type ReviewGenerationProcessResult =
   | { status: "ready"; sessionId: string }
@@ -35,22 +37,6 @@ function isDuplicateJobError(error: unknown): boolean {
     message.includes("already exists") ||
     message.includes("job with this id already exists")
   );
-}
-
-function toSessionSummary(session: InterviewSession): SessionSummary {
-  return {
-    id: session.id,
-    resumeId: session.resumeId,
-    resumeName: session.resumeName,
-    level: session.level,
-    turnCount: session.turnCount,
-    maxTurns: session.maxTurns,
-    isFinished: session.isFinished,
-    hasJobDescription: session.jobDescription != null,
-    createdAt: session.createdAt,
-    reviewGenerationStatus: session.reviewGenerationStatus,
-    reviewGenerationError: session.reviewGenerationError,
-  };
 }
 
 export class ReviewGenerationService {
@@ -209,7 +195,9 @@ export class ReviewGenerationService {
     await this.reviewGenerationQueue.remove(sessionId);
     await this.enqueueForSession(sessionId);
 
-    const updated = await this.sessionRepository.findByIdAndUserId(
+    // Load the owner's rating too: the client replaces its cached session with
+    // this response, and a missing `feedback` would re-show the rating prompt.
+    const updated = await this.sessionRepository.findWithFeedbackByIdAndUserId(
       sessionId,
       userId,
     );

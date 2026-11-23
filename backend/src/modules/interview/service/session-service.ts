@@ -1,28 +1,16 @@
 import type { MessageRepository } from "@/modules/interview/repository/message-repository";
 import type { SessionRepository } from "@/modules/interview/repository/session-repository";
 import { sanitizeJobDescription } from "@/modules/interview/security/sanitize-job-description";
-import type {
-  CreateSessionInput,
-  InterviewLevel,
-} from "@/modules/interview/validations/interview-schemas";
+import type { CreateSessionInput } from "@/modules/interview/validations/interview-schemas";
 import type { ResumeRepository } from "@/modules/resumes/repository/resume-repository";
 import type { SessionQuotaService } from "@/modules/session-quota/service/session-quota-service";
 import { BadRequestError, NotFoundError } from "@/shared";
-import type { InterviewSession } from "../../../../prisma/generated/client";
+import { toSessionSummary, type SessionSummary } from "./session-summary";
 
-export type SessionSummary = {
-  id: string;
-  resumeId: string | null;
-  resumeName: string;
-  level: InterviewLevel;
-  turnCount: number;
-  maxTurns: number;
-  isFinished: boolean;
-  hasJobDescription: boolean;
-  createdAt: Date;
-  reviewGenerationStatus: "idle" | "pending" | "ready" | "failed";
-  reviewGenerationError: string | null;
-};
+export type {
+  SessionFeedbackSummary,
+  SessionSummary,
+} from "./session-summary";
 
 export type SessionMessage = {
   id: string;
@@ -109,18 +97,18 @@ export class SessionService {
     });
 
     const hasMore = rows.length > limit;
-    const sessions = rows.slice(0, limit).map((session) => this.toSummary(session));
+    const sessions = rows.slice(0, limit).map(toSessionSummary);
 
     return { sessions, page, limit, hasMore };
   }
 
   async getSession(userId: number, sessionId: string): Promise<SessionSummary> {
-    const session = await this.sessionRepository.findByIdAndUserId(
+    const session = await this.sessionRepository.findWithFeedbackByIdAndUserId(
       sessionId,
       userId,
     );
     if (!session) throw new NotFoundError();
-    return this.toSummary(session);
+    return toSessionSummary(session);
   }
 
   async getMessages(
@@ -166,21 +154,5 @@ export class SessionService {
     }
 
     await this.sessionRepository.deleteByIdAndUserId(sessionId, userId);
-  }
-
-  private toSummary(session: InterviewSession): SessionSummary {
-    return {
-      id: session.id,
-      resumeId: session.resumeId,
-      resumeName: session.resumeName,
-      level: session.level,
-      turnCount: session.turnCount,
-      maxTurns: session.maxTurns,
-      isFinished: session.isFinished,
-      hasJobDescription: session.jobDescription != null,
-      createdAt: session.createdAt,
-      reviewGenerationStatus: session.reviewGenerationStatus,
-      reviewGenerationError: session.reviewGenerationError,
-    };
   }
 }

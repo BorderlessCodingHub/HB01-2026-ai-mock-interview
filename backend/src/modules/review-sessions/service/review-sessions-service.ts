@@ -282,19 +282,29 @@ export class ReviewSessionsService {
       throw new BadRequestError("All session items must be included");
     }
 
-    if (session.items.some((item) => item.confirmedStatus !== null)) {
-      throw new ConflictError("Review session item already confirmed");
-    }
-
     const sessionItemById = new Map(
       session.items.map((item) => [item.id, item]),
     );
 
-    for (const applyItem of items) {
-      const sessionItem = sessionItemById.get(applyItem.reviewSessionItemId);
+    // Validate the whole payload before writing anything, so a bad id can't
+    // leave the session half-applied.
+    const requestedIds = new Set(
+      items.map((applyItem) => applyItem.reviewSessionItemId),
+    );
+    if (requestedIds.size !== items.length) {
+      throw new BadRequestError("Each session item must be included once");
+    }
+    if (items.some((applyItem) => !sessionItemById.has(applyItem.reviewSessionItemId))) {
+      throw new NotFoundError("Review session item not found");
+    }
 
-      if (!sessionItem) {
-        throw new NotFoundError("Review session item not found");
+    for (const applyItem of items) {
+      const sessionItem = sessionItemById.get(applyItem.reviewSessionItemId)!;
+
+      // Already confirmed by an earlier attempt that failed part-way (or a
+      // concurrent keepalive request): skip it so a retry can finish the job.
+      if (sessionItem.confirmedStatus !== null) {
+        continue;
       }
 
       const resolved = toMergeConfirmation(applyItem);

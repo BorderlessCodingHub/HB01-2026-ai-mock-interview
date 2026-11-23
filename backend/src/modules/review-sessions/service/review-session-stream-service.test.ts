@@ -203,7 +203,48 @@ describe("ReviewSessionStreamService", () => {
     expect(res.writeHead).not.toHaveBeenCalled();
   });
 
-  it("throws BadRequestError before SSE when answer is required", async () => {
+  it("replays the pending question without an LLM call when resumed without an answer", async () => {
+    vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+      createSession({
+        items: [
+          createSessionItem({
+            id: "session-item-1",
+            turns: createCompletedTurns(1, "session-item-1"),
+            pendingQuestion: "What is sharding?",
+          }),
+        ],
+      }),
+    );
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, "review-session-id", { interviewLocale: "en" }, res);
+
+    const output = res.chunks.join("");
+    expect(output).toContain('"content":"What is sharding?"');
+    expect(output).toContain('"turnsCompleted":1');
+    expect(output).toContain("data: [DONE]");
+    expect(questionGenerator.streamQuestion).not.toHaveBeenCalled();
+    expect(reviewSessionRepository.appendTurn).not.toHaveBeenCalled();
+    expect(reviewSessionRepository.setPendingQuestion).not.toHaveBeenCalled();
+    expect(tokenUsageService.recordUsage).not.toHaveBeenCalled();
+  });
+
+  it("throws BadRequestError before SSE when answering without a pending question", async () => {
+    vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+      createSession(),
+    );
+
+    const res = createMockResponse();
+
+    await expect(
+      service.streamTurn(1, "review-session-id", { answer: "answer", interviewLocale: "en" }, res),
+    ).rejects.toBeInstanceOf(BadRequestError);
+
+    expect(res.writeHead).not.toHaveBeenCalled();
+  });
+
+  it("checks the token limit before persisting an answer", async () => {
     vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
       createSession({
         items: [
@@ -214,14 +255,46 @@ describe("ReviewSessionStreamService", () => {
         ],
       }),
     );
+    vi.mocked(tokenUsageService.assertWithinLimit).mockRejectedValue(
+      new Error("Monthly token limit exceeded"),
+    );
 
     const res = createMockResponse();
 
     await expect(
-      service.streamTurn(1, "review-session-id", { interviewLocale: "en" }, res),
-    ).rejects.toBeInstanceOf(BadRequestError);
+      service.streamTurn(1, "review-session-id", { answer: "answer", interviewLocale: "en" }, res),
+    ).rejects.toThrow("Monthly token limit exceeded");
 
+    expect(reviewSessionRepository.appendTurn).not.toHaveBeenCalled();
     expect(res.writeHead).not.toHaveBeenCalled();
+  });
+
+  it("generates a missing question when a previous stream failed after the answer was saved", async () => {
+    vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+      createSession({
+        items: [
+          createSessionItem({
+            id: "session-item-1",
+            turns: createCompletedTurns(1, "session-item-1"),
+            pendingQuestion: null,
+          }),
+        ],
+      }),
+    );
+    vi.mocked(questionGenerator.streamQuestion).mockReturnValue(
+      createQuestionStream(["Next question?"])(),
+    );
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, "review-session-id", { interviewLocale: "en" }, res);
+
+    expect(questionGenerator.streamQuestion).toHaveBeenCalledTimes(1);
+    expect(reviewSessionRepository.setPendingQuestion).toHaveBeenCalledWith(
+      "session-item-1",
+      "Next question?",
+    );
+    expect(reviewSessionRepository.appendTurn).not.toHaveBeenCalled();
   });
 
   it("streams first question, persists pendingQuestion, and emits progress meta", async () => {
@@ -663,5 +736,81 @@ describe("ReviewSessionStreamService", () => {
 
     expect(reviewSessionRepository.setPendingQuestion).not.toHaveBeenCalled();
     expect(res.chunks.join("")).not.toContain("event: meta");
+  });
+
+  it("re-runs an unfinished evaluation when resumed without an answer", async () => {
+    const completeSession = createSession({
+      items: [
+        createSessionItem({
+          id: "session-item-1",
+          turns: createCompletedTurns(QUESTION_COUNT, "session-item-1"),
+          pendingQuestion: null,
+        }),
+      ],
+    });
+    vi.mocked(reviewSessionRepository.findByIdAndUserId)
+      .mockResolvedValueOnce(completeSession)
+      .mockResolvedValueOnce({ ...completeSession, status: "pending_review" });
+    vi.mocked(evaluator.evaluate).mockResolvedValue({
+      status: "learned",
+      wentWell: ["Clear"],
+      workOn: [],
+    } as never);
+
+    const res = createMockResponse();
+
+    await service.streamTurn(1, "review-session-id", { interviewLocale: "en" }, res);
+
+    expect(evaluator.evaluate).toHaveBeenCalledTimes(1);
+    expect(reviewSessionRepository.markPendingReview).toHaveBeenCalledWith(
+      "review-session-id",
+      "en",
+    );
+    expect(res.chunks.join("")).toContain('"status":"pending_review"');
+  });
+
+  it("persists the evaluation even when the client disconnects while evaluating", async () => {
+    let finishEvaluation: () => void = () => undefined;
+    vi.mocked(reviewSessionRepository.findByIdAndUserId).mockResolvedValue(
+      createSession({
+        items: [
+          createSessionItem({
+            id: "session-item-1",
+            turns: createCompletedTurns(QUESTION_COUNT - 1, "session-item-1"),
+            pendingQuestion: "Last question?",
+          }),
+        ],
+      }),
+    );
+    vi.mocked(evaluator.evaluate).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finishEvaluation = () =>
+            resolve({ status: "learned", wentWell: [], workOn: [] } as never);
+        }),
+    );
+
+    const res = createMockResponse();
+    const streamPromise = service.streamTurn(
+      1,
+      "review-session-id",
+      { answer: "Final answer", interviewLocale: "en" },
+      res,
+    );
+
+    await vi.waitFor(() => {
+      expect(res.chunks.join("")).toContain('"status":"evaluating"');
+    });
+
+    res.emitClose();
+    finishEvaluation();
+    await streamPromise;
+
+    expect(reviewSessionRepository.saveSuggestions).toHaveBeenCalledTimes(1);
+    expect(reviewSessionRepository.markPendingReview).toHaveBeenCalledWith(
+      "review-session-id",
+      "en",
+    );
+    expect(res.chunks.join("")).not.toContain('"status":"pending_review"');
   });
 });

@@ -8,6 +8,7 @@ import type { MessageRepository } from "../repository/message-repository";
 import {
   SessionRepository,
   type CreateSessionParams,
+  type SessionFeedbackRow,
 } from "../repository/session-repository";
 import { SessionService } from "./session-service";
 
@@ -60,6 +61,7 @@ function createStubSessionRepository() {
     sessionById: null as Awaited<
       ReturnType<SessionRepository["findByIdAndUserId"]>
     >,
+    ownFeedbacks: [] as SessionFeedbackRow[],
     createCalls: [] as CreateSessionParams[],
     createTx: undefined as unknown,
   };
@@ -76,6 +78,12 @@ function createStubSessionRepository() {
     },
     set sessionById(value) {
       state.sessionById = value;
+    },
+    get ownFeedbacks() {
+      return state.ownFeedbacks;
+    },
+    set ownFeedbacks(value) {
+      state.ownFeedbacks = value;
     },
     get createCalls() {
       return state.createCalls;
@@ -104,6 +112,10 @@ function createStubSessionRepository() {
     },
     listByUserId: async () => state.sessions,
     findByIdAndUserId: async () => state.sessionById,
+    findWithFeedbackByIdAndUserId: async () =>
+      state.sessionById
+        ? { ...state.sessionById, interviewFeedbacks: state.ownFeedbacks }
+        : null,
     incrementTurnCount: async (id: string) => ({
       id,
       userId,
@@ -464,6 +476,7 @@ describe("SessionService", () => {
         reviewGenerationStatus: "idle" as const,
         reviewGenerationError: null,
         createdAt,
+        interviewFeedbacks: [],
       },
     ];
 
@@ -483,6 +496,7 @@ describe("SessionService", () => {
           createdAt,
           reviewGenerationStatus: "idle",
           reviewGenerationError: null,
+          feedback: null,
         },
       ],
       page: 1,
@@ -507,6 +521,7 @@ describe("SessionService", () => {
       reviewGenerationStatus: "idle" as const,
       reviewGenerationError: null,
       createdAt,
+      interviewFeedbacks: [],
     });
     sessionRepository.sessions = [
       buildSession("session-1"),
@@ -554,7 +569,76 @@ describe("SessionService", () => {
       createdAt,
       reviewGenerationStatus: "failed",
       reviewGenerationError: "LLM timeout",
+      feedback: null,
     });
+  });
+
+  it("includes the owner's rating in the session summary once it was rated", async () => {
+    const createdAt = new Date("2026-01-02T00:00:00.000Z");
+    const ratedAt = new Date("2026-01-02T00:30:00.000Z");
+    sessionRepository.sessionById = {
+      id: sessionId,
+      userId,
+      resumeId,
+      resumeName: "resume.pdf",
+      level: "mid",
+      jobDescription: null,
+      interviewLocale: "en",
+      turnCount: 7,
+      maxTurns: 7,
+      isFinished: true,
+      reviewGenerationStatus: "ready" as const,
+      reviewGenerationError: null,
+      createdAt,
+    };
+    sessionRepository.ownFeedbacks = [
+      { rating: "up", comment: "Great follow-ups", updatedAt: ratedAt },
+    ];
+
+    const result = await service.getSession(userId, sessionId);
+
+    expect(result.feedback).toEqual({
+      rating: "up",
+      comment: "Great follow-ups",
+      updatedAt: ratedAt,
+    });
+  });
+
+  it("includes each listed session's own rating", async () => {
+    const createdAt = new Date("2026-01-02T00:00:00.000Z");
+    const ratedAt = new Date("2026-01-02T00:30:00.000Z");
+    const buildSession = (
+      id: string,
+      interviewFeedbacks: SessionFeedbackRow[],
+    ) => ({
+      id,
+      userId,
+      resumeId,
+      resumeName: "resume.pdf",
+      level: "mid" as const,
+      jobDescription: null,
+      interviewLocale: "en" as const,
+      turnCount: 7,
+      maxTurns: 7,
+      isFinished: true,
+      reviewGenerationStatus: "ready" as const,
+      reviewGenerationError: null,
+      createdAt,
+      interviewFeedbacks,
+    });
+    sessionRepository.sessions = [
+      buildSession("rated", [
+        { rating: "down", comment: null, updatedAt: ratedAt },
+      ]),
+      buildSession("unrated", []),
+    ];
+
+    const result = await service.listSessions(userId, { page: 1, limit: 10 });
+
+    expect(result.sessions.map((s) => [s.id, s.feedback])).toEqual([
+      ["rated", { rating: "down", comment: null, updatedAt: ratedAt }],
+      ["unrated", null],
+    ]);
   });
 
   it("throws NotFoundError when getting an unknown or other user's session", async () => {

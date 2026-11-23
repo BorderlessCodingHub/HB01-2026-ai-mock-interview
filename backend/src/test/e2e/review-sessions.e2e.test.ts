@@ -744,7 +744,7 @@ describe("Review Sessions API E2E", () => {
       expect(reviewSessionAiMock.streamQuestion).not.toHaveBeenCalled();
     });
 
-    it("returns 400 when answer is required but omitted", async () => {
+    it("replays the pending question when resumed without an answer", async () => {
       const { token, userId } = await authenticate();
       const item = await seedReviewItem(userId, {
         topic: "System Design",
@@ -762,10 +762,15 @@ describe("Review Sessions API E2E", () => {
       const firstStream = await streamReviewSessionTurn(app, token, sessionId);
       expect(firstStream.status).toBe(200);
 
+      const callsBefore = reviewSessionAiMock.streamQuestion.mock.calls.length;
       const response = await streamReviewSessionTurn(app, token, sessionId);
 
-      expect(response.status).toBe(400);
-      expect(response.body).toEqual({ message: "Answer is required" });
+      expect(response.status).toBe(200);
+      expect(response.text).toContain("event: token");
+      expect(response.text).toContain("data: [DONE]");
+      expect(reviewSessionAiMock.streamQuestion.mock.calls.length).toBe(
+        callsBefore,
+      );
     });
 
     it("returns 409 when session is pending review or completed", async () => {

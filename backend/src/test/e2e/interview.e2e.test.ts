@@ -1161,6 +1161,49 @@ describe("Interview API E2E", () => {
       });
     });
 
+    it("exposes the rating on the session detail and list so the prompt is not shown again", async () => {
+      const { token, userId } = await authenticate();
+      const resume = await seedReadyResume(userId);
+
+      const createResponse = await request(app)
+        .post("/api/interview/sessions")
+        .set(authHeader(token))
+        .send(
+          buildCreateSessionPayload({
+            resumeId: resume.id,
+            level: "entry",
+          }),
+        );
+      const sessionId = createResponse.body.id as string;
+
+      const before = await request(app)
+        .get(`/api/interview/sessions/${sessionId}`)
+        .set(authHeader(token));
+      expect(before.body.feedback).toBeNull();
+
+      await request(app)
+        .post(`/api/interview/sessions/${sessionId}/feedback`)
+        .set(authHeader(token))
+        .send({ rating: "up" });
+      await request(app)
+        .post(`/api/interview/sessions/${sessionId}/feedback`)
+        .set(authHeader(token))
+        .send({ rating: "down", comment: "Changed my mind" });
+
+      const detail = await request(app)
+        .get(`/api/interview/sessions/${sessionId}`)
+        .set(authHeader(token));
+      expect(detail.body.feedback).toMatchObject({
+        rating: "down",
+        comment: "Changed my mind",
+      });
+
+      const list = await request(app)
+        .get("/api/interview/sessions")
+        .set(authHeader(token));
+      expect(list.body.sessions[0].feedback).toMatchObject({ rating: "down" });
+    });
+
     it("returns 404 when submitting feedback for another user's session", async () => {
       const { token, userId } = await authenticate();
       const resume = await seedReadyResume(userId);

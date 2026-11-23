@@ -1,11 +1,35 @@
 import prisma from "@/infrastructure/database";
 import type { InterviewLocale } from "@/shared";
 import type {
+  InterviewFeedback,
   InterviewLevel,
   InterviewSession,
   Prisma,
   PrismaClient,
 } from "../../../../prisma/generated/client";
+
+export type SessionFeedbackRow = Pick<
+  InterviewFeedback,
+  "rating" | "comment" | "updatedAt"
+>;
+
+/**
+ * A session row plus the owner's own rating of it (at most one row, enforced by
+ * the `(sessionId, userId)` unique index on `interview_feedback`).
+ */
+export type InterviewSessionWithFeedback = InterviewSession & {
+  interviewFeedbacks: SessionFeedbackRow[];
+};
+
+function ownFeedbackInclude(userId: number) {
+  return {
+    interviewFeedbacks: {
+      where: { userId },
+      select: { rating: true, comment: true, updatedAt: true },
+      take: 1,
+    },
+  } satisfies Prisma.InterviewSessionInclude;
+}
 
 /** Fallback for callers that create a session without an explicit turn count (e.g. tests). */
 const DEFAULT_MAX_TURNS = 9;
@@ -44,9 +68,10 @@ export class SessionRepository {
   async listByUserId(
     userId: number,
     params?: { skip: number; take: number },
-  ): Promise<InterviewSession[]> {
+  ): Promise<InterviewSessionWithFeedback[]> {
     return prisma.interviewSession.findMany({
       where: { userId },
+      include: ownFeedbackInclude(userId),
       orderBy: { createdAt: "desc" },
       ...(params ? { skip: params.skip, take: params.take } : {}),
     });
@@ -64,6 +89,17 @@ export class SessionRepository {
   ): Promise<InterviewSession | null> {
     return prisma.interviewSession.findFirst({
       where: { id, userId },
+    });
+  }
+
+  /** Like `findByIdAndUserId`, but also loads the owner's rating of the session. */
+  async findWithFeedbackByIdAndUserId(
+    id: string,
+    userId: number,
+  ): Promise<InterviewSessionWithFeedback | null> {
+    return prisma.interviewSession.findFirst({
+      where: { id, userId },
+      include: ownFeedbackInclude(userId),
     });
   }
 

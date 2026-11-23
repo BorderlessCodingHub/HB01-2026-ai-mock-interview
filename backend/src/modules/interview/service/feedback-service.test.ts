@@ -110,4 +110,28 @@ describe("FeedbackService", () => {
     ]);
     expect(result).toEqual(feedbackRepository.upsertResult);
   });
+
+  it("clears a previous comment when the new submission has none", async () => {
+    sessionRepository.sessionById = {
+      id: sessionId,
+      userId,
+      resumeId: "resume-id",
+      resumeName: "resume.pdf",
+      level: "entry",
+      jobDescription: null,
+      interviewLocale: "en",
+      turnCount: 3,
+      maxTurns: 5,
+      isFinished: true,
+      reviewGenerationStatus: "ready" as const,
+      reviewGenerationError: null,
+      createdAt: new Date("2026-01-01T00:00:00.000Z"),
+    };
+
+    await service.submit(userId, sessionId, { rating: "down" });
+
+    expect(feedbackRepository.upsertCalls).toEqual([
+      { sessionId, userId, rating: "down", comment: null },
+    ]);
+  });
 });
