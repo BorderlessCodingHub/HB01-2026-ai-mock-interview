@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import {
   motion,
   useReducedMotion,
@@ -11,6 +11,10 @@ import {
 import { Mic } from "lucide-react";
 
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
+import {
+  useAutoplayVideo,
+  useIsCompactViewport,
+} from "@/components/landing/use-autoplay-video";
 
 const basePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
 const SRC = `${basePath}/landing/videos/ai-listening.mp4`;
@@ -27,8 +31,7 @@ const COPY = {
       "Feedback on what you said, not only what you wrote",
     ],
     listening: "Listening…",
-    transcript:
-      "I'd start by splitting the read path behind a cache, then…",
+    transcript: "I'd start by splitting the read path behind a cache, then…",
     label:
       "A software engineer answering out loud while the Hone AI interviewer listens on his laptop",
   },
@@ -42,8 +45,7 @@ const COPY = {
       "Feedback sobre o que você falou, não só o que escreveu",
     ],
     listening: "Ouvindo…",
-    transcript:
-      "Eu começaria separando a leitura atrás de um cache, depois…",
+    transcript: "Eu começaria separando a leitura atrás de um cache, depois…",
     label:
       "Um engenheiro de software respondendo em voz alta enquanto a IA do Hone escuta no notebook",
   },
@@ -85,10 +87,11 @@ export default function VoiceAnswerSection() {
   const { locale } = useSiteLocale();
   const copy = COPY[locale === "pt" ? "pt" : "en"];
   const prefersReducedMotion = useReducedMotion();
+  // Scaling a playing <video> on every scroll frame stutters on phones.
+  const staticFrame = useIsCompactViewport();
 
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isNear, setIsNear] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: frameRef,
@@ -107,31 +110,15 @@ export default function VoiceAnswerSection() {
   const cardY = useTransform(progress, [0.55, 1], [24, 0]);
   const cardOpacity = useTransform(progress, [0.55, 1], [0, 1]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || prefersReducedMotion) return;
-    video.muted = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsNear(true);
-          void video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [prefersReducedMotion]);
+  const shouldLoad = useAutoplayVideo(videoRef, !prefersReducedMotion);
 
   const textStyle = prefersReducedMotion
     ? undefined
     : { y: textY, opacity: textOpacity };
-  const frameStyle = prefersReducedMotion
-    ? { borderRadius: 24 }
-    : { scale, y, borderRadius: radius };
+  const frameStyle =
+    prefersReducedMotion || staticFrame
+      ? { borderRadius: 24 }
+      : { scale, y, borderRadius: radius };
   const cardStyle = prefersReducedMotion
     ? undefined
     : { y: cardY, opacity: cardOpacity };
@@ -154,15 +141,14 @@ export default function VoiceAnswerSection() {
       ) : (
         <video
           ref={videoRef}
-          src={isNear ? SRC : undefined}
+          src={shouldLoad ? SRC : undefined}
           poster={POSTER}
           width={1280}
           height={720}
-          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={shouldLoad ? "auto" : "none"}
           aria-label={copy.label}
           className={`block h-auto w-full object-cover object-[62%_center] ${aspect}`}
         />
@@ -177,7 +163,9 @@ export default function VoiceAnswerSection() {
   );
 
   const bullets = (className: string) => (
-    <ul className={`manrope grid gap-3 text-[15px] text-ink-black ${className}`}>
+    <ul
+      className={`manrope grid gap-3 text-[15px] text-ink-black ${className}`}
+    >
       {copy.points.map((point) => (
         <li key={point} className="flex items-start gap-2.5">
           <span

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import {
   motion,
   useReducedMotion,
@@ -10,6 +10,10 @@ import {
 } from "motion/react";
 
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
+import {
+  useAutoplayVideo,
+  useIsCompactViewport,
+} from "@/components/landing/use-autoplay-video";
 
 const basePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
 const SRC = `${basePath}/landing/videos/candidate-story.mp4`;
@@ -36,10 +40,11 @@ export default function StoryVideoSection() {
   const { locale } = useSiteLocale();
   const copy = COPY[locale === "pt" ? "pt" : "en"];
   const prefersReducedMotion = useReducedMotion();
+  // Scaling a playing <video> on every scroll frame stutters on phones.
+  const staticFrame = useIsCompactViewport();
 
   const frameRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isNear, setIsNear] = useState(false);
 
   // Card opens up from a smaller, rounder frame to full width as it scrolls in.
   const { scrollYProgress } = useScroll({
@@ -57,24 +62,7 @@ export default function StoryVideoSection() {
   const textY = useTransform(progress, [0.35, 1], [28, 0]);
   const textOpacity = useTransform(progress, [0.35, 0.9], [0, 1]);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || prefersReducedMotion) return;
-    video.muted = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsNear(true);
-          void video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [prefersReducedMotion]);
+  const shouldLoad = useAutoplayVideo(videoRef, !prefersReducedMotion);
 
   return (
     <section className="overflow-x-clip bg-paper-white px-4 pb-[var(--section-gap)] md:px-10">
@@ -82,7 +70,7 @@ export default function StoryVideoSection() {
         ref={frameRef}
         className="relative mx-auto max-w-[1280px] overflow-hidden bg-mist-gray shadow-[0_30px_80px_-40px_rgba(10,92,74,0.35)] will-change-transform"
         style={
-          prefersReducedMotion
+          prefersReducedMotion || staticFrame
             ? { borderRadius: 28 }
             : { scale, y, borderRadius: radius }
         }
@@ -99,15 +87,14 @@ export default function StoryVideoSection() {
         ) : (
           <video
             ref={videoRef}
-            src={isNear ? SRC : undefined}
+            src={shouldLoad ? SRC : undefined}
             poster={POSTER}
             width={1280}
             height={720}
-            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload={shouldLoad ? "auto" : "none"}
             aria-label={copy.label}
             className="block aspect-[4/5] h-auto w-full object-cover object-[70%_center] sm:aspect-video"
           />
@@ -121,7 +108,11 @@ export default function StoryVideoSection() {
 
         <motion.div
           className="absolute inset-y-0 left-0 hidden max-w-[44%] flex-col justify-center p-10 sm:flex lg:p-16"
-          style={prefersReducedMotion ? undefined : { y: textY, opacity: textOpacity }}
+          style={
+            prefersReducedMotion
+              ? undefined
+              : { y: textY, opacity: textOpacity }
+          }
         >
           <p className="landing-eyebrow">{copy.eyebrow}</p>
           <h2 className="landing-heading mt-3">{copy.title}</h2>

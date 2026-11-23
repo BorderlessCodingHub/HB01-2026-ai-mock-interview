@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { useReducedMotion } from "motion/react";
 
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
+import { useAutoplayVideo } from "@/components/landing/use-autoplay-video";
 
 const basePath = process.env.__NEXT_ROUTER_BASEPATH ?? "";
 const CLIP_SRC = `${basePath}/landing/videos/mobile-practice.mp4`;
@@ -32,26 +33,8 @@ export function PhonePracticeClip({
   const label = CLIP_LABEL[locale === "pt" ? "pt" : "en"];
   const prefersReducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isNear, setIsNear] = useState(false);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || prefersReducedMotion) return;
-    video.muted = true;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsNear(true);
-          void video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [prefersReducedMotion]);
+  const shouldLoad = useAutoplayVideo(videoRef, !prefersReducedMotion);
 
   const media = `block h-auto w-full object-cover ${mediaClassName}`;
 
@@ -71,15 +54,14 @@ export function PhonePracticeClip({
       ) : (
         <video
           ref={videoRef}
-          src={isNear ? CLIP_SRC : undefined}
+          src={shouldLoad ? CLIP_SRC : undefined}
           poster={CLIP_POSTER}
           width={640}
           height={360}
-          autoPlay
           muted
           loop
           playsInline
-          preload="metadata"
+          preload={shouldLoad ? "auto" : "none"}
           aria-label={label}
           className={media}
         />

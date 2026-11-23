@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { useSiteLocale } from "@/features/site-locale/site-locale-provider";
+import { useAutoplayVideo } from "@/components/landing/use-autoplay-video";
 
 /**
  * Public assets are not rewritten by Next's `basePath`, so prefix them the
@@ -34,7 +35,6 @@ export function LandingVideo({
 }: LandingVideoProps) {
   const { t } = useSiteLocale();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isNear, setIsNear] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
 
   const src = `${basePath}/landing/videos/${name}.mp4`;
@@ -48,25 +48,7 @@ export function LandingVideo({
     return () => query.removeEventListener("change", update);
   }, []);
 
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || reducedMotion) return;
-    video.muted = true;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsNear(true);
-          void video.play().catch(() => {});
-        } else {
-          video.pause();
-        }
-      },
-      { rootMargin: "200px 0px" },
-    );
-    observer.observe(video);
-    return () => observer.disconnect();
-  }, [reducedMotion]);
+  const shouldLoad = useAutoplayVideo(videoRef, !reducedMotion);
 
   const mediaClassName = "block h-auto w-full";
 
@@ -99,15 +81,14 @@ export function LandingVideo({
         ) : (
           <video
             ref={videoRef}
-            src={isNear ? src : undefined}
+            src={shouldLoad ? src : undefined}
             poster={poster}
             width={width}
             height={height}
-            autoPlay
             muted
             loop
             playsInline
-            preload="metadata"
+            preload={shouldLoad ? "auto" : "none"}
             aria-label={label}
             className={mediaClassName}
           />
